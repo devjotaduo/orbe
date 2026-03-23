@@ -784,6 +784,22 @@
         "TOOL_CMD_OBFUSCATED_EXEC": "Detects execution of base64 encoded strings passed directly to a shell interpreter"
       }
     },
+    "fileGuard": {
+      "title": "File Guard",
+      "description": "Protect sensitive files and directories from being accessed by agent tools. Paths added here will be blocked across all tool calls.",
+      "enableLabel": "Enable File Guard",
+      "path": "Path",
+      "actions": "Actions",
+      "add": "Add",
+      "inputPlaceholder": "Enter file or directory path (e.g. ~/.ssh/ or /etc/passwd)",
+      "empty": "No custom sensitive paths configured",
+      "directory": "Directory",
+      "removeConfirm": "Remove this path from the protected list?",
+      "duplicate": "This path is already in the list",
+      "saveSuccess": "File guard settings saved",
+      "saveFailed": "Failed to save file guard settings",
+      "loadFailed": "Failed to load file guard settings"
+    },
     "skillScanner": {
       "title": "Skill Scanner",
       "description": "Automatically scan skills for security threats before enabling or installing. Unsafe skills can be blocked or whitelisted.",

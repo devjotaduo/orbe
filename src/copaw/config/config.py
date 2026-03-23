@@ -754,6 +754,13 @@ class ToolGuardConfig(BaseModel):
     disabled_rules: List[str] = Field(default_factory=list)
 
 
+class FileGuardConfig(BaseModel):
+    """File guard settings under ``security.file_guard``."""
+
+    enabled: bool = True
+    sensitive_files: List[str] = Field(default_factory=list)
+
+
 class SkillScannerWhitelistEntry(BaseModel):
     """A whitelisted skill (identified by name + content hash)."""
 
@@ -798,6 +805,7 @@ class SecurityConfig(BaseModel):
     """Top-level ``security`` section in config.json."""
 
     tool_guard: ToolGuardConfig = Field(default_factory=ToolGuardConfig)
+    file_guard: FileGuardConfig = Field(default_factory=FileGuardConfig)
     skill_scanner: SkillScannerConfig = Field(
         default_factory=SkillScannerConfig,
     )

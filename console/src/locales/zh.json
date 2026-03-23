@@ -750,6 +750,22 @@
         "TOOL_CMD_OBFUSCATED_EXEC": "检测将 base64 编码字符串直接传递给 Shell 解释器执行的行为"
       }
     },
+    "fileGuard": {
+      "title": "文件防护",
+      "description": "保护敏感文件和目录，防止被 Agent 工具访问。添加的路径将在所有工具调用中被拦截。",
+      "enableLabel": "启用文件防护",
+      "path": "路径",
+      "actions": "操作",
+      "add": "添加",
+      "inputPlaceholder": "输入文件或目录路径（如 ~/.ssh/ 或 /etc/passwd）",
+      "empty": "未配置自定义敏感路径",
+      "directory": "目录",
+      "removeConfirm": "从保护列表中移除该路径？",
+      "duplicate": "该路径已存在",
+      "saveSuccess": "文件防护设置已保存",
+      "saveFailed": "保存文件防护设置失败",
+      "loadFailed": "加载文件防护设置失败"
+    },
     "skillScanner": {
       "title": "技能扫描器",
       "description": "在启用或安装技能前，自动扫描安全威胁。不安全的技能可以被拦截或加入白名单。",
