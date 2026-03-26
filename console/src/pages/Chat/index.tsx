@@ -453,7 +453,7 @@ export default function ChatPage() {
 
         const res = await chatApi.uploadFile(file);
         onProgress?.({ percent: 100 });
-        onSuccess({ url: chatApi.fileUrl(res.url) });
+        onSuccess({ url: chatApi.filePreviewUrl(res.url) });
       } catch (e) {
         onError?.(e instanceof Error ? e : new Error(String(e)));
       }
