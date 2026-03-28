@@ -106,6 +106,8 @@
     "saveFailed": "Save failed"
   },
   "agent": {
+    "parent": "Settings",
+    "agents": "Agents",
     "management": "Agent Management",
     "pageDescription": "Create, configure, and manage multiple AI agents with custom workspaces and identities.",
     "name": "Name",
@@ -174,6 +176,8 @@
     "invalidSkillUrlSource": "Skill URL currently needs to start with https://skills.sh/, https://clawhub.ai/, https://skillsmp.com/, https://lobehub.com/, https://market.lobehub.com/, https://github.com/, or https://modelscope.cn/skills/",
     "type": "Type",
     "skillDescription": "Description",
+    "builtin": "Built-in",
+    "custom": "Custom",
     "createSkill": "Create Skill",
     "viewSkill": "View Skill",
     "editSkill": "Edit Skill",
@@ -303,7 +307,9 @@
     "statusOutdated": "Outdated",
     "statusNotSynced": "Not synced",
     "statusConflict": "Conflict",
-    "renameEntry": "New name for \"{{name}}\":"
+    "renameEntry": "New name for \"{{name}}\":",
+    "builtin": "Built-in",
+    "custom": "Custom"
   },
   "mcp": {
     "title": "MCP Clients",
@@ -537,6 +543,8 @@
     "sessionNamePlaceholder": "Session name"
   },
   "environments": {
+    "parent": "Settings",
+    "environments": "Environment Variables",
     "title": "Environment Variables",
     "description": "Configure key-value environment variables for agents and skills.",
     "key": "Key",
@@ -673,6 +681,7 @@
     "providerDeleted": "Provider \"{{name}}\" deleted",
     "providerDeleteFailed": "Failed to delete provider",
     "manageModels": "Models",
+    "models": "Models",
     "manageModelsTitle": "{{provider}} — Model Management",
     "userAdded": "User-added",
     "addModel": "Add Model",
@@ -959,7 +968,8 @@
     "docs": "Doc",
     "tutorial": "Tutorial",
     "faq": "FAQ",
-    "github": "GitHub"
+    "github": "GitHub",
+    "updateAvailable": "Update Available"
   },
   "theme": {
     "dark": "Dark",
@@ -1010,6 +1020,8 @@
     }
   },
   "security": {
+    "parent": "Settings",
+    "security": "Security",
     "title": "Security",
     "description": "Manage security features for tools and skills.",
     "toolGuardTitle": "Tool Guard",
