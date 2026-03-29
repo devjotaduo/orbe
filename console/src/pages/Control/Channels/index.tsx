@@ -97,7 +97,7 @@ function ChannelsPage() {
     }
   };
 
-  const activeLabel = activeKey ? getChannelLabel(activeKey) : "";
+  const activeLabel = activeKey ? getChannelLabel(activeKey, t) : "";
 
   const FILTER_TABS: { key: FilterType; label: string }[] = [
     { key: "all", label: t("channels.filterAll") },

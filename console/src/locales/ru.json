@@ -30,8 +30,8 @@
     "sessions": "Сессии",
     "cronJobs": "Cron-задачи",
     "heartbeat": "Пульс",
-    "agent": "Агент",
-    "workspace": "Рабочее пространство",
+    "agent": "Рабочая область",
+    "workspace": "Файлы",
     "skills": "Навыки",
     "skillPool": "Пул навыков",
     "tools": "Инструменты",
@@ -68,6 +68,7 @@
     "deleteSuccess": "Агент успешно удалён",
     "deleteFailed": "Не удалось удалить агента",
     "selectAgent": "Выбрать агента",
+    "defaultDisplayName": "Агент по умолчанию",
     "currentWorkspace": "Текущий агент",
     "switchSuccess": "Агент успешно переключён",
     "switchFailed": "Не удалось переключить агента",
@@ -99,7 +100,7 @@
     "cannotSwitchToDisabled": "Этот агент отключён, пожалуйста, сначала включите его на странице управления"
   },
   "workspace": {
-    "title": "Рабочее пространство",
+    "title": "Файлы",
     "workspacePath": "Рабочее пространство:",
     "noFiles": "Нет файлов",
     "coreFiles": "Основные файлы",

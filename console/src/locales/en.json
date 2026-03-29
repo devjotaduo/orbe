@@ -33,8 +33,8 @@
     "sessions": "Sessions",
     "cronJobs": "Cron Jobs",
     "heartbeat": "Heartbeat",
-    "agent": "Agent",
-    "workspace": "Workspace",
+    "agent": "Workspace",
+    "workspace": "Files",
     "skills": "Skills",
     "skillPool": "Skill Pool",
     "tools": "Tools",
@@ -83,7 +83,7 @@
     "transcriptionInfoDescLocal": "Local Whisper transcription runs the openai-whisper library directly on your machine. It requires both ffmpeg (for audio decoding) and the openai-whisper Python package to be installed. No API key or network connection is needed. Install with: uv pip install 'copaw[whisper]'."
   },
   "workspace": {
-    "title": "Workspace",
+    "title": "Files",
     "workspacePath": "Workspace:",
     "noFiles": "No files",
     "coreFiles": "Core Files",
@@ -129,6 +129,7 @@
     "deleteSuccess": "Agent deleted successfully",
     "deleteFailed": "Failed to delete agent",
     "selectAgent": "Select Agent",
+    "defaultDisplayName": "Default Agent",
     "currentWorkspace": "Current Agent",
     "switchSuccess": "Agent switched successfully",
     "switchFailed": "Failed to switch agent",

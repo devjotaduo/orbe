@@ -30,8 +30,8 @@
     "sessions": "セッション",
     "cronJobs": "定期実行",
     "heartbeat": "ハートビート",
-    "agent": "エージェント",
-    "workspace": "ワークスペース",
+    "agent": "ワークスペース",
+    "workspace": "ファイル",
     "skills": "スキル",
     "skillPool": "スキルプール",
     "mcp": "MCP",
@@ -68,6 +68,7 @@
     "deleteSuccess": "エージェントが正常に削除されました",
     "deleteFailed": "エージェントの削除に失敗しました",
     "selectAgent": "エージェントを選択",
+    "defaultDisplayName": "デフォルトエージェント",
     "currentWorkspace": "現在のエージェント",
     "switchSuccess": "エージェントが正常に切り替えられました",
     "switchFailed": "エージェントの切り替えに失敗しました",
@@ -99,7 +100,7 @@
     "cannotSwitchToDisabled": "このエージェントは無効化されています。管理ページで有効化してください"
   },
   "workspace": {
-    "title": "ワークスペース",
+    "title": "ファイル",
     "workspacePath": "ワークスペース:",
     "noFiles": "ファイルなし",
     "coreFiles": "コアファイル",

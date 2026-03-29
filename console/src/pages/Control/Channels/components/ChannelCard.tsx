@@ -29,7 +29,7 @@ const CHANNEL_ICON_MAP: Record<string, string> = {
   wecom:
     "https://gw.alicdn.com/imgextra/i1/O1CN01HWtzmr1hkK9beQICJ_!!6000000004315-2-tps-400-400.png",
   weixin:
-    "https://gw.alicdn.com/imgextra/i1/O1CN01HWtzmr1hkK9beQICJ_!!6000000004315-2-tps-400-400.png",
+    "https://img.alicdn.com/imgextra/i4/O1CN01Jw2SLK1XxvlP5879e_!!6000000002991-55-tps-1200-800.svg",
 };
 
 const DEFAULT_ICON =
@@ -55,7 +55,7 @@ export function ChannelCard({
   const { t } = useTranslation();
   const enabled = Boolean(config.enabled);
   const isBuiltin = Boolean(config.isBuiltin);
-  const label = getChannelLabel(channelKey);
+  const label = getChannelLabel(channelKey, t);
   const getConfigString = (key: string) =>
     typeof config[key] === "string" ? config[key] : "";
   const botPrefix = getConfigString("bot_prefix");
