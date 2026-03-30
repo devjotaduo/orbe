@@ -324,6 +324,7 @@ def create_model_and_formatter(
             )
             rate_limit_config = RateLimitConfig(
                 max_concurrent=agent_config.running.llm_max_concurrent,
+                max_qpm=agent_config.running.llm_max_qpm,
                 pause_seconds=agent_config.running.llm_rate_limit_pause,
                 jitter_range=agent_config.running.llm_rate_limit_jitter,
                 acquire_timeout=agent_config.running.llm_acquire_timeout,
