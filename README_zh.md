@@ -229,7 +229,7 @@ copaw uninstall          # 保留配置和数据
 copaw uninstall --purge  # 删除所有内容
 ```
 
-> **注意**：如需安装本地模型支持（llama.cpp、MLX、Ollama），请参考 [本地模型](#本地模型) 章节。
+> **注意**：如需安装本地模型支持（llama.cpp、Ollama、LM Studio），请参考 [本地模型](#本地模型) 章节。
 
 </details>
 
