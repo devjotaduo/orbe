@@ -668,24 +668,24 @@ class ProviderManager:
 
     def _init_builtins(self):
         self._add_builtin(PROVIDER_COPAW)
+        self._add_builtin(PROVIDER_OLLAMA)
+        self._add_builtin(PROVIDER_LMSTUDIO)
         self._add_builtin(PROVIDER_MODELSCOPE)
         self._add_builtin(PROVIDER_DASHSCOPE)
         self._add_builtin(PROVIDER_ALIYUN_CODINGPLAN)
+        self._add_builtin(PROVIDER_OPENAI)
+        self._add_builtin(PROVIDER_AZURE_OPENAI)
+        self._add_builtin(PROVIDER_ANTHROPIC)
+        self._add_builtin(PROVIDER_GEMINI)
+        self._add_builtin(PROVIDER_DEEPSEEK)
+        self._add_builtin(PROVIDER_KIMI_CN)
+        self._add_builtin(PROVIDER_KIMI_INTL)
+        self._add_builtin(PROVIDER_MINIMAX_CN)
+        self._add_builtin(PROVIDER_MINIMAX)
         self._add_builtin(PROVIDER_ZHIPU_CN)
         self._add_builtin(PROVIDER_ZHIPU_CN_CODINGPLAN)
         self._add_builtin(PROVIDER_ZHIPU_INTL)
         self._add_builtin(PROVIDER_ZHIPU_INTL_CODINGPLAN)
-        self._add_builtin(PROVIDER_OPENAI)
-        self._add_builtin(PROVIDER_AZURE_OPENAI)
-        self._add_builtin(PROVIDER_KIMI_CN)
-        self._add_builtin(PROVIDER_KIMI_INTL)
-        self._add_builtin(PROVIDER_DEEPSEEK)
-        self._add_builtin(PROVIDER_ANTHROPIC)
-        self._add_builtin(PROVIDER_GEMINI)
-        self._add_builtin(PROVIDER_MINIMAX_CN)
-        self._add_builtin(PROVIDER_MINIMAX)
-        self._add_builtin(PROVIDER_OLLAMA)
-        self._add_builtin(PROVIDER_LMSTUDIO)
 
     def _add_builtin(self, provider: Provider):
         self.builtin_providers[provider.id] = provider
@@ -880,6 +880,26 @@ class ProviderManager:
         if not provider:
             raise ValueError(f"Provider '{provider_id}' not found.")
         await provider.add_model(model_info)
+        self._save_provider(
+            provider,
+            is_builtin=provider_id in self.builtin_providers,
+        )
+        return await provider.get_info()
+
+    async def update_model_config(
+        self,
+        provider_id: str,
+        model_id: str,
+        config: Dict,
+    ) -> ProviderInfo:
+        """Update per-model configuration and persist to disk."""
+        provider = self.get_provider(provider_id)
+        if not provider:
+            raise ValueError(f"Provider '{provider_id}' not found.")
+        if not provider.update_model_config(model_id, config):
+            raise ValueError(
+                f"Model '{model_id}' not found in provider '{provider_id}'.",
+            )
         self._save_provider(
             provider,
             is_builtin=provider_id in self.builtin_providers,
@@ -1119,6 +1139,18 @@ class ProviderManager:
                 builtin.api_key = provider.api_key
                 builtin.extra_models = provider.extra_models
                 builtin.generate_kwargs.update(provider.generate_kwargs)
+                # Restore per-model generate_kwargs for built-in models
+                stored_model_kwargs = {
+                    m.id: m.generate_kwargs
+                    for m in provider.models
+                    if m.generate_kwargs
+                }
+                if stored_model_kwargs:
+                    for model in builtin.models:
+                        if model.id in stored_model_kwargs:
+                            model.generate_kwargs = stored_model_kwargs[
+                                model.id
+                            ]
         # Load custom providers
         for provider_file in self.custom_path.glob("*.json"):
             provider = self.load_provider(provider_file.stem, is_builtin=False)
