@@ -1120,7 +1120,8 @@
       "noResults": "結果が見つかりません",
       "resultsCount": "{{count}} 件の結果が見つかりました",
       "userMessage": "ユーザー",
-      "assistantMessage": "アシスタント"
+      "assistantMessage": "アシスタント",
+      "titleMatch": "タイトル"
     }
   },
   "security": {

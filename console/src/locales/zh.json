@@ -1180,7 +1180,8 @@
       "noResults": "未找到结果",
       "resultsCount": "找到 {{count}} 个结果",
       "userMessage": "用户",
-      "assistantMessage": "助手"
+      "assistantMessage": "助手",
+      "titleMatch": "标题"
     }
   },
   "security": {
