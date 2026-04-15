@@ -520,6 +520,10 @@ def chat_cmd(
         from_agent=from_agent,
     )
 
+    # Background tasks bypass tool guard (cannot respond to /approve prompts)
+    if background:
+        request_payload["request_context"] = {"_headless_tool_guard": "false"}
+
     click.echo(f"INFO: Using session_id: {final_session_id}", err=True)
 
     if prefix_added:
