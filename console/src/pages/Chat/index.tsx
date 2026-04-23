@@ -27,6 +27,7 @@ import { IconButton } from "@agentscope-ai/design";
 import ChatActionGroup from "./components/ChatActionGroup";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
+import { planApi } from "../../api/modules/plan";
 import {
   toDisplayUrl,
   copyText,
@@ -458,6 +459,20 @@ export default function ChatPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const runtimeLoadingBridgeRef = useRef<RuntimeLoadingBridgeApi | null>(null);
   const { message } = useAppMessage();
+  const [planEnabled, setPlanEnabled] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    planApi
+      .getPlanConfig()
+      .then((cfg) => {
+        if (!cancelled) setPlanEnabled(cfg.enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAgent]);
 
   const isChatActiveRef = useRef(false);
   isChatActiveRef.current =
@@ -775,6 +790,13 @@ export default function ChatPage() {
         description: t("chat.commands.skills.description"),
       },
     ];
+    if (planEnabled) {
+      commandSuggestions.push({
+        command: "/plan",
+        value: "plan ",
+        description: t("chat.commands.plan.description"),
+      });
+    }
 
     const handleBeforeSubmit = async () => {
       if (isComposingRef.current) return false;
@@ -910,6 +932,7 @@ export default function ChatPage() {
     multimodalCaps,
     toolRenderConfig,
     scheduleHistoryClear,
+    planEnabled,
   ]);
 
   return (
