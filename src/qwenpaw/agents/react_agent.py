@@ -509,7 +509,7 @@ class QwenPawAgent(ToolGuardMixin, ReActAgent):
                         await self.toolkit.register_mcp_client(
                             recovered_client,
                             namesake_strategy=namesake_strategy,
-                            exeution_timeout=client.timeout,
+                            execution_timeout=client.timeout,
                         )
                         continue
                     except asyncio.CancelledError as recover_error:
