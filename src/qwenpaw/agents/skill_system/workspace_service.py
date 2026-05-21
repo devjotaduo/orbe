@@ -37,6 +37,53 @@ from .store import (
 )
 
 
+def _register_workspace_skill_entry(
+    payload: dict[str, Any],
+    skill_name: str,
+    skill_dir: Path,
+    *,
+    enable: bool = False,
+    installed_from: str = "",
+    config: dict[str, Any] | None = None,
+    source: str | None = None,
+) -> None:
+    """Upsert a workspace skill entry — single source of truth for shape."""
+    payload.setdefault("skills", {})
+    entry = payload["skills"].get(skill_name) or {}
+    # Explicit *source* wins (e.g. /make-skill stamps "agent"); otherwise
+    # fall back to existing entry / builtin lookup / "customized" default.
+    if source is not None:
+        resolved_source = source
+    elif "source" in entry:
+        resolved_source = entry["source"]
+    elif skill_name in get_packaged_builtin_versions():
+        resolved_source = "builtin"
+    else:
+        resolved_source = "customized"
+    metadata = build_skill_metadata(
+        skill_name,
+        skill_dir,
+        source=resolved_source,
+        protected=False,
+    )
+    payload["skills"][skill_name] = {
+        "enabled": bool(entry.get("enabled", enable)),
+        "channels": entry.get("channels") or ["all"],
+        "source": metadata["source"],
+        "installed_from": (
+            installed_from or str(entry.get("installed_from", "") or "")
+        ),
+        "config": (
+            dict(config)
+            if config is not None
+            else dict(entry.get("config") or {})
+        ),
+        "metadata": metadata,
+        "requirements": metadata["requirements"],
+        "updated_at": metadata["updated_at"],
+    }
+
+
 class SkillService:
     """Workspace-scoped skill lifecycle service.
 
@@ -103,6 +150,7 @@ class SkillService:
         extra_files: dict[str, Any] | None = None,
         config: dict[str, Any] | None = None,
         enable: bool = False,
+        installed_from: str = "",
         source: str | None = None,
     ) -> str | None:
         validate_skill_content(content)
@@ -125,39 +173,15 @@ class SkillService:
             copy_skill_dir(staged_dir, skill_dir)
 
         def _update(payload: dict[str, Any]) -> None:
-            payload.setdefault("skills", {})
-            entry = payload["skills"].get(skill_name) or {}
-            # Explicit *source* wins (e.g. /make-skill stamps "agent");
-            # otherwise fall back to existing entry / builtin lookup
-            # / "customized" default. Separate local var so we don't
-            # rebind the outer kwarg inside this closure.
-            if source is not None:
-                resolved_source = source
-            elif "source" in entry:
-                resolved_source = entry["source"]
-            elif skill_name in get_packaged_builtin_versions():
-                resolved_source = "builtin"
-            else:
-                resolved_source = "customized"
-            metadata = build_skill_metadata(
+            _register_workspace_skill_entry(
+                payload,
                 skill_name,
                 skill_dir,
-                source=resolved_source,
-                protected=False,
+                enable=enable,
+                installed_from=installed_from,
+                config=config,
+                source=source,
             )
-            payload["skills"][skill_name] = {
-                "enabled": bool(entry.get("enabled", enable)),
-                "channels": entry.get("channels") or ["all"],
-                "source": metadata["source"],
-                "config": (
-                    dict(config)
-                    if config is not None
-                    else dict(entry.get("config") or {})
-                ),
-                "metadata": metadata,
-                "requirements": metadata["requirements"],
-                "updated_at": metadata["updated_at"],
-            }
 
         try:
             mutate_json(
@@ -318,6 +342,9 @@ class SkillService:
                 "enabled": bool(current_entry.get("enabled", False)),
                 "channels": current_entry.get("channels") or ["all"],
                 "source": metadata["source"],
+                "installed_from": str(
+                    current_entry.get("installed_from", "") or "",
+                ),
                 "config": new_config,
                 "metadata": metadata,
                 "requirements": metadata["requirements"],
@@ -381,6 +408,9 @@ class SkillService:
                 "enabled": bool(current_entry.get("enabled", False)),
                 "channels": current_entry.get("channels") or old_channels,
                 "source": metadata["source"],
+                "installed_from": str(
+                    current_entry.get("installed_from", "") or "",
+                ),
                 "config": old_config,
                 "metadata": metadata,
                 "requirements": metadata["requirements"],
@@ -485,6 +515,20 @@ class SkillService:
 
             if imported:
                 reconcile_workspace_manifest(self.workspace_dir)
+
+                def _mark_imported_entries(payload: dict[str, Any]) -> None:
+                    skills = payload.setdefault("skills", {})
+                    for name in imported:
+                        entry = skills.get(name)
+                        if entry is not None:
+                            entry["installed_from"] = "zip"
+
+                mutate_json(
+                    get_workspace_skill_manifest_path(self.workspace_dir),
+                    default_workspace_manifest(),
+                    _mark_imported_entries,
+                )
+
                 if enable:
                     for skill_name in imported:
                         self.enable_skill(skill_name)
