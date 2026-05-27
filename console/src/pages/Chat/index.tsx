@@ -61,6 +61,7 @@ import {
   extractUserMessageText,
   extractTextFromMessage,
   setTextareaValue,
+  formatMessageTime,
   type CopyableResponse,
   type RuntimeLoadingBridgeApi,
 } from "./utils";
@@ -649,6 +650,12 @@ function RuntimeLoadingBridge({
 
   return null;
 }
+
+const timestampStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: "var(--ant-color-text-quaternary)",
+  whiteSpace: "nowrap",
+};
 
 export default function ChatPage() {
   const { t } = useTranslation();
@@ -1336,8 +1343,48 @@ export default function ChatPage() {
               void copyResponse(data);
             },
           },
+          {
+            render: ({
+              data,
+            }: {
+              data: { data?: { created_at?: number } };
+            }) => {
+              return (
+                <span style={timestampStyle}>
+                  {formatMessageTime(data?.data?.created_at ?? 0)}
+                </span>
+              );
+            },
+          },
         ],
         replace: true,
+      },
+      requestActions: {
+        list: [
+          {
+            render: ({ data }: { data: { created_at?: number } }) => {
+              return (
+                <span style={timestampStyle}>
+                  {formatMessageTime(data?.created_at ?? 0)}
+                </span>
+              );
+            },
+          },
+          {
+            icon: <SparkCopyLine />,
+            onClick: ({ data }: { data: { input?: any[] } }) => {
+              const text = (data?.input || [])
+                .map(extractUserMessageText)
+                .join("\n")
+                .trim();
+              if (text) {
+                void copyText(text)
+                  .then(() => message.success(t("common.copied")))
+                  .catch(() => message.error(t("common.copyFailed")));
+              }
+            },
+          },
+        ],
       },
     } as unknown as IAgentScopeRuntimeWebUIOptions;
   }, [
