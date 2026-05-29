@@ -163,7 +163,8 @@
     "noFiles": "没有文件",
     "coreFiles": "核心文件",
     "coreFilesDesc": "引导角色、身份和工具指南。",
-    "uploadTooltip": "引导角色、身份和工具指南。（仅支持 ZIP 文件，最大 100MB）",
+    "uploadTooltip": "仅支持 ZIP 文件",
+    "uploadTooltipWithLimit": "仅支持 ZIP 文件，最大 {{limit}}MB",
     "selectFile": "选择文件进行编辑",
     "fileContent": "文件内容...",
     "uploadSuccess": "文件上传成功",
@@ -1779,9 +1780,10 @@
       }
     },
     "attachments": {
-      "tooltip": "支持文档、图片、视频、音频等多种格式，单文件不超过 {{limit}}MB",
-      "tooltipImageOnly": "当前模型仅支持图片上传，单文件不超过 {{limit}}MB",
-      "tooltipNoMultimodal": "当前模型未检测到多模态能力，图片或视频可能无法被正确处理，单文件不超过 {{limit}}MB",
+      "tooltip": "支持文档、图片、视频、音频等多种格式",
+      "tooltipImageOnly": "当前模型仅支持图片上传",
+      "tooltipNoMultimodal": "当前模型未检测到多模态能力，图片或视频可能无法被正确处理",
+      "fileSizeLimit": "单文件不超过 {{limit}}MB",
       "fileSizeExceeded": "文件大小超过 {{limit}}MB 限制。当前文件：{{size}}MB",
       "multimodalDisabled": "当前模型不支持文件上传",
       "multimodalWarning": "当前模型未检测到多模态能力，图片或视频可能无法被正确处理",
