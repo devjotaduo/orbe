@@ -187,10 +187,12 @@ class DiscoverySession:
                 self.state.integrations.append(ig)
                 seen.add((ig.kind, ig.name))
 
-        # company
+        # company — protege `segment` após ser fixado por segment_lookup
         if upd.company_updates:
             merged = self.state.company.model_dump()
             for k, v in upd.company_updates.items():
+                if k == "segment" and merged.get("segment"):
+                    continue  # segment_lookup já definiu a chave canônica
                 if k in merged and v is not None:
                     merged[k] = v
             cls = type(self.state.company)
