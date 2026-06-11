@@ -67,9 +67,11 @@ class _MsgStub:
 
 @pytest.mark.asyncio
 async def test_runner_scripted_interview(tmp_path, monkeypatch):
-    # respostas do empresário, terminando com /fim
+    # respostas do empresário. Nota: o loop sai quando session.emitted=True após o
+    # 2º turno, então "/fim" nunca é lido — esse caminho é testado separadamente
+    # em test_runner_fim_path.
     inputs = iter(["tenho uma loja virtual de roupas",
-                   "atendo manual no zap", "/fim"])
+                   "atendo manual no zap"])
     monkeypatch.setattr(runner_mod, "_read_user_input", lambda prompt: next(inputs))
     monkeypatch.setattr(runner_mod, "build_discovery_agent",
                         lambda session, **kw: FakeAgent(session))
@@ -82,3 +84,27 @@ async def test_runner_scripted_interview(tmp_path, monkeypatch):
     assert bp["proposed_team"][0]["name"] == "Atendente WhatsApp"
     assert (tmp_path / "discovery_state.json").exists()
     assert out.emitted is True
+
+
+class _NeverEmitAgent:
+    """Agent falso que nunca chama emit_blueprint — força o caminho /fim."""
+
+    async def reply(self, msg):
+        return _MsgStub("Pode continuar me contando...")
+
+
+@pytest.mark.asyncio
+async def test_runner_fim_path(tmp_path, monkeypatch):
+    """Exercita o branch /fim: o loop deve persistir e sair sem blueprint."""
+    inputs = iter(["minha empresa vende sapatos", "/fim"])
+    monkeypatch.setattr(runner_mod, "_read_user_input", lambda prompt: next(inputs))
+    monkeypatch.setattr(runner_mod, "build_discovery_agent",
+                        lambda session, **kw: _NeverEmitAgent())
+
+    out = await runner_mod.run_discovery_session(
+        session_id="fim_test", out_dir=tmp_path)
+
+    # blueprint não foi emitido
+    assert out.emitted is False
+    # estado foi persistido mesmo sem blueprint
+    assert (tmp_path / "discovery_state.json").exists()

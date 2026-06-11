@@ -39,13 +39,18 @@ async def run_discovery_session(
     """Conduz a entrevista no terminal e retorna a sessão (com estado/flags)."""
     out_dir = Path(out_dir)
     state = DiscoveryState(session_id=session_id)
-    state.open_areas.append(_SEED_AREA)
+    state.open_areas.append(_SEED_AREA.model_copy())  # cópia: evita mutar o singleton
     session = DiscoverySession(state, out_dir=out_dir)
     agent = build_discovery_agent(session)
 
     print(_GREETING)
     while not session.emitted:
-        user_text = _read_user_input("\nVocê: ").strip()
+        try:
+            user_text = _read_user_input("\nVocê: ").strip()
+        except EOFError:
+            # stdin encerrado (pipe/CI): persiste o que já foi coletado e sai
+            _persist(state, out_dir)
+            break
         if user_text.lower() in ("/fim", "/sair", "exit", "quit"):
             # pede ao agente que feche com o que já sabe
             close_text = (
