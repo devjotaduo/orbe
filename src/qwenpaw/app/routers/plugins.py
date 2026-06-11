@@ -59,8 +59,17 @@ def _list_plugins_from_disk() -> list[dict]:
         frontend_entry = manifest.get("entry", {}).get("frontend")
 
         from ...plugins.architecture import PluginManifest
+        from ...plugins.compatibility import is_plugin_compatible
 
         disk_manifest = PluginManifest.from_dict(manifest)
+        if not is_plugin_compatible(disk_manifest.min_version):
+            logger.info(
+                "Skipping incompatible disk plugin '%s' "
+                "(requires QwenPaw >= %s)",
+                plugin_id,
+                disk_manifest.min_version,
+            )
+            continue
 
         result.append(
             {
@@ -123,6 +132,36 @@ def _find_plugin_dir(base: Path) -> Path:
     raise ValueError(
         "No plugin.json found in archive root or top-level subdirectory",
     )
+
+
+def _load_compatible_install_manifest(source_path: Path) -> dict:
+    """Read plugin.json and reject plugins requiring a newer QwenPaw.
+
+    This must run before force-uninstall, dependency installation, or copying
+    files into the installed plugin directory.
+    """
+    manifest_path = source_path / "plugin.json"
+    if not manifest_path.exists():
+        raise HTTPException(
+            status_code=400,
+            detail=f"plugin.json not found in {source_path}",
+        )
+
+    try:
+        raw = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid plugin.json: {exc}",
+        ) from exc
+
+    from ...plugins.compatibility import ensure_plugin_compatible
+
+    ensure_plugin_compatible(
+        str(raw.get("id") or source_path.name),
+        raw.get("min_version"),
+    )
+    return raw
 
 
 async def _post_load_setup(  # pylint: disable=too-many-branches
@@ -551,38 +590,34 @@ async def install_plugin(
                 )
 
         from ...config.utils import get_plugins_dir
+        raw = _load_compatible_install_manifest(source_path)
 
         # Force-reinstall: unload the existing plugin first so that
         # load_plugin_from_path can proceed without a conflict.
         if body.force:
-            manifest_path = source_path / "plugin.json"
-            if manifest_path.exists():
-                raw = json.loads(
-                    manifest_path.read_text(encoding="utf-8"),
+            existing_id = raw.get("id")
+            if (
+                existing_id
+                and loader.get_loaded_plugin(existing_id) is not None
+            ):
+                logger.info(
+                    f"Force-reinstall: unloading '{existing_id}'"
+                    " before re-installing",
                 )
-                existing_id = raw.get("id")
-                if (
-                    existing_id
-                    and loader.get_loaded_plugin(existing_id) is not None
-                ):
-                    logger.info(
-                        f"Force-reinstall: unloading '{existing_id}'"
-                        " before re-installing",
-                    )
-                    _f_pids, _f_cmds = _collect_plugin_runtime_ids(
-                        loader.registry,
-                        existing_id,
-                    )
-                    await loader.unload_plugin(
-                        existing_id,
-                        delete_files=False,
-                    )
-                    _post_unload_cleanup(
-                        request,
-                        existing_id,
-                        _f_pids,
-                        _f_cmds,
-                    )
+                _f_pids, _f_cmds = _collect_plugin_runtime_ids(
+                    loader.registry,
+                    existing_id,
+                )
+                await loader.unload_plugin(
+                    existing_id,
+                    delete_files=False,
+                )
+                _post_unload_cleanup(
+                    request,
+                    existing_id,
+                    _f_pids,
+                    _f_cmds,
+                )
 
         record = await loader.load_plugin_from_path(
             source_path=source_path,
@@ -661,37 +696,33 @@ async def upload_plugin(
         source_path = _find_plugin_dir(temp_dir)
 
         from ...config.utils import get_plugins_dir
+        raw = _load_compatible_install_manifest(source_path)
 
         # Force-reinstall: unload existing plugin before re-installing
         if force:
-            manifest_path = source_path / "plugin.json"
-            if manifest_path.exists():
-                raw = json.loads(
-                    manifest_path.read_text(encoding="utf-8"),
+            existing_id = raw.get("id")
+            if (
+                existing_id
+                and loader.get_loaded_plugin(existing_id) is not None
+            ):
+                logger.info(
+                    f"Force-reinstall: unloading '{existing_id}'"
+                    " before re-installing",
                 )
-                existing_id = raw.get("id")
-                if (
-                    existing_id
-                    and loader.get_loaded_plugin(existing_id) is not None
-                ):
-                    logger.info(
-                        f"Force-reinstall: unloading '{existing_id}'"
-                        " before re-installing",
-                    )
-                    _u_pids, _u_cmds = _collect_plugin_runtime_ids(
-                        loader.registry,
-                        existing_id,
-                    )
-                    await loader.unload_plugin(
-                        existing_id,
-                        delete_files=False,
-                    )
-                    _post_unload_cleanup(
-                        request,
-                        existing_id,
-                        _u_pids,
-                        _u_cmds,
-                    )
+                _u_pids, _u_cmds = _collect_plugin_runtime_ids(
+                    loader.registry,
+                    existing_id,
+                )
+                await loader.unload_plugin(
+                    existing_id,
+                    delete_files=False,
+                )
+                _post_unload_cleanup(
+                    request,
+                    existing_id,
+                    _u_pids,
+                    _u_cmds,
+                )
 
         record = await loader.load_plugin_from_path(
             source_path=source_path,

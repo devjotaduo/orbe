@@ -12,6 +12,8 @@ from typing import Any
 
 from packaging.version import InvalidVersion, Version
 
+from .compatibility import is_plugin_compatible
+
 logger = logging.getLogger(__name__)
 
 PLUGIN_DOWNLOAD_CDN = "https://download.qwenpaw.agentscope.io"
@@ -154,6 +156,15 @@ def build_plugin_catalog() -> dict[str, Any]:
             continue
         plugin_id = _plugin_id_from_file_entry(entry)
         catalog_version = str(entry.get("version") or "")
+        min_version = str(entry.get("min_version") or "0.1.0")
+        if not is_plugin_compatible(min_version):
+            logger.info(
+                "Skipping incompatible catalog plugin '%s' "
+                "(requires QwenPaw >= %s)",
+                plugin_id,
+                min_version,
+            )
+            continue
         installed_version = installed.get(plugin_id)
         # Build description_i18n dict from the raw entry
         raw_desc = entry.get("description")
@@ -169,6 +180,7 @@ def build_plugin_catalog() -> dict[str, Any]:
                 "description": _pick_en(entry.get("description")),
                 "description_i18n": description_i18n,
                 "version": catalog_version,
+                "min_version": min_version,
                 "author": str(entry.get("author") or ""),
                 "kind": str(entry.get("platform") or ""),
                 "size": str(entry.get("size") or ""),

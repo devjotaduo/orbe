@@ -54,6 +54,7 @@ export interface OfficialPluginCatalogEntry {
   /** Locale-keyed descriptions, e.g. { "zh-CN": "...", "en-US": "..." } */
   description_i18n?: Record<string, string>;
   version: string;
+  min_version: string;
   author: string;
   kind: string;
   size: string;

@@ -19,6 +19,7 @@ from packaging.requirements import Requirement
 
 from .architecture import PluginManifest, PluginRecord
 from .api import PluginApi
+from .compatibility import ensure_plugin_compatible
 from .registry import PluginRegistry
 
 logger = logging.getLogger(__name__)
@@ -198,6 +199,8 @@ class PluginLoader:
             Exception: If plugin registration fails
         """
         plugin_id = manifest.id
+
+        ensure_plugin_compatible(plugin_id, manifest.min_version)
 
         if plugin_id in self._loaded_plugins:
             logger.warning(f"Plugin '{plugin_id}' already loaded")
@@ -580,6 +583,7 @@ class PluginLoader:
 
         manifest = self._load_manifest(manifest_path)
         plugin_id = manifest.id
+        ensure_plugin_compatible(plugin_id, manifest.min_version)
 
         if plugin_id in self._loaded_plugins:
             raise ValueError(

@@ -51,6 +51,7 @@ website/public/search-index.json
 .env.*
 providers.json
 envs.json
+.secrets/
 !.env.example
 !.env.template
 __pycache__/

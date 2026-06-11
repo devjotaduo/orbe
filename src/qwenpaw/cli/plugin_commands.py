@@ -21,6 +21,7 @@ import click
 from qwenpaw.plugins.validation import (
     validate_plugin_module as _validate_plugin_module,
 )
+from qwenpaw.plugins.compatibility import ensure_plugin_compatible
 
 logger = logging.getLogger(__name__)
 
@@ -595,6 +596,12 @@ def install(source: str, force: bool):
 
     click.echo(f"Installing plugin: {plugin_name} ({plugin_id})")
 
+    try:
+        ensure_plugin_compatible(plugin_id, manifest.get("min_version"))
+    except RuntimeError as exc:
+        click.echo(f"❌ Incompatible plugin: {exc}", err=True)
+        return
+
     plugin_dir = get_plugins_dir()
     plugin_dir.mkdir(parents=True, exist_ok=True)
     target_dir = plugin_dir / plugin_id
@@ -867,6 +874,8 @@ def validate(path: str):
             if field not in manifest:
                 click.echo(f"❌ Missing required field: {field}", err=True)
                 return
+
+        ensure_plugin_compatible(manifest["id"], manifest.get("min_version"))
 
         # Check entry points
         entry = manifest.get("entry", {})

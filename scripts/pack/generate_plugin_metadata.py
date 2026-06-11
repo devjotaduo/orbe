@@ -31,12 +31,15 @@ import fnmatch
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from packaging.version import InvalidVersion, Version
 
 KIND_DIRS = ("bundle", "tool")
 
@@ -112,6 +115,30 @@ def _read_manifest(plugin_dir: Path) -> dict[str, Any] | None:
         return None
 
 
+def _read_repo_version(repo_root: Path) -> str | None:
+    version_file = repo_root / "src" / "qwenpaw" / "__version__.py"
+    try:
+        text = version_file.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', text)
+    return match.group(1) if match else None
+
+
+def _is_plugin_compatible(
+    min_version: str | None,
+    current_version: str | None,
+) -> bool:
+    required = str(min_version or "").strip()
+    if not required or current_version is None:
+        return True
+    current = str(current_version).strip()
+    try:
+        return Version(current) >= Version(required)
+    except InvalidVersion:
+        return current == required
+
+
 def _localized_field(value: Any) -> dict[str, str]:
     """Normalize manifest name/description to ``{zh-CN, en-US}``.
 
@@ -159,6 +186,7 @@ def _build_metadata(
         "product": "plugins",
         "platform": kind,
         "version": version,
+        "min_version": str(manifest.get("min_version") or "0.1.0"),
         "author": str(manifest.get("author") or ""),
         "filename": zip_path.name,
         "url": cdn_path,
@@ -176,6 +204,7 @@ def discover_and_pack(
     cdn_prefix: str,
 ) -> dict[str, Any]:
     """Scan, zip, and assemble the plugins index. Always full-rebuild."""
+    current_version = _read_repo_version(plugins_root.parent)
     index: dict[str, Any] = {
         "product": "plugins",
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -200,6 +229,14 @@ def discover_and_pack(
                 continue
             if manifest.get("publish") is False:
                 print(f"  - skip {plugin_dir.name} (publish=false)")
+                continue
+            min_version = str(manifest.get("min_version") or "0.1.0")
+            if not _is_plugin_compatible(min_version, current_version):
+                print(
+                    f"  - skip {plugin_dir.name} "
+                    f"(requires qwenpaw>={min_version}; "
+                    f"current={current_version})"
+                )
                 continue
 
             plugin_id = str(manifest.get("id") or plugin_dir.name)
@@ -289,6 +326,15 @@ def main() -> int:
                     continue
                 if manifest.get("publish") is False:
                     print(f"  - skip {plugin_dir.name} (publish=false)")
+                    continue
+                min_version = str(manifest.get("min_version") or "0.1.0")
+                current_version = _read_repo_version(plugins_root.parent)
+                if not _is_plugin_compatible(min_version, current_version):
+                    print(
+                        f"  - skip {plugin_dir.name} "
+                        f"(requires qwenpaw>={min_version}; "
+                        f"current={current_version})"
+                    )
                     continue
                 print(
                     f"  ~ would pack {kind}/{plugin_dir.name} "
