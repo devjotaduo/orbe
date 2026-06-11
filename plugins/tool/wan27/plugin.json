@@ -5,7 +5,8 @@
   "description": "Generate videos using Alibaba Wan 2.7 models (text-to-video, image-to-video, reference-to-video)",
   "description_i18n": {
     "zh-CN": "使用阿里云 Wan 2.7 模型生成视频（文生视频、图生视频、参考生视频）",
-    "en-US": "Generate videos using Alibaba Wan 2.7 models (text-to-video, image-to-video, reference-to-video)"
+    "en-US": "Generate videos using Alibaba Wan 2.7 models (text-to-video, image-to-video, reference-to-video)",
+    "pt-BR": "Gera vídeos usando os modelos Wan 2.7 da Alibaba (texto para vídeo, imagem para vídeo, referência para vídeo)"
   },
   "author": "QwenPaw Team",
   "entry": {

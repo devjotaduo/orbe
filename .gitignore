@@ -104,6 +104,8 @@ logs/
 
 # vibe coding
 AGENTS.md
+# md_files de agentes têm AGENTS.md versionados (templates de workspace por idioma)
+!src/qwenpaw/agents/md_files/**/AGENTS.md
 .claude
 openspec
 CLAUDE.md
