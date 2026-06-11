@@ -297,6 +297,55 @@
     &::-webkit-scrollbar { display: none; }
   }
 
+  .recentSessions {
+    flex-shrink: 0;
+    padding: 8px 0 4px;
+    border-top: 1px solid @border-base;
+    margin-top: 4px;
+  }
+
+  .recentSessionsLabel {
+    font-size: @section-label-font-size;
+    font-weight: 500;
+    color: @text-muted;
+    padding: 0 10px;
+    margin-bottom: 2px;
+  }
+
+  .recentSessionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .recentSessionItem {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: @nav-row-height;
+    padding: 0 10px;
+    border: none;
+    border-radius: @sidebar-radius;
+    background: transparent;
+    color: @text-secondary;
+    font-size: @nav-font-size;
+    cursor: pointer;
+    text-align: left;
+    transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
+
+    &:hover {
+      background: @bg-hover;
+      color: @text-primary;
+    }
+  }
+
+  .recentSessionName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
   &.siderCollapsed {
     padding: 0 6px;
 
@@ -498,6 +547,23 @@
   .stickyChatButtonActive {
     background: @bg-active-dark;
     color: @text-primary-dark;
+  }
+
+  .recentSessions {
+    border-top-color: @border-base-dark;
+  }
+
+  .recentSessionsLabel {
+    color: @text-muted-dark;
+  }
+
+  .recentSessionItem {
+    color: @text-secondary-dark;
+
+    &:hover {
+      background: @bg-hover-dark;
+      color: @text-primary-dark;
+    }
   }
 
   .newChatBtn {

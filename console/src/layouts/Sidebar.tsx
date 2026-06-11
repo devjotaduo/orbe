@@ -81,6 +81,7 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   // for standalone use (e.g. tests that don't pass the prop).
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedLocal, setCollapsedLocal] = useState(false);
+  const [recentSessions, setRecentSessions] = useState<Array<{ id: string; name: string }>>([]);
   const collapsed = collapsedProp ?? collapsedLocal;
   const setCollapsed = (val: boolean | ((prev: boolean) => boolean)) => {
     const next = typeof val === "function" ? val(collapsed) : val;
@@ -159,6 +160,18 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
       void loadUnreadState();
     }, INBOX_BADGE_POLLING_MS);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    import('../pages/Chat/sessionApi').then(({ default: sessionApi }) => {
+      sessionApi.getSessionList()
+        .then(sessions => {
+          setRecentSessions(
+            sessions.slice(0, 15).map(s => ({ id: s.id, name: s.name || '' }))
+          );
+        })
+        .catch(() => {});
+    });
   }, []);
 
   // ── Search filter ─────────────────────────────────────────────────────────
@@ -482,6 +495,23 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
             className={styles.sideMenu}
           />
           <Slot name="sider.bottom" kind="fill" />
+          {recentSessions.length > 0 && !searchQuery && (
+            <div className={styles.recentSessions}>
+              <div className={styles.recentSessionsLabel}>{t('nav.recentChats', 'Recent')}</div>
+              <div className={styles.recentSessionsList}>
+                {recentSessions.slice(0, 8).map(s => (
+                  <button
+                    key={s.id}
+                    className={styles.recentSessionItem}
+                    onClick={() => navigate(`/chat/${s.id}`)}
+                    title={s.name}
+                  >
+                    <span className={styles.recentSessionName}>{s.name || t('nav.untitledChat', 'Untitled')}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 
