@@ -694,6 +694,11 @@ const timestampStyle: React.CSSProperties = {
 
 export default function ChatPage() {
   const { t, i18n } = useTranslation();
+  const [chatReady, setChatReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setChatReady(true), 400);
+    return () => clearTimeout(t);
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark } = useTheme();
@@ -1756,7 +1761,28 @@ export default function ChatPage() {
         flexDirection: "column",
       }}
     >
-      <div className={styles.chatMessagesArea}>
+      <div className={styles.chatMessagesArea} style={{ position: "relative" }}>
+        {!chatReady && (
+          <div className={styles.chatSkeleton}>
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={`${styles.skeletonMsg} ${i % 2 === 0 ? styles.skeletonMsgRight : ""}`}
+              >
+                <div className={styles.skeletonAvatar} />
+                <div className={styles.skeletonLines}>
+                  <div
+                    className={styles.skeletonLine}
+                    style={{ width: i === 1 ? "70%" : i === 2 ? "50%" : "80%" }}
+                  />
+                  {i !== 2 && (
+                    <div className={styles.skeletonLine} style={{ width: "40%" }} />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <AgentScopeRuntimeWebUI
           ref={chatRef}
           key={refreshKey}
