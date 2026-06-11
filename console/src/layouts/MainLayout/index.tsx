@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Layout, Spin } from "antd";
 import { Routes, Route, useLocation, matchPath } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -36,6 +36,71 @@ export default function MainLayout() {
   const currentPath = location.pathname;
   const routes = useRoutes();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [siderWidth, setSiderWidth] = useState<number>(() => {
+    try {
+      return parseInt(localStorage.getItem('qwenpaw-sider-width') || '260', 10) || 260;
+    } catch {
+      return 260;
+    }
+  });
+
+  // Keep a ref so the mouseup closure always reads the latest width.
+  const siderWidthRef = useRef(siderWidth);
+  useEffect(() => { siderWidthRef.current = siderWidth; }, [siderWidth]);
+
+  // When sidebar collapses, record width=0; when it expands, restore saved/default.
+  useEffect(() => {
+    if (sidebarCollapsed) {
+      setSiderWidth(0);
+    } else {
+      setSiderWidth(() => {
+        try {
+          return parseInt(localStorage.getItem('qwenpaw-sider-width') || '260', 10) || 260;
+        } catch {
+          return 260;
+        }
+      });
+    }
+  }, [sidebarCollapsed]);
+
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartWidth = useRef(260);
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    dragStartX.current = e.clientX;
+    dragStartWidth.current = siderWidthRef.current || 260;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
+    const onMove = (me: MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = me.clientX - dragStartX.current;
+      const next = dragStartWidth.current + delta;
+      if (next < 130) {
+        setSidebarCollapsed(true);
+        setSiderWidth(0);
+      } else {
+        setSidebarCollapsed(false);
+        setSiderWidth(Math.min(Math.max(next, 160), 400));
+      }
+    };
+    const onUp = () => {
+      isDragging.current = false;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      const finalWidth = siderWidthRef.current;
+      if (finalWidth > 0) {
+        try { localStorage.setItem('qwenpaw-sider-width', String(finalWidth)); } catch {}
+      }
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, []);
 
   // Backend is the source of truth for Coding Mode state — refill the
   // in-memory store every time the selected agent changes.
@@ -57,6 +122,8 @@ export default function MainLayout() {
           selectedKey={selectedKey}
           collapsed={sidebarCollapsed}
           onSetCollapsed={setSidebarCollapsed}
+          siderWidth={siderWidth}
+          onDragStart={handleDragStart}
         />
         <Content className="page-container">
           <ConsolePollService />
