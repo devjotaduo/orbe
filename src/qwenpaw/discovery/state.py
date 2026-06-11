@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # --- Estado da entrevista -------------------------------------------------
@@ -50,6 +50,14 @@ class DiscoveryState(BaseModel):
     integrations: list[Integration] = Field(default_factory=list)
     transcript: list[Turn] = Field(default_factory=list)
 
+    @field_validator("open_areas")
+    @classmethod
+    def _unique_area_ids(cls, v: list[OpenArea]) -> list[OpenArea]:
+        ids = [a.id for a in v]
+        if len(ids) != len(set(ids)):
+            raise ValueError("open_areas contém ids duplicados")
+        return v
+
     def next_focus(self) -> Optional[OpenArea]:
         """Área de maior prioridade e menor confiança (não-formulário)."""
         if not self.open_areas:
@@ -59,7 +67,12 @@ class DiscoveryState(BaseModel):
         )[0]
 
     def ready_to_emit(self, threshold: float = 0.7) -> bool:
-        """Pronto quando toda área prioritária (priority>=3) supera limiar."""
+        """Pronto quando toda área prioritária (priority>=3) supera limiar.
+
+        Retorna False quando open_areas está vazio (nenhuma descoberta ainda).
+        """
+        if not self.open_areas:
+            return False
         critical = [a for a in self.open_areas if a.priority >= 3]
         return all(a.confidence >= threshold for a in critical)
 
