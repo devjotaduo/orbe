@@ -2397,5 +2397,29 @@
       "LOAD_FAILED": "Falha ao carregar a visualização do arquivo.",
       "LOAD_FAILED_DETAIL": "Falha ao carregar a visualização do arquivo: {{detail}}"
     }
+  },
+  "home": {
+    "greeting": "Como posso ajudá-lo hoje?",
+    "pillBar": { "label": "Seletor de backend" },
+    "pills": {
+      "all": "Todos",
+      "chat": "Chat",
+      "code": "Código",
+      "agent": "Agente"
+    },
+    "assistants": {
+      "chat": { "name": "Chat", "desc": "Inicie uma conversa com seu assistente de IA" },
+      "coding": { "name": "Código", "desc": "Programe em par com um editor de IA" },
+      "agent": { "name": "Agente", "desc": "Gerencie sessões de agentes autônomos" },
+      "inbox": { "name": "Caixa de Entrada", "desc": "Revise mensagens e notificações" },
+      "workspace": { "name": "Área de Trabalho", "desc": "Navegue em arquivos e contexto do projeto" },
+      "mcp": { "name": "Ferramentas MCP", "desc": "Conecte e gerencie servidores de ferramentas MCP" }
+    },
+    "footer": {
+      "label": "Ações rápidas",
+      "reportIssue": "Reportar Problema",
+      "star": "Favoritar no GitHub",
+      "remote": "Conexão Remota"
+    }
   }
 }

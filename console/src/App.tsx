@@ -34,6 +34,7 @@ import { authApi } from "./api/modules/auth";
 import { languageApi } from "./api/modules/language";
 import { useUploadLimitStore } from "./stores/uploadLimitStore";
 import { getApiUrl, getApiToken, clearAuthToken } from "./api/config";
+import "./styles/aionui-tokens.css";
 import "./styles/layout.css";
 import "./styles/form-override.css";
 

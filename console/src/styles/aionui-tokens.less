@@ -1,0 +1,10 @@
+// ─── AionUi Design Tokens (Less shim) ──────────────────────────────────────
+// The actual CSS custom-property definitions live in aionui-tokens.css which
+// is imported globally in App.tsx. This Less shim exists so .module.less files
+// can `@import` it to get Less variable aliases if needed, and to confirm the
+// import path. No Less variables are currently needed — all component styles
+// reference var(--token-name) directly.
+//
+// If you need a Less variable for a calculation, add it here:
+//   @titlebar-height: 36px;
+//   @sidebar-width: 260px;
