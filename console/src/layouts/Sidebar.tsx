@@ -51,11 +51,15 @@ const INBOX_BADGE_POLLING_MS = 6000;
 interface SidebarProps {
   /** Route id of the currently active page (e.g. "core.workspace"). */
   selectedKey: string;
+  /** Controlled collapse state — driven by MainLayout so Header can toggle it too. */
+  collapsed?: boolean;
+  /** Called when the user clicks the in-sidebar collapse toggle. */
+  onToggleCollapse?: () => void;
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────
 
-export default function Sidebar({ selectedKey }: SidebarProps) {
+export default function Sidebar({ selectedKey, collapsed: collapsedProp, onToggleCollapse }: SidebarProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { message } = useAppMessage();
@@ -68,7 +72,17 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
-  const [collapsed, setCollapsed] = useState(false);
+  // collapsedProp from MainLayout is the source of truth; fall back to local state
+  // for standalone use (e.g. tests that don't pass the prop).
+  const [collapsedLocal, setCollapsedLocal] = useState(false);
+  const collapsed = collapsedProp ?? collapsedLocal;
+  const setCollapsed = (val: boolean | ((prev: boolean) => boolean)) => {
+    if (onToggleCollapse) {
+      onToggleCollapse();
+    } else {
+      setCollapsedLocal(val);
+    }
+  };
   const [isMobile, setIsMobile] = useState(isMobileSidebarViewport);
   const [hasInboxUnread, setHasInboxUnread] = useState(false);
 
@@ -270,7 +284,7 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const siderWidth = collapsed ? (isMobile ? 56 : 72) : 240;
+  const siderWidth = collapsed ? (isMobile ? 56 : 72) : 260;
   // Sticky chat is active when on /chat* or /coding routes.
   const isChatActive =
     selectedKey === "core.chat" || selectedKey === "core.coding";
@@ -284,6 +298,22 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         collapsed ? ` ${styles.siderCollapsed}` : ""
       }${isDark ? ` ${styles.siderDark}` : ""}`}
     >
+      {/* AionUi BrandHeader — 52px, logo square + app name */}
+      {!collapsed && (
+        <div className={styles.brandHeader}>
+          <Slot name="header.logo" kind="replace">
+            <div className={styles.brandLogoSquare}>
+              <img
+                src={isDark ? "/logo-dark.svg" : "/logo-light.svg"}
+                alt="QwenPaw"
+                className={styles.brandLogoImg}
+              />
+            </div>
+          </Slot>
+          <span className={styles.brandName}>QwenPaw</span>
+        </div>
+      )}
+
       {collapsed ? (
         <nav className={styles.collapsedNav}>
           {collapsedNavItems.map((item) => {

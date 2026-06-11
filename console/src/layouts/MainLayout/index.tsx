@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Layout, Spin } from "antd";
 import { Routes, Route, useLocation, matchPath } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -35,6 +35,7 @@ export default function MainLayout() {
   const location = useLocation();
   const currentPath = location.pathname;
   const routes = useRoutes();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Backend is the source of truth for Coding Mode state — refill the
   // in-memory store every time the selected agent changes.
@@ -47,9 +48,16 @@ export default function MainLayout() {
 
   return (
     <Layout className={styles.mainLayout}>
-      <Header />
+      <Header
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
+      />
       <Layout>
-        <Sidebar selectedKey={selectedKey} />
+        <Sidebar
+          selectedKey={selectedKey}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+        />
         <Content className="page-container">
           <ConsolePollService />
           <Slot name="content.statusBar" kind="fill" />

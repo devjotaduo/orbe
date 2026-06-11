@@ -1,5 +1,11 @@
-import { Layout, Space, Badge, Spin, Tooltip, Dropdown } from "antd";
+import { Layout, Space, Badge, Spin, Tooltip, Dropdown, Button as AntButton } from "antd";
 import type { MenuProps } from "antd";
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+} from "@ant-design/icons";
 import LanguageSwitcher from "../components/LanguageSwitcher/index";
 import ThemeToggleButton from "../components/ThemeToggleButton";
 import CodingModeToggle from "../components/CodingModeToggle";
@@ -64,7 +70,12 @@ function UpdateCodeBlock({ code }: { code: string }) {
   );
 }
 
-export default function Header() {
+interface HeaderProps {
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
+}
+
+export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
   const [version, setVersion] = useState<string>("");
@@ -160,26 +171,41 @@ export default function Header() {
   return (
     <>
       <AntHeader className={styles.header}>
-        <div className={styles.logoWrapper}>
-          {/*
-            Slot lets a plugin replace the brand logo (e.g. a per-agent
-            branding override). When no plugin registers a replacement —
-            or when the registered render returns null — the host default
-            <img> below paints.
-          */}
-          <Slot name="header.logo" kind="replace">
-            <img
-              src={isDark ? "/logo-dark.svg" : "/logo-light.svg"}
-              alt="QwenPaw"
-              className={styles.logoImg}
-            />
-          </Slot>
-          <div className={styles.logoDivider} />
+        {/* AionUi TitleBar — left: collapse + nav arrows */}
+        <div className={styles.titlebarLeft}>
+          <AntButton
+            type="text"
+            size="small"
+            icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={onToggleSidebar}
+            className={styles.titlebarBtn}
+            aria-label="Toggle sidebar"
+          />
+          <AntButton
+            type="text"
+            size="small"
+            icon={<ArrowLeftOutlined />}
+            disabled
+            className={styles.titlebarBtn}
+            aria-label="Back"
+          />
+          <AntButton
+            type="text"
+            size="small"
+            icon={<ArrowRightOutlined />}
+            disabled
+            className={styles.titlebarBtn}
+            aria-label="Forward"
+          />
+        </div>
+
+        {/* Center: version badge (subtle) */}
+        <div className={styles.titlebarCenter}>
           {version && (
             <Badge
               dot={!!hasUpdate}
               color="rgba(255, 157, 77, 1)"
-              offset={[4, 28]}
+              offset={[4, 14]}
             >
               <span
                 className={`${styles.versionBadge} ${
@@ -194,6 +220,7 @@ export default function Header() {
             </Badge>
           )}
         </div>
+
         <Slot name="header.left" kind="fill" />
         <Space size="middle">
           <Slot name="header.right" kind="fill" />
