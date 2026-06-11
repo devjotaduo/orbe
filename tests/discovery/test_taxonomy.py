@@ -96,6 +96,20 @@ def test_lookup_matches_servicos_b2b():
     assert info.key == "servicos_b2b"
 
 
+def test_lookup_petshop_is_outside_seed():
+    """Pet shop não tem trilho curado — deve cair no raciocínio livre."""
+    assert lookup_segment(
+        "tenho um pet shop com banho e tosa e vendemos ração"
+    ) is None
+
+
+def test_lookup_oficina_is_outside_seed():
+    """Oficina mecânica não tem trilho curado — raciocínio livre."""
+    assert lookup_segment(
+        "tenho uma oficina mecânica, fazemos revisão e troca de óleo"
+    ) is None
+
+
 def test_new_segments_have_complete_rails():
     segs = {s.key: s for s in load_segments()}
     for key in ("tecnologia", "construcao", "servicos_b2b"):

@@ -171,6 +171,73 @@ def test_e2e_smoke_single_persona(eval_mod, tmp_path):
     )
 
 
+def test_out_of_seed_persona_accepts_free_description(eval_mod, make_session, tmp_path):
+    """Persona fora da seed pontua 20 se a descrição livre menciona o ramo."""
+    persona = next(p for p in eval_mod.PERSONAS if p.id == "petshop")
+    assert persona.expected_segment is None
+    session = make_session(segment="Pet shop / banho e tosa")
+    bp = _write_blueprint(tmp_path)
+    result = eval_mod.score_session(persona, session, bp)
+    seg = next(c for c in result.criteria if c.name == "Segmento")
+    assert seg.score == 20
+
+
+def test_out_of_seed_persona_rejects_unrelated_description(eval_mod, make_session, tmp_path):
+    persona = next(p for p in eval_mod.PERSONAS if p.id == "petshop")
+    session = make_session(segment="restaurante")
+    bp = _write_blueprint(tmp_path)
+    result = eval_mod.score_session(persona, session, bp)
+    seg = next(c for c in result.criteria if c.name == "Segmento")
+    assert seg.score == 8
+    assert any("incorretamente" in i for i in result.issues)
+
+
+def test_out_of_seed_persona_zero_when_missing(eval_mod, make_session, tmp_path):
+    persona = next(p for p in eval_mod.PERSONAS if p.id == "oficina_mecanica")
+    session = make_session(segment=None)
+    bp = _write_blueprint(tmp_path)
+    result = eval_mod.score_session(persona, session, bp)
+    seg = next(c for c in result.criteria if c.name == "Segmento")
+    assert seg.score == 0
+
+
+def test_qualitative_issue_maps_to_recommendation(eval_mod, make_session, tmp_path):
+    """Nota baixa do juiz vira issue e recomendação de condução conversacional."""
+    persona = eval_mod.PERSONAS[0]
+    session = make_session(segment=persona.expected_segment)
+    bp = _write_blueprint(tmp_path)
+    score = eval_mod.score_session(persona, session, bp)
+    score.issues.append(
+        "Qualidade conversacional abaixo do esperado (não-repetição: 4/10) — "
+        "repetiu a mesma pergunta 4 vezes"
+    )
+    run = eval_mod.SessionRun(
+        persona=persona, score=score, stdout_log="", session=session,
+        out_dir=tmp_path,
+        qual={"clareza": 9, "empatia": 9, "nao_repeticao": 4,
+              "justificativa": "repetiu a mesma pergunta 4 vezes"},
+    )
+    recs = eval_mod._build_recommendations([run])
+    assert any("condução conversacional" in r for r in recs)
+
+
+def test_report_renders_qualitative_section(eval_mod, make_session, tmp_path):
+    persona = eval_mod.PERSONAS[0]
+    session = make_session(segment=persona.expected_segment)
+    bp = _write_blueprint(tmp_path)
+    score = eval_mod.score_session(persona, session, bp)
+    run = eval_mod.SessionRun(
+        persona=persona, score=score, stdout_log="Você: oi", session=session,
+        out_dir=tmp_path,
+        qual={"clareza": 8, "empatia": 9, "nao_repeticao": 7,
+              "justificativa": "Condução clara e acolhedora."},
+    )
+    report = eval_mod.generate_report([run], "20260611_000000")
+    assert "LLM-as-judge" in report
+    assert "24/30" in report
+    assert "Condução clara e acolhedora." in report
+
+
 def test_report_includes_all_personas(eval_mod, make_session, tmp_path):
     runs = []
     for persona in eval_mod.PERSONAS[:2]:
