@@ -285,26 +285,26 @@
       background: transparent !important;
     }
 
-    // Group labels — AionUi: 12px muted text
+    // Group labels — AionUi: 12px muted text, collapsible
     .qwenpaw-menu-submenu-title {
       font-size: @section-label-font-size !important;
       font-weight: 500 !important;
       line-height: 28px !important;
       color: @text-muted !important;
       padding-left: 10px !important;
+      cursor: pointer !important;
 
       &:hover {
-        background: transparent !important;
-        color: @text-muted !important;
+        background: @bg-hover !important;
+        color: @text-secondary !important;
+        border-radius: @sidebar-radius !important;
       }
     }
 
+    // Show a subtle chevron so users know sections are collapsible
     .qwenpaw-menu-submenu-arrow {
-      display: none !important;
-    }
-
-    .qwenpaw-menu-submenu > .qwenpaw-menu {
-      display: block !important;
+      font-size: 10px !important;
+      opacity: 0.45 !important;
     }
 
     .qwenpaw-menu-item {
@@ -374,8 +374,9 @@
       color: @text-muted-dark !important;
 
       &:hover {
-        background: transparent !important;
-        color: @text-muted-dark !important;
+        background: @bg-hover-dark !important;
+        color: @text-secondary-dark !important;
+        border-radius: @sidebar-radius !important;
       }
     }
 
