@@ -174,12 +174,12 @@
 
   &::-webkit-scrollbar { display: none; }
 
-  // Agent-scoped section — AionUi uses bg-bg-3/aou-1 tint instead of amber
+  // Agent-scoped section — AionUi: flat, no box, no border
   .agentScopedSection {
-    background: @aou-1;
-    border-radius: 10px;
-    border: 1px solid @border-base;
-    padding: 4px;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    padding: 0;
 
     :global {
       .qwenpaw-menu {
@@ -188,18 +188,19 @@
     }
   }
 
-  // AgentSelector + Chat container - sticky at top
+  // AgentSelector + Chat container - sticky at top, flat like AionUi
   .agentSelectorContainer {
     position: sticky;
     top: 0;
     z-index: 10;
     margin-bottom: 4px;
-    background: @aou-1;
-    border-radius: 10px 10px 0 0;
+    background: @bg-1;
+    border-radius: 0;
   }
 
-  // Sticky Chat button — AionUi NavRow style
+  // Sticky Chat button — AionUi NavRow style, flat bg
   .stickyChatButton {
+    background: @bg-1;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -281,6 +282,7 @@
   :global {
     .qwenpaw-menu {
       border-inline-end: 0 !important;
+      background: transparent !important;
     }
 
     // Group labels — AionUi: 12px muted text
@@ -339,15 +341,16 @@
   border-right-color: @border-base-dark !important;
 
   .agentScopedSection {
-    background: @brand-light-dark;
-    border-color: @border-base-dark;
+    background: transparent;
+    border: none;
   }
 
   .agentSelectorContainer {
-    background: @brand-light-dark;
+    background: @bg-1-dark;
   }
 
   .stickyChatButton {
+    background: @bg-1-dark;
     color: @text-secondary-dark;
 
     &:hover {
