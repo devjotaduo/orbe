@@ -27,6 +27,14 @@ def _ok(text: str) -> ToolChunk:
     )
 
 
+def _err(text: str) -> ToolChunk:
+    return ToolChunk(
+        is_last=True,
+        state=ToolResultState.ERROR,
+        content=[TextBlock(type="text", text=text)],
+    )
+
+
 def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
     lines: list[str] = ["# Blueprint do Time de Agentes\n"]
     cp = bp.company_profile
@@ -142,7 +150,7 @@ class DiscoverySession:
         try:
             upd = ReflectUpdate.model_validate_json(updates_json)
         except Exception as exc:
-            return _ok(
+            return _err(
                 f"updates_json inválido ({exc}). Reenvie um JSON válido "
                 f"conforme o schema ReflectUpdate."
             )
@@ -176,7 +184,7 @@ class DiscoverySession:
         if upd.company_updates:
             merged = self.state.company.model_dump()
             for k, v in upd.company_updates.items():
-                if k in merged and v not in (None, "", []):
+                if k in merged and v is not None:
                     merged[k] = v
             self.state.company = type(self.state.company).model_validate(merged)
 
@@ -205,7 +213,7 @@ class DiscoverySession:
         try:
             bp = TeamBlueprint.model_validate_json(blueprint_json)
         except Exception as exc:
-            return _ok(
+            return _err(
                 f"Blueprint inválido ({exc}). Corrija o JSON conforme o "
                 f"schema TeamBlueprint e chame emit_blueprint de novo."
             )
@@ -227,8 +235,8 @@ class DiscoverySession:
     def build_toolkit(self) -> Toolkit:
         return Toolkit(
             tools=[
-                FunctionTool(self.segment_lookup),
-                FunctionTool(self.reflect),
-                FunctionTool(self.emit_blueprint),
+                FunctionTool(self.segment_lookup, is_read_only=False),
+                FunctionTool(self.reflect, is_read_only=False),
+                FunctionTool(self.emit_blueprint, is_read_only=False),
             ]
         )
