@@ -53,7 +53,7 @@
 @danger:  #f53f3f;
 
 // ─── Layout metrics ───────────────────────────────────────────────────────────
-@titlebar-height: 36px;
+@titlebar-height: 42px;
 @sidebar-width:   260px;
 @sidebar-radius:  8px;
 @nav-row-height:  36px;
@@ -87,3 +87,27 @@
 @border-special-dark: #60677e;
 
 @primary-dark: #4d9fff;
+
+// ─── Timing functions ─────────────────────────────────────────────────────────
+@ease-spring: cubic-bezier(0.33, 1, 0.68, 1);
+@transition-fast: 0.14s;
+@transition-medium: 0.2s;
+
+// ─── Sidebar search ───────────────────────────────────────────────────────────
+@sider-search-height: 28px;
+@sider-search-bg: @bg-3;
+@sider-search-bg-dark: @bg-3-dark;
+
+// ─── Z-index scale ────────────────────────────────────────────────────────────
+@z-sider-mobile: 200;
+@z-sider-backdrop: 199;
+@z-dropdown: 300;
+
+// ─── Mobile ───────────────────────────────────────────────────────────────────
+@mobile-backdrop-bg: rgba(0, 0, 0, 0.3);
+@breakpoint-mobile: 768px;
+@breakpoint-tablet: 1024px;
+
+// ─── Drag handle ─────────────────────────────────────────────────────────────
+@sider-drag-handle-width: 4px;
+@sider-drag-snap: 130px;
