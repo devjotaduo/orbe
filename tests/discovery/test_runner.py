@@ -85,6 +85,15 @@ async def test_runner_scripted_interview(tmp_path, monkeypatch):
     assert (tmp_path / "discovery_state.json").exists()
     assert out.emitted is True
 
+    # -- reviewer-flagged: user turns must appear in session.state.transcript --
+    user_turns = [t for t in out.state.transcript if t.role == "user"]
+    assert len(user_turns) >= 2, (
+        f"Esperado >= 2 turnos de usuário no transcript, encontrado {len(user_turns)}: "
+        f"{out.state.transcript}"
+    )
+    assert user_turns[0].text == "tenho uma loja virtual de roupas"
+    assert user_turns[1].text == "atendo manual no zap"
+
 
 class _NeverEmitAgent:
     """Agent falso que nunca chama emit_blueprint — força o caminho /fim."""
@@ -108,3 +117,38 @@ async def test_runner_fim_path(tmp_path, monkeypatch):
     assert out.emitted is False
     # estado foi persistido mesmo sem blueprint
     assert (tmp_path / "discovery_state.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_runner_eoferror_persists_and_returns_not_emitted(tmp_path, monkeypatch):
+    """EOFError em _read_user_input (stdin fechado em CI/pipe) deve persistir o
+    estado já coletado e retornar com emitted=False, sem levantar exceção."""
+
+    call_count = 0
+
+    def _raise_eof(prompt: str) -> str:
+        nonlocal call_count
+        call_count += 1
+        raise EOFError("stdin fechado")
+
+    monkeypatch.setattr(runner_mod, "_read_user_input", _raise_eof)
+    monkeypatch.setattr(runner_mod, "build_discovery_agent",
+                        lambda session, **kw: _NeverEmitAgent())
+
+    # Não deve levantar exceção
+    out = await runner_mod.run_discovery_session(
+        session_id="eof_test", out_dir=tmp_path)
+
+    # EOFError deve ter sido capturado na primeira leitura
+    assert call_count == 1, "EOFError deve ser capturado na primeira chamada de _read_user_input"
+    # Não emitiu blueprint (encerrou antes)
+    assert out.emitted is False
+    # Estado deve ter sido persistido mesmo assim
+    assert (tmp_path / "discovery_state.json").exists(), (
+        "discovery_state.json deve ser salvo mesmo quando stdin fecha inesperadamente"
+    )
+    # O arquivo de estado deve ser JSON válido
+    state_data = json.loads(
+        (tmp_path / "discovery_state.json").read_text(encoding="utf-8")
+    )
+    assert state_data["session_id"] == "eof_test"
