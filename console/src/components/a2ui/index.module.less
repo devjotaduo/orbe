@@ -18,3 +18,15 @@
 .node {
   display: block;
 }
+
+// Editable field (TextInput/TextArea) — label stacked above the control.
+// Rendered as a <label> so clicking the caption focuses the input.
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+}
