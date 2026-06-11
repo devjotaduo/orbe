@@ -588,6 +588,14 @@ class QwenPawAgent(CodingModeMixin, Agent):
             else getattr(tool_call, "name", "") or ""
         )
 
+        # ``id`` is read the same defensive way as ``name`` above: 2.0 passes a
+        # ``ToolCallBlock`` (attribute access), 1.x passed a dict.
+        tool_call_id = (
+            tool_call.get("id", "")
+            if isinstance(tool_call, dict)
+            else getattr(tool_call, "id", "") or ""
+        )
+
         if tool_name in self._PLAN_TOOLS_WITH_JSON_ARGS:
             self._fix_stringified_json_args(tool_call)
 
@@ -604,28 +612,32 @@ class QwenPawAgent(CodingModeMixin, Agent):
             nb._plan_awaiting_user_confirm = True
 
         if nb is not None:
-            # The qwenpaw `plan` package was dropped in the agentscope 2.0
-            # migration (agentscope.plan no longer exists); plan_notebook is
-            # never set, so this import is only reached if the plan feature is
-            # reintroduced. Keep it local so a missing module can't break the
-            # tool path.
+            # Plan-tool gate. ``check_plan_tool_gate`` lives in the qwenpaw
+            # ``plan`` package (NOT in agentscope — agentscope 2.0 ships no
+            # ``agentscope.plan`` module). The helper is pure-Python and works
+            # whether or not a real notebook backend exists. Kept as a local
+            # import so the rest of the tool path stays decoupled from the
+            # (currently dormant) plan feature.
             from ..plan.hints import check_plan_tool_gate
 
             err = check_plan_tool_gate(nb, tool_name)
             if err:
                 from agentscope.message import ToolResultBlock
 
+                # A ``ToolResultBlock`` is only valid on an assistant-role
+                # message in 2.0 (user → text/data, system → text only), so the
+                # synthetic gate result is emitted as the assistant turn.
                 tool_res_msg = Msg(
-                    "system",
-                    [
+                    name="system",
+                    content=[
                         ToolResultBlock(
                             type="tool_result",
-                            id=tool_call["id"],
+                            id=tool_call_id,
                             name=tool_name,
                             output=[{"type": "text", "text": err}],
                         ),
                     ],
-                    "system",
+                    role="assistant",
                 )
                 await self.print(tool_res_msg, True)
                 await self.memory.add(tool_res_msg)
