@@ -173,10 +173,23 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
     [settingsMenu, collapsed],
   );
 
-  const openKeys = useMemo(
+  const derivedOpenKeys = useMemo(
     () => [...deriveOpenKeys(agentMenu), ...deriveOpenKeys(settingsMenu)],
     [agentMenu, settingsMenu],
   );
+  const [openKeys, setOpenKeys] = useState<string[]>(() => [
+    ...deriveOpenKeys(agentMenu),
+    ...deriveOpenKeys(settingsMenu),
+  ]);
+  // Sync any newly registered group keys without closing user-toggled ones.
+  useEffect(() => {
+    setOpenKeys((prev) => {
+      const next = derivedOpenKeys.filter((k) => !prev.includes(k));
+      return next.length ? [...prev, ...next] : prev;
+    });
+  }, [derivedOpenKeys]);
+
+  const handleOpenChange = (keys: string[]) => setOpenKeys(keys);
 
   const collapsedNavItems = useMemo(() => {
     // Sticky chat is its own carve-out (lives outside menu data — see builtinMenu.ts).
@@ -370,6 +383,7 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
               mode="inline"
               selectedKeys={[selectedKey]}
               openKeys={openKeys}
+              onOpenChange={handleOpenChange}
               onClick={({ key }) => handleMenuClick(String(key), agentMenu)}
               items={agentMenuItems}
               theme={isDark ? "dark" : "light"}
@@ -382,6 +396,7 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
             mode="inline"
             selectedKeys={[selectedKey]}
             openKeys={openKeys}
+            onOpenChange={handleOpenChange}
             onClick={({ key }) => handleMenuClick(String(key), settingsMenu)}
             items={settingsMenuItems}
             theme={isDark ? "dark" : "light"}
