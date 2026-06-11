@@ -306,11 +306,21 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   void renderIcon;
 
   return (
+    <>
+    {isMobile && !collapsed && (
+      <div
+        className={styles.siderBackdrop}
+        onClick={() => setCollapsed(true)}
+        aria-hidden="true"
+      />
+    )}
     <Sider
       width={siderWidth}
       className={`${styles.sider}${
         collapsed ? ` ${styles.siderCollapsed}` : ""
-      }${isDark ? ` ${styles.siderDark}` : ""}`}
+      }${isDark ? ` ${styles.siderDark}` : ""}${
+        isMobile ? ` ${styles.siderMobileOverlay}` : ""
+      }${isMobile && !collapsed ? ` ${styles.siderMobileOverlayOpen}` : ""}`}
     >
       {/* AionUi BrandHeader — 52px, logo square + app name */}
       {!collapsed && (
@@ -519,5 +529,6 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
         </Form>
       </Modal>
     </Sider>
+    </>
   );
 }
