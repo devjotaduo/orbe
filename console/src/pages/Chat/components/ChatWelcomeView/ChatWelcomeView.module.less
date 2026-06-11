@@ -1,0 +1,136 @@
+@import "../../../../styles/aionui-tokens.less";
+
+// ── Welcome screen ────────────────────────────────────────────────────────────
+.welcomeRoot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 48px 24px 32px;
+  text-align: center;
+  gap: 0;
+}
+
+// ── Avatar / brand mark ───────────────────────────────────────────────────────
+.avatarWrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, @aou-5, @aou-7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(117, 131, 178, 0.28);
+  flex-shrink: 0;
+}
+
+.avatarIcon {
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  opacity: 0.95;
+}
+
+// ── Text ──────────────────────────────────────────────────────────────────────
+.greeting {
+  font-size: 26px;
+  font-weight: 700;
+  color: @text-primary;
+  line-height: 1.2;
+  margin: 0 0 10px;
+  letter-spacing: -0.3px;
+}
+
+.description {
+  font-size: 14px;
+  color: @text-muted;
+  max-width: 440px;
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
+// ── Prompt cards ──────────────────────────────────────────────────────────────
+.promptList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.promptCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: @bg-base;
+  border: 1px solid @border-base;
+  border-radius: @card-radius;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  color: @text-primary;
+  transition:
+    border-color @transition-fast @ease-spring,
+    box-shadow @transition-fast @ease-spring,
+    transform @transition-fast @ease-spring;
+
+  &:hover {
+    border-color: @aou-4;
+    box-shadow: 0 2px 12px rgba(117, 131, 178, 0.18);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+.promptLabel {
+  flex: 1;
+  font-size: 14px;
+  color: @text-primary;
+}
+
+.promptArrow {
+  flex-shrink: 0;
+  color: @text-muted;
+  font-size: 13px;
+  transition: color @transition-fast @ease-spring, transform @transition-fast @ease-spring;
+
+  .promptCard:hover & {
+    color: @brand;
+    transform: translateX(2px);
+  }
+}
+
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+:global(.dark-mode) {
+  .greeting { color: @text-primary-dark; }
+  .description { color: @text-muted-dark; }
+
+  .promptCard {
+    background: @bg-2-dark;
+    border-color: @border-base-dark;
+    color: @text-primary-dark;
+
+    &:hover {
+      border-color: @aou-7;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .promptLabel { color: @text-primary-dark; }
+  .promptArrow { color: @text-muted-dark; }
+  .promptCard:hover .promptArrow { color: @brand-dark; }
+}
+
+// ── Reduced motion ────────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .promptCard { transition: none; }
+  .promptArrow { transition: none; }
+}

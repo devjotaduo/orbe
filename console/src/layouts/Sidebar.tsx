@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppMessage } from "../hooks/useAppMessage";
-import AgentSelector from "../components/AgentSelector";
 import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import {
   SparkChatTabFill,
@@ -445,21 +444,8 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
         </nav>
       ) : (
         <>
-          {/* Agent-scoped section: selector + Chat + Control + Workspace */}
+          {/* Agent-scoped section: search + nav */}
           <div className={styles.agentScopedSection}>
-            <div className={styles.agentSelectorContainer}>
-              <AgentSelector collapsed={collapsed} />
-              {/* Chat entry — sticky together with agent selector */}
-              <button
-                className={`${styles.stickyChatButton}${
-                  isChatActive ? ` ${styles.stickyChatButtonActive}` : ""
-                }`}
-                onClick={() => navigate(chatPath)}
-              >
-                <SparkChatTabFill size={16} />
-                <span>{t("nav.chat")}</span>
-              </button>
-            </div>
             <div className={styles.siderSearch}>
               <Input
                 prefix={<SearchOutlined style={{ fontSize: 12, opacity: 0.5 }} />}

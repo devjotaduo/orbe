@@ -31,6 +31,7 @@ import ChatActionGroup from "./components/ChatActionGroup";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
 import { ChatThreePanel } from "./components/ChatThreePanel";
+import { ChatWelcomeView } from "./components/ChatWelcomeView";
 import { ApprovalCard } from "../../components/ApprovalCard/ApprovalCard";
 import { commandsApi } from "../../api/modules/commands";
 import { useApprovalContext } from "../../contexts/ApprovalContext";
@@ -1553,7 +1554,10 @@ export default function ChatPage() {
           : {}),
         ...(extPrompts !== undefined ? { prompts: extPrompts } : {}),
         // SDK uses `render` if present and ignores the other fields.
-        ...(wrappedWelcomeRender ? { render: wrappedWelcomeRender } : {}),
+        // Plugin render wins; otherwise use our AionUi-style welcome.
+        ...(wrappedWelcomeRender
+          ? { render: wrappedWelcomeRender }
+          : { render: (props: WelcomeRenderProps) => <ChatWelcomeView {...props} /> }),
       },
       sender: {
         ...(i18nConfig as any)?.sender,
