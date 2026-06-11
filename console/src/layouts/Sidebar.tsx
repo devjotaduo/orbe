@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppMessage } from "../hooks/useAppMessage";
 import AgentSelector from "../components/AgentSelector";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import {
   SparkChatTabFill,
   SparkExitFullscreenLine,
@@ -384,7 +384,20 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
         </div>
       )}
 
-      {collapsed ? (
+
+      {/* SiderToolbar — Nova Conversa, visível em modo expandido e colapsado */}
+      <div className={styles.siderToolbar}>
+        <button
+          className={styles.newChatBtn}
+          onClick={() => navigate('/chat')}
+          title={t('nav.newChat', 'Nova Conversa')}
+        >
+          <PlusOutlined style={{ fontSize: 14 }} />
+          {!collapsed && <span>{t('nav.newChat', 'Nova Conversa')}</span>}
+        </button>
+      </div>
+
+            {collapsed ? (
         <nav className={styles.collapsedNav}>
           {collapsedNavItems.map((item) => {
             const isActive =
