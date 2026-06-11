@@ -857,5 +857,24 @@
     "timeout": "Backend gagal dimulai dalam {{seconds}} detik.",
     "timeoutHint": "Backend gagal dimulai. Coba lagi, atau periksa log aplikasi untuk detail.",
     "retry": "Coba lagi"
+  },
+  "home": {
+    "greeting": "Apa yang bisa saya bantu?",
+    "pillBar": { "label": "Pemilih backend" },
+    "pills": { "all": "Semua", "chat": "Chat", "code": "Kode", "agent": "Agen" },
+    "assistants": {
+      "chat": { "name": "Chat", "desc": "Mulai percakapan dengan asisten AI" },
+      "coding": { "name": "Kode", "desc": "Pair-program dengan editor AI" },
+      "agent": { "name": "Agen", "desc": "Kelola sesi agen otonom" },
+      "inbox": { "name": "Kotak Masuk", "desc": "Tinjau pesan dan notifikasi" },
+      "workspace": { "name": "Ruang Kerja", "desc": "Jelajahi file dan konteks proyek" },
+      "mcp": { "name": "Alat MCP", "desc": "Hubungkan dan kelola server alat MCP" }
+    },
+    "footer": {
+      "label": "Tindakan cepat",
+      "reportIssue": "Laporkan Masalah",
+      "star": "Beri Bintang di GitHub",
+      "remote": "Koneksi Jarak Jauh"
+    }
   }
 }

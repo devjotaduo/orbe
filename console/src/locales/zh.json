@@ -2574,5 +2574,29 @@
       "LOAD_FAILED": "加载文件预览失败。",
       "LOAD_FAILED_DETAIL": "加载文件预览失败：{{detail}}"
     }
+  },
+  "home": {
+    "greeting": "今天有什么我可以帮你的？",
+    "pillBar": { "label": "后端选择器" },
+    "pills": {
+      "all": "全部",
+      "chat": "对话",
+      "code": "代码",
+      "agent": "智能体"
+    },
+    "assistants": {
+      "chat": { "name": "对话", "desc": "与 AI 助手开始对话" },
+      "coding": { "name": "代码", "desc": "与 AI 编辑器进行结对编程" },
+      "agent": { "name": "智能体", "desc": "管理自主智能体会话" },
+      "inbox": { "name": "收件箱", "desc": "查看消息和通知" },
+      "workspace": { "name": "工作区", "desc": "浏览文件和项目上下文" },
+      "mcp": { "name": "MCP 工具", "desc": "连接并管理 MCP 工具服务器" }
+    },
+    "footer": {
+      "label": "快捷操作",
+      "reportIssue": "反馈问题",
+      "star": "GitHub Star",
+      "remote": "远程连接"
+    }
   }
 }

@@ -2358,5 +2358,24 @@
       "LOAD_FAILED": "ファイルプレビューの読み込みに失敗しました。",
       "LOAD_FAILED_DETAIL": "ファイルプレビューの読み込みに失敗しました: {{detail}}"
     }
+  },
+  "home": {
+    "greeting": "何かお手伝いできることはありますか？",
+    "pillBar": { "label": "バックエンド選択" },
+    "pills": { "all": "すべて", "chat": "チャット", "code": "コード", "agent": "エージェント" },
+    "assistants": {
+      "chat": { "name": "チャット", "desc": "AIアシスタントと会話を始める" },
+      "coding": { "name": "コーディング", "desc": "AIエディタとペアプログラミング" },
+      "agent": { "name": "エージェント", "desc": "自律エージェントセッションの管理" },
+      "inbox": { "name": "受信トレイ", "desc": "メッセージと通知を確認する" },
+      "workspace": { "name": "ワークスペース", "desc": "ファイルとプロジェクトを閲覧する" },
+      "mcp": { "name": "MCPツール", "desc": "MCPツールサーバーを接続・管理する" }
+    },
+    "footer": {
+      "label": "クイックアクション",
+      "reportIssue": "問題を報告",
+      "star": "GitHubでスター",
+      "remote": "リモート接続"
+    }
   }
 }

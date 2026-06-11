@@ -1,16 +1,19 @@
+@import "../styles/aionui-tokens.less";
+
 // ─── MainLayout ───────────────────────────────────────────────────────────────
 .mainLayout {
   height: 100vh;
+  background: var(--bg-1);
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 .header {
-  height: 56px;
-  padding: 0 28px;
+  height: var(--titlebar-height, 36px);
+  padding: 0 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9f8f4;
+  background: var(--bg-2);
 
   :global {
     .qwenpaw-space-item {
@@ -32,9 +35,9 @@
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 .sider {
-  background: #f9f8f4 !important;
+  background: var(--bg-2) !important;
   overflow: auto;
-  height: calc(100vh - 64px);
+  height: calc(100vh - var(--titlebar-height, 36px));
   padding: 0 16px;
   display: flex;
   flex-direction: column;
@@ -80,7 +83,7 @@
     z-index: 10;
     margin-bottom: 4px;
     // Opaque background so scrolled content is hidden behind
-    background: #f9f7f3;
+    background: var(--bg-2);
     border-radius: 12px 12px 0 0;
   }
 
@@ -90,24 +93,23 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    height: 40px;
-    padding: 0 8px;
+    height: 36px;
+    padding: 0 10px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-nav, 8px);
     background: transparent;
-    color: rgba(0, 0, 0, 0.88);
+    color: var(--text-primary);
     font-size: 14px;
     cursor: pointer;
     transition: background 0.2s;
-    padding-left: 12px;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.06);
+      background: var(--bg-hover);
     }
   }
 
   .stickyChatButtonActive {
-    background: rgba(43, 18, 0, 0.08);
+    background: var(--bg-active);
   }
 
   // Menu takes remaining space
@@ -191,13 +193,13 @@
       font-weight: 500 !important;
       line-height: 32px !important;
       letter-spacing: normal !important;
-      color: rgba(26, 23, 22, 0.25) !important;
+      color: var(--color-text-3) !important;
       padding-left: 8px !important;
 
       /* No hover effect for group titles */
       &:hover {
         background: transparent !important;
-        color: rgba(26, 23, 22, 0.25) !important;
+        color: var(--color-text-3) !important;
       }
     }
 
@@ -213,19 +215,27 @@
       }
     }
 
-    /* Menu item padding - align all items */
+    /* Menu item — height + padding matching NavRow */
     .qwenpaw-menu-item {
-      padding-left: 8px !important;
+      height: 36px !important;
+      line-height: 36px !important;
+      border-radius: var(--border-radius-nav, 8px) !important;
+      padding-left: 10px !important;
     }
 
     /* Remove submenu indent - align with parent */
     .qwenpaw-menu-submenu .qwenpaw-menu-item {
-      padding-left: 8px !important;
+      padding-left: 10px !important;
+    }
+
+    /* Hover state */
+    .qwenpaw-menu-item:not(.qwenpaw-menu-item-selected):hover {
+      background: var(--bg-hover) !important;
     }
 
     /* Selected item */
     .qwenpaw-menu-item-selected {
-      background: rgba(43, 18, 0, 0.08) !important;
+      background: var(--bg-active) !important;
       color: inherit !important;
       display: flex !important;
       align-items: center !important;
@@ -244,68 +254,69 @@
   }
 }
 
+// siderDark is only a fallback; CSS vars handle dark via .dark-mode class on <html>
 .siderDark {
-  background: #1a1a1a !important;
-  border-right-color: rgba(255, 255, 255, 0.08) !important;
+  background: var(--bg-2) !important;
+  border-right-color: var(--border-base) !important;
 
   // Agent-scoped section (dark mode)
   .agentScopedSection {
     background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-base);
   }
 
   // Sticky container background (dark mode)
   .agentSelectorContainer {
-    background: #1e1e1e;
+    background: var(--bg-2);
   }
 
   // Chat button (dark mode)
   .stickyChatButton {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
 
     &:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.95);
+      background: var(--bg-hover);
+      color: var(--text-primary);
     }
   }
 
   .stickyChatButtonActive {
-    background: rgba(255, 127, 22, 0.5);
-    color: #ff7f16;
+    background: var(--bg-active);
+    color: var(--text-primary);
   }
 
   :global {
     .qwenpaw-menu {
-      background: #1a1a1a !important;
+      background: var(--bg-2) !important;
       border-inline-end: 0 !important;
     }
 
     /* Group title (sub-menu label) */
     .qwenpaw-menu-submenu-title {
-      color: rgba(255, 255, 255, 0.45) !important;
+      color: var(--color-text-3) !important;
 
       /* No hover effect for group titles in dark mode */
       &:hover {
         background: transparent !important;
-        color: rgba(255, 255, 255, 0.45) !important;
+        color: var(--color-text-3) !important;
       }
     }
 
     /* Regular menu item */
     .qwenpaw-menu-item {
-      color: rgba(255, 255, 255, 0.75) !important;
+      color: var(--text-secondary) !important;
     }
 
-    /* Hover state - only for menu items, not group titles */
-    .qwenpaw-menu-item:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-      color: rgba(255, 255, 255, 0.95) !important;
+    /* Hover state */
+    .qwenpaw-menu-item:not(.qwenpaw-menu-item-selected):hover {
+      background: var(--bg-hover) !important;
+      color: var(--text-primary) !important;
     }
 
     /* Selected item */
     .qwenpaw-menu-item-selected {
-      background: rgba(255, 127, 22, 0.5) !important;
-      color: #ff7f16 !important;
+      background: var(--bg-active) !important;
+      color: var(--text-primary) !important;
     }
   }
 }
@@ -361,7 +372,7 @@
 // ─── Auth actions (account + logout) ──────────────────────────────────────────
 .authActions {
   padding: 12px 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-base);
 }
 
 .authBtn {
@@ -369,11 +380,11 @@
   align-items: center;
   gap: 8px;
   justify-content: flex-start;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--text-secondary);
 
   &:hover {
-    color: rgba(0, 0, 0, 0.88) !important;
-    background: rgba(0, 0, 0, 0.04) !important;
+    color: var(--text-primary) !important;
+    background: var(--bg-hover) !important;
   }
 }
 
@@ -398,13 +409,13 @@
 }
 
 .collapseToggle {
-  color: rgba(0, 0, 0, 0.45);
-  border-radius: 8px;
+  color: var(--color-text-3);
+  border-radius: var(--border-radius-nav, 8px);
   transition: all 0.2s;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.06) !important;
-    color: #ff7f16 !important;
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
   }
 }
 
@@ -431,22 +442,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--border-radius-nav, 8px);
   border: none;
   background: transparent;
   cursor: pointer;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--color-text-3);
   transition: all 0.15s;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.06);
-    color: rgba(0, 0, 0, 0.88);
+    background: var(--bg-hover);
+    color: var(--text-primary);
   }
 }
 
 .collapsedNavItemActive {
-  background: rgba(43, 18, 0, 0.08) !important;
-  color: rgba(0, 0, 0, 0.88) !important;
+  background: var(--bg-active) !important;
+  color: var(--text-primary) !important;
 }
 
 @media (max-width: 768px) {
@@ -639,11 +650,13 @@
 }
 
 /* ─── Dark mode overrides ─────────────────────────────────────────────────── */
+// Most theming is now handled by CSS vars from aionui-tokens.less.
+// Only element-level tweaks that can't be expressed via vars are kept here.
 :global(.dark-mode) {
   .header {
-    background: #1a1a1a !important;
-    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
-    color: rgba(255, 255, 255, 0.85);
+    background: var(--bg-2) !important;
+    border-bottom-color: var(--border-base) !important;
+    color: var(--text-primary);
 
     /* Text buttons (Docs / FAQ / GitHub / Changelog) */
     :global(.qwenpaw-btn-text),
@@ -668,60 +681,16 @@
   }
 
   .headerTitle {
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-primary);
   }
 
   .sider {
-    background: #1a1a1a !important;
-    border-right-color: rgba(255, 255, 255, 0.08) !important;
+    background: var(--bg-2) !important;
+    border-right-color: var(--border-base) !important;
   }
 
   .siderTop {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .versionBadge {
-    color: #ff7f16;
-  }
-
-  .collapseBtn {
-    color: #ff7f16;
-  }
-
-  .authActions {
-    border-top-color: rgba(255, 255, 255, 0.08);
-  }
-
-  .authBtn {
-    color: rgba(255, 255, 255, 0.75);
-
-    &:hover {
-      color: rgba(255, 255, 255, 0.9) !important;
-      background: rgba(255, 255, 255, 0.06) !important;
-    }
-  }
-
-  .collapseToggle {
-    color: rgba(255, 255, 255, 0.45);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #ff7f16;
-    }
-  }
-
-  .collapsedNavItem {
-    color: rgba(255, 255, 255, 0.5);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(255, 255, 255, 0.88);
-    }
-  }
-
-  .collapsedNavItemActive {
-    background: rgba(255, 127, 22, 0.5) !important;
-    color: rgba(255, 255, 255, 0.88) !important;
+    border-bottom: 1px solid var(--border-base);
   }
 
   .codeBlock {

@@ -4,11 +4,12 @@ body {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  background: #f9f8f4;
+  background: var(--bg-1, #f9f8f4);
+  font-family: var(--font-app, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
 }
 
 .qwenpaw-layout {
-  background: #f9f8f4;
+  background: var(--bg-1, #f9f8f4);
 }
 
 /* ─── Dark mode global token overrides ─────────────────────────────────────── */
@@ -17,19 +18,19 @@ html.dark-mode {
 }
 
 html.dark-mode body {
-  background: #141414;
-  color: rgba(255, 255, 255, 0.85);
+  background: var(--bg-1, #1a1a1a);
+  color: var(--text-primary, rgba(255, 255, 255, 0.85));
 }
 
 /* Ant Design layout background in dark mode */
 html.dark-mode .ant-layout,
 html.dark-mode .qwenpaw-layout {
-  background: #141414 !important;
+  background: var(--bg-1, #1a1a1a) !important;
 }
 
 html.dark-mode .ant-layout-content,
 html.dark-mode .qwenpaw-layout-content {
-  background: #141414 !important;
+  background: var(--bg-1, #1a1a1a) !important;
 }
 
 /* Page content area background */
@@ -895,12 +896,12 @@ html.dark-mode
   min-height: 100vh;
   max-height: 100vh;
   overflow: hidden;
-  background: #f9f8f4;
+  background: var(--bg-1, #f9fafb);
 }
 
 .ant-layout-content {
   overflow: hidden;
-  background: #f9f8f4;
+  background: var(--bg-1, #f9fafb);
 }
 
 .qwenpaw-bubble-list-wrapper {
@@ -942,13 +943,13 @@ html.dark-mode .qwenpaw-sender-content {
 /* Menu background in light mode */
 .qwenpaw-menu,
 .ant-menu {
-  background: #f9f8f4 !important;
+  background: var(--bg-2, #f2f3f5) !important;
 }
 
 /* Menu selected item in light mode */
 .qwenpaw-menu-item-selected,
 .ant-menu-item-selected {
-  background: rgba(43, 18, 0, 0.08) !important;
+  background: var(--bg-active, #e5e6eb) !important;
   color: inherit !important;
 }
 
@@ -997,12 +998,10 @@ html.dark-mode .qwenpaw-sender-content {
 .page-content {
   flex: 1 1 auto;
   overflow: auto;
-  background-color: #fff;
+  background-color: var(--bg-base, #ffffff);
   border-radius: 8px;
-  /* 8px */
   box-sizing: border-box;
-  border: 1px solid #eae9e7;
-  /* #EAE9E7 */
+  border: 1px solid var(--border-base, #e5e6eb);
 }
 
 .table-container {

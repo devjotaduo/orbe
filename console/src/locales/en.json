@@ -2565,5 +2565,29 @@
       "LOAD_FAILED": "Failed to load file preview.",
       "LOAD_FAILED_DETAIL": "Failed to load file preview: {{detail}}"
     }
+  },
+  "home": {
+    "greeting": "What can I help you with?",
+    "pillBar": { "label": "Backend selector" },
+    "pills": {
+      "all": "All",
+      "chat": "Chat",
+      "code": "Code",
+      "agent": "Agent"
+    },
+    "assistants": {
+      "chat": { "name": "Chat", "desc": "Start a conversation with your AI assistant" },
+      "coding": { "name": "Coding", "desc": "Pair-program with an AI code editor" },
+      "agent": { "name": "Agent", "desc": "Manage autonomous agent sessions" },
+      "inbox": { "name": "Inbox", "desc": "Review messages and notifications" },
+      "workspace": { "name": "Workspace", "desc": "Browse files and project context" },
+      "mcp": { "name": "MCP Tools", "desc": "Connect and manage MCP tool servers" }
+    },
+    "footer": {
+      "label": "Quick actions",
+      "reportIssue": "Report Issue",
+      "star": "Star on GitHub",
+      "remote": "Remote Connection"
+    }
   }
 }
