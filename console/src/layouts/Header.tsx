@@ -222,9 +222,15 @@ export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProp
         </div>
 
         <Slot name="header.left" kind="fill" />
-        <Space size="middle">
+        <Space size={4}>
           <Slot name="header.right" kind="fill" />
+          {/* AionUi right side: minimal — only essential toggles visible, rest in ⋯ */}
+          <CodingModeToggle />
+          <LanguageSwitcher />
+          <ThemeToggleButton />
+          <div className={styles.headerDivider} />
           <Dropdown
+            trigger={["click"]}
             menu={{
               items: [
                 {
@@ -253,27 +259,25 @@ export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProp
                   label: t("header.faq"),
                   onClick: () => handleNavClick(getFaqUrl(i18n.language)),
                 },
+                { type: "divider" },
+                {
+                  key: "github",
+                  icon: <GithubOutlined />,
+                  label: t("header.github"),
+                  onClick: () => handleNavClick(GITHUB_URL),
+                },
               ] as MenuProps["items"],
             }}
           >
-            <Button type="text">
-              {t("header.resources")} <DownOutlined />
-            </Button>
-          </Dropdown>
-          <Tooltip title={t("header.github")}>
-            <Button
+            <AntButton
               type="text"
-              icon={<GithubOutlined />}
-              onClick={() => handleNavClick(GITHUB_URL)}
+              size="small"
+              className={styles.titlebarBtn}
+              aria-label="More options"
             >
-              {t("header.github")}
-            </Button>
-          </Tooltip>
-          <div className={styles.headerDivider} />
-          <CodingModeToggle />
-          <div className={styles.headerDivider} />
-          <LanguageSwitcher />
-          <ThemeToggleButton />
+              ···
+            </AntButton>
+          </Dropdown>
         </Space>
       </AntHeader>
 
