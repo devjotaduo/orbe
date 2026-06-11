@@ -205,10 +205,18 @@ class DiscoverySession:
             focus_txt = f"{focus.id} — {focus.topic}"
         else:
             focus_txt = "nenhuma (pode emitir)"
-        return _ok(
+        msg = (
             f"Estado atualizado. Próxima área foco: {focus_txt}. "
             f"Pronto p/ emitir? {self.state.ready_to_emit()}"
         )
+        user_turns = sum(1 for t in self.state.transcript if t.role == "user")
+        if not self.state.integrations and user_turns >= 2:
+            msg += (
+                " ATENÇÃO: nenhuma integração registrada ainda — pergunte "
+                "quais sistemas/ferramentas a empresa usa (CRM, planilha, "
+                "WhatsApp, ERP...) e registre via reflect."
+            )
+        return _ok(msg)
 
     async def emit_blueprint(self, blueprint_json: str) -> ToolChunk:
         """Valida e grava o blueprint final do time de agentes.

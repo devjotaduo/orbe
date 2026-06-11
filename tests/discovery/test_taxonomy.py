@@ -71,3 +71,36 @@ def test_lookup_substring_false_positive_is_documented():
         f"Expected 'educacao' false-positive but got '{result.key}'. "
         "Update this test if the seed or matching logic changed."
     )
+
+
+# ---------------------------------------------------------------------------
+# Segmentos adicionados na expansão da seed (tecnologia, construção, B2B)
+# ---------------------------------------------------------------------------
+
+
+def test_lookup_matches_tecnologia():
+    info = lookup_segment("tenho uma software house que desenvolve saas")
+    assert info is not None
+    assert info.key == "tecnologia"
+
+
+def test_lookup_matches_construcao():
+    info = lookup_segment("sou dono de uma construtora de obras residenciais")
+    assert info is not None
+    assert info.key == "construcao"
+
+
+def test_lookup_matches_servicos_b2b():
+    info = lookup_segment("tenho um escritório de advocacia empresarial")
+    assert info is not None
+    assert info.key == "servicos_b2b"
+
+
+def test_new_segments_have_complete_rails():
+    segs = {s.key: s for s in load_segments()}
+    for key in ("tecnologia", "construcao", "servicos_b2b"):
+        seg = segs[key]
+        assert seg.typical_areas, f"{key} sem typical_areas"
+        assert seg.typical_processes, f"{key} sem typical_processes"
+        assert seg.common_pains, f"{key} sem common_pains"
+        assert seg.common_integrations, f"{key} sem common_integrations"

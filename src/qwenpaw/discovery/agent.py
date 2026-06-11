@@ -12,7 +12,7 @@ from .tools import DiscoverySession
 
 def build_discovery_agent(
     session: DiscoverySession,
-    max_iters: int = 6,
+    max_iters: int = 10,
 ) -> Agent:
     """Monta o Agent de discovery com o toolkit da sessão e o modelo ativo."""
     # No agent_id: always use the global active model for discovery sessions.

@@ -150,12 +150,64 @@ O blueprint PRECISA ter:
 
 SCHEMA TeamBlueprint (JSON):
 {schema}
+
+EXEMPLO RESUMIDO de um bom blueprint (note a variedade de áreas — \
+atendimento + marketing + operações — e tarefas concretas por agente):
+{example}
 """
+
+_EXAMPLE = {
+    "company_profile": {
+        "segment": "alimentacao",
+        "size": "pequeno (8 funcionários, R$ 60k/mês)",
+        "business_model": "restaurante com salão e delivery (iFood + WhatsApp)",
+        "pains": ["pedidos misturados na cozinha", "sem presença digital"],
+    },
+    "process_map": [
+        {"name": "atendimento", "description": "dúvidas e reservas via WhatsApp"},
+        {"name": "pedidos", "description": "iFood + WhatsApp + salão, sem unificação"},
+        {"name": "marketing", "description": "sem rotina de posts ou campanhas"},
+    ],
+    "detected_integrations": [
+        {"kind": "marketplace", "name": "iFood", "data_location": "painel do parceiro", "confidence": 0.9},
+        {"kind": "whatsapp", "name": "WhatsApp Business", "data_location": "celular do dono", "confidence": 0.9},
+    ],
+    "proposed_team": [
+        {
+            "name": "Atendente WhatsApp", "role": "SAC 24/7",
+            "objective": "responder cardápio, horários e reservas sem intervenção humana",
+            "tasks": ["responder FAQ", "registrar reservas", "encaminhar pedidos"],
+            "tools_integrations": ["whatsapp", "cardápio digital"],
+            "talks_to": ["Coordenador de Pedidos"],
+        },
+        {
+            "name": "Gerente de Redes Sociais", "role": "marketing de conteúdo",
+            "objective": "criar presença digital que traga clientes novos",
+            "tasks": ["posts do prato do dia", "stories", "responder comentários"],
+            "tools_integrations": ["instagram"],
+            "talks_to": ["Atendente WhatsApp"],
+        },
+        {
+            "name": "Coordenador de Pedidos", "role": "operações",
+            "objective": "unificar pedidos do iFood, WhatsApp e salão num fluxo só",
+            "tasks": ["consolidar pedidos", "notificar cozinha", "avisar atraso"],
+            "tools_integrations": ["ifood", "whatsapp", "planilha"],
+            "talks_to": ["Atendente WhatsApp"],
+        },
+    ],
+    "roadmap": [
+        {"order": 1, "title": "Atendente WhatsApp", "rationale": "dor principal, implantação simples"},
+        {"order": 2, "title": "Coordenador de Pedidos", "rationale": "resolve o caos da cozinha"},
+        {"order": 3, "title": "Gerente de Redes Sociais", "rationale": "cresce a receita após estabilizar a operação"},
+    ],
+    "open_questions": ["o iFood do parceiro permite integração via API?"],
+}
 
 
 def build_discovery_system_prompt() -> str:
     """Retorna o system prompt com o JSON schema do TeamBlueprint."""
     schema = TeamBlueprint.model_json_schema()
     return _SYSTEM.format(
-        schema=json.dumps(schema, ensure_ascii=False, indent=2)
+        schema=json.dumps(schema, ensure_ascii=False, indent=2),
+        example=json.dumps(_EXAMPLE, ensure_ascii=False, indent=2),
     )

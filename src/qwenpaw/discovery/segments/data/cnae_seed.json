@@ -54,5 +54,29 @@
     "typical_processes": ["agendar horário", "confirmar/lembrar", "remarcar"],
     "common_pains": ["faltas", "agenda no caderno", "horários ociosos"],
     "common_integrations": ["whatsapp", "agenda online"]
+  },
+  {
+    "key": "tecnologia", "label": "Tecnologia / Software / SaaS", "cnae": "62.xx",
+    "keywords": ["software", "saas", "startup", "tecnologia", "aplicativo", "software house", "desenvolvimento de sistemas", "agência digital"],
+    "typical_areas": ["vendas/pré-vendas", "onboarding de clientes", "suporte técnico", "sucesso do cliente", "marketing de conteúdo"],
+    "typical_processes": ["qualificar lead", "demo do produto", "onboarding", "responder tickets", "renovação/upsell"],
+    "common_pains": ["funil de vendas manual", "suporte sobrecarregado", "churn por onboarding ruim", "leads esfriando"],
+    "common_integrations": ["crm", "helpdesk/tickets", "slack/discord", "stripe/pagamento", "analytics"]
+  },
+  {
+    "key": "construcao", "label": "Construção Civil / Reformas / Engenharia", "cnae": "41-43",
+    "keywords": ["construção", "construtora", "reforma", "engenharia civil", "empreiteira", "obras", "arquitetura", "marcenaria"],
+    "typical_areas": ["orçamentos", "gestão de obras", "compras/fornecedores", "atendimento ao cliente", "pós-obra"],
+    "typical_processes": ["visita técnica", "elaborar orçamento", "cronograma de obra", "medição/etapas", "assistência pós-entrega"],
+    "common_pains": ["orçamento demora dias", "cliente sem visibilidade da obra", "compras desorganizadas", "retrabalho"],
+    "common_integrations": ["whatsapp", "planilha", "erp de obra", "agenda/calendar"]
+  },
+  {
+    "key": "servicos_b2b", "label": "Serviços B2B / Escritórios / Consultorias", "cnae": "69-70",
+    "keywords": ["b2b", "advocacia", "escritório de advocacia", "contabilidade", "consultoria empresarial", "terceirização", "recursos humanos", "agência de marketing"],
+    "typical_areas": ["prospecção", "propostas comerciais", "entrega/projetos", "relacionamento com clientes", "financeiro"],
+    "typical_processes": ["qualificar lead", "enviar proposta", "follow-up comercial", "reportar status ao cliente", "faturar/cobrar"],
+    "common_pains": ["propostas lentas", "follow-up esquecido", "cliente sem retorno de status", "inadimplência"],
+    "common_integrations": ["crm", "whatsapp", "e-mail", "erp/financeiro", "agenda/calendar"]
   }
 ]
