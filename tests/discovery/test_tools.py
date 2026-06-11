@@ -32,7 +32,9 @@ async def test_segment_lookup_unknown_records_open_question(tmp_path):
 async def test_reflect_mutates_state(tmp_path):
     s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
     s.state.open_areas.append(
-        OpenArea(id="segmento", topic="qual segmento", confidence=0.1, priority=5)
+        OpenArea(
+            id="segmento", topic="qual segmento", confidence=0.1, priority=5
+        )
     )
     updates = json.dumps(
         {
@@ -90,10 +92,11 @@ async def test_emit_blueprint_writes_files(tmp_path):
         "roadmap": [{"order": 1, "title": "WhatsApp", "rationale": "dor"}],
         "open_questions": [],
     }
-    chunk = await s.emit_blueprint(json.dumps(bp))
+    _ = await s.emit_blueprint(json.dumps(bp))
     assert (tmp_path / "blueprint.json").exists()
     assert (tmp_path / "blueprint.md").exists()
-    assert "Atendente" in (tmp_path / "blueprint.md").read_text(encoding="utf-8")
+    md = (tmp_path / "blueprint.md").read_text(encoding="utf-8")
+    assert "Atendente" in md
     assert s.emitted is True
 
 
@@ -104,3 +107,62 @@ async def test_emit_blueprint_invalid_json_does_not_write(tmp_path):
     assert not (tmp_path / "blueprint.json").exists()
     assert "erro" in _text(chunk).lower() or "inválid" in _text(chunk).lower()
     assert s.emitted is False
+
+
+# --- MISSING TESTS flagged by reviewer --------------------------------------
+
+@pytest.mark.asyncio
+async def test_reflect_error_path_returns_error_state(tmp_path):
+    """reflect() com JSON inválido deve retornar state=ERROR."""
+    from agentscope.message import ToolResultState
+
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    chunk = await s.reflect("aprendizado qualquer", "{json quebrado }")
+    assert chunk.state == ToolResultState.ERROR
+
+
+@pytest.mark.asyncio
+async def test_emit_blueprint_error_state(tmp_path):
+    """emit_blueprint() inválido retorna state=ERROR e não cria arquivo."""
+    from agentscope.message import ToolResultState
+
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    chunk = await s.emit_blueprint('{"company_profile": ')
+    assert chunk.state == ToolResultState.ERROR
+    assert not (tmp_path / "blueprint.json").exists()
+    assert s.emitted is False
+
+
+@pytest.mark.asyncio
+async def test_segment_lookup_unknown_idempotent(tmp_path):
+    """Chamadas repetidas com segmento desconhecido não duplicam a área."""
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    await s.segment_lookup("mineração de asteroides")
+    await s.segment_lookup("mineração de asteroides")
+    ids = [a.id for a in s.state.open_areas]
+    assert ids.count("validar-segmento") == 1
+
+
+@pytest.mark.asyncio
+async def test_reflect_confidence_clamped(tmp_path):
+    """confidence_updates acima de 1.0 é fixada em 1.0 (clamping)."""
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    s.state.open_areas.append(
+        OpenArea(
+            id="estoque", topic="controle de estoque",
+            confidence=0.3, priority=3,
+        )
+    )
+    updates = json.dumps(
+        {
+            "learned": "usa planilha",
+            "close_area_ids": [],
+            "new_areas": [],
+            "integrations": [],
+            "company_updates": {},
+            "confidence_updates": {"estoque": 2.0},
+        }
+    )
+    await s.reflect("usa planilha", updates)
+    area = next(a for a in s.state.open_areas if a.id == "estoque")
+    assert area.confidence == 1.0
