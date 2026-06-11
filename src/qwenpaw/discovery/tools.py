@@ -49,7 +49,8 @@ def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
         lines.append(f"- **{p.name}**: {p.description}")
     lines.append("\n## Integrações detectadas")
     for i in bp.detected_integrations:
-        lines.append(f"- {i.kind} — {i.name} (dados em: {i.data_location or '—'})")
+        loc = i.data_location or "—"
+        lines.append(f"- {i.kind} — {i.name} (dados em: {loc})")
     lines.append("\n## Time de agentes proposto")
     for a in bp.proposed_team:
         lines.append(f"### {a.name} — {a.role}")
@@ -81,7 +82,7 @@ class DiscoverySession:
     # --- tools -----------------------------------------------------------
 
     async def segment_lookup(self, description: str) -> ToolChunk:
-        """Classifica o segmento da empresa a partir da descrição do empresário.
+        """Classifica o segmento da empresa a partir da descrição fornecida.
 
         Use assim que o empresário descrever o que a empresa faz. Retorna os
         'trilhos' do segmento (áreas, processos, dores e integrações típicas)
@@ -96,19 +97,24 @@ class DiscoverySession:
         """
         info = lookup_segment(description)
         if info is None:
-            if not any(a.id == "validar-segmento" for a in self.state.open_areas):
+            ids = [a.id for a in self.state.open_areas]
+            if "validar-segmento" not in ids:
                 self.state.open_areas.append(
                     OpenArea(
                         id="validar-segmento",
-                        topic="validar a taxonomia deste segmento (fora da seed)",
+                        topic=(
+                            "validar a taxonomia deste segmento"
+                            " (fora da seed)"
+                        ),
                         confidence=0.1,
                         priority=4,
                     )
                 )
             return _ok(
-                "Segmento não está na taxonomia curada. Raciocine de forma "
-                "LIVRE sobre as áreas, processos, dores e integrações típicas "
-                "deste tipo de negócio antes de continuar a entrevista."
+                "Segmento não está na taxonomia curada. Raciocine de"
+                " forma LIVRE sobre as áreas, processos, dores e"
+                " integrações típicas deste tipo de negócio antes de"
+                " continuar a entrevista."
             )
         self.state.company.segment = info.key
         if info.cnae:
@@ -145,7 +151,7 @@ class DiscoverySession:
                 (dict area_id->float).
 
         Returns:
-            `ToolChunk`: resumo do estado atualizado e qual a próxima área foco.
+            `ToolChunk`: resumo do estado atualizado e próxima área foco.
         """
         try:
             upd = ReflectUpdate.model_validate_json(updates_json)
@@ -158,7 +164,8 @@ class DiscoverySession:
         # fecha áreas
         if upd.close_area_ids:
             self.state.open_areas = [
-                a for a in self.state.open_areas if a.id not in upd.close_area_ids
+                a for a in self.state.open_areas
+                if a.id not in upd.close_area_ids
             ]
 
         # ajusta confiança
@@ -186,12 +193,16 @@ class DiscoverySession:
             for k, v in upd.company_updates.items():
                 if k in merged and v is not None:
                     merged[k] = v
-            self.state.company = type(self.state.company).model_validate(merged)
+            cls = type(self.state.company)
+            self.state.company = cls.model_validate(merged)
 
         self.state.transcript.append(Turn(role="assistant", text=learned))
 
         focus = self.state.next_focus()
-        focus_txt = f"{focus.id} — {focus.topic}" if focus else "nenhuma (pode emitir)"
+        if focus:
+            focus_txt = f"{focus.id} — {focus.topic}"
+        else:
+            focus_txt = "nenhuma (pode emitir)"
         return _ok(
             f"Estado atualizado. Próxima área foco: {focus_txt}. "
             f"Pronto p/ emitir? {self.state.ready_to_emit()}"
@@ -225,9 +236,10 @@ class DiscoverySession:
             _blueprint_to_markdown(bp), encoding="utf-8"
         )
         self.emitted = True
+        j = self.out_dir / "blueprint.json"
+        m = self.out_dir / "blueprint.md"
         return _ok(
-            f"Blueprint gravado em {self.out_dir / 'blueprint.json'} e "
-            f"{self.out_dir / 'blueprint.md'}. Entrevista concluída."
+            f"Blueprint gravado em {j} e {m}. Entrevista concluída."
         )
 
     # --- toolkit ---------------------------------------------------------
