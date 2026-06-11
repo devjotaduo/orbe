@@ -25,15 +25,33 @@ def _tag(cid: str, text: str) -> Component:
     return Component(id=cid, type="Tag", properties={"text": text})
 
 
+def _input(cid: str, bind: str, label: str) -> Component:
+    return Component(
+        id=cid,
+        type="TextInput",
+        properties={"bind": bind, "label": label},
+    )
+
+
+def _textarea(cid: str, bind: str, label: str) -> Component:
+    return Component(
+        id=cid,
+        type="TextArea",
+        properties={"bind": bind, "label": label},
+    )
+
+
 def build_blueprint_surface(
-    blueprint: dict[str, Any], surface_id: str = "blueprint"
+    blueprint: dict[str, Any],
+    surface_id: str = "blueprint",
 ) -> list[A2UIMessage]:
     """Build createSurface + updateComponents + updateDataModel msgs.
 
     Layout: a root Column with a title, one Card per proposed team member
-    (name Heading + role/objective Text + integration Tags), then an areas
-    List and an open-questions List. Text is inlined in properties; the raw
-    blueprint also rides in updateDataModel for future data-binding.
+    (bound TextInputs for name/role + TextArea for objective + integration
+    Tags), then an areas List, an open-questions List and an approve_team
+    Button. Editable fields bind into the raw blueprint that rides in
+    updateDataModel (paths like ``proposed_team/0/name``).
     """
     comps: list[Component] = []
     root_children: list[str] = []
@@ -43,21 +61,27 @@ def build_blueprint_surface(
     comps.append(_heading("title", f"Time proposto — {title}"))
     root_children.append("title")
 
-    # One card per team member.
+    # One card per team member (scalar fields are editable, bound by index).
     for i, member in enumerate(blueprint.get("proposed_team", []) or []):
         card_id = f"card-{i}"
         name_id, role_id = f"card-{i}-name", f"card-{i}-role"
-        card_children = [name_id, role_id]
-        comps.append(_heading(name_id, member.get("name", "Agente")))
-        role = member.get("role", "")
-        objective = member.get("objective", "")
-        comps.append(_text(role_id, f"{role} — {objective}".strip(" —")))
+        objective_id = f"card-{i}-objective"
+        card_children = [name_id, role_id, objective_id]
+        comps.append(_input(name_id, f"proposed_team/{i}/name", "Nome"))
+        comps.append(_input(role_id, f"proposed_team/{i}/role", "Papel"))
+        comps.append(
+            _textarea(
+                objective_id,
+                f"proposed_team/{i}/objective",
+                "Objetivo",
+            ),
+        )
         for j, integ in enumerate(member.get("tools_integrations", []) or []):
             tid = f"card-{i}-tool-{j}"
             comps.append(_tag(tid, str(integ)))
             card_children.append(tid)
         comps.append(
-            Component(id=card_id, type="Card", children=card_children)
+            Component(id=card_id, type="Card", children=card_children),
         )
         root_children.append(card_id)
 
@@ -75,7 +99,7 @@ def build_blueprint_surface(
                 id="integ-row",
                 type="Row",
                 children=integ_section_children,
-            )
+            ),
         )
         root_children.extend(["integ-title", "integ-row"])
 
@@ -89,9 +113,23 @@ def build_blueprint_surface(
             oq_children.append(qid)
         comps.append(_heading("oq-title", "Perguntas em aberto"))
         comps.append(
-            Component(id="oq-list", type="List", children=oq_children)
+            Component(id="oq-list", type="List", children=oq_children),
         )
         root_children.extend(["oq-title", "oq-list"])
+
+    # Approve action: ships the (possibly edited) data model back.
+    comps.append(
+        Component(
+            id="approve-btn",
+            type="Button",
+            properties={
+                "text": "Aprovar time",
+                "variant": "primary",
+                "action": {"name": "approve_team"},
+            },
+        ),
+    )
+    root_children.append("approve-btn")
 
     root = Component(id="root", type="Column", children=root_children)
     # Root must be first (test asserts components[0] is the root).

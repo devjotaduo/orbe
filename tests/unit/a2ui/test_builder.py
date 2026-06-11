@@ -9,7 +9,7 @@ from qwenpaw.a2ui.schema import (
 BLUEPRINT = {
     "company_profile": {"segment": "ecommerce", "name": "Loja X"},
     "process_map": [
-        {"area": "Atendimento", "processes": ["responder WhatsApp"]}
+        {"area": "Atendimento", "processes": ["responder WhatsApp"]},
     ],
     "detected_integrations": [{"type": "messaging", "name": "WhatsApp"}],
     "proposed_team": [
@@ -20,7 +20,7 @@ BLUEPRINT = {
             "tasks": ["responder dúvidas"],
             "tools_integrations": ["mcp:evolution-whatsapp"],
             "talks_to": [],
-        }
+        },
     ],
     "roadmap": [{"step": "atendimento WhatsApp"}],
     "open_questions": ["qual volume de mensagens?"],
@@ -36,17 +36,53 @@ def test_returns_create_then_components_then_datamodel():
     assert msgs[0].root == msgs[1].components[0].id  # root is first component
 
 
-def test_one_card_per_team_member_with_name_text():
+def test_one_card_per_team_member_with_bound_name_input():
     msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
     comps = msgs[1].components
     cards = [c for c in comps if c.type == "Card"]
     assert len(cards) == 1
-    texts = [
-        c.properties.get("text", "")
+    name_inputs = [
+        c
         for c in comps
-        if c.type in ("Text", "Heading")
+        if c.type == "TextInput"
+        and c.properties.get("bind") == "proposed_team/0/name"
     ]
-    assert any("Atendente WhatsApp" in t for t in texts)
+    assert len(name_inputs) == 1
+    assert name_inputs[0].id in cards[0].children
+
+
+def test_team_member_fields_are_bound_inputs():
+    msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
+    name_inputs = [
+        c
+        for c in msgs[1].components
+        if c.type == "TextInput"
+        and c.properties.get("bind") == "proposed_team/0/name"
+    ]
+    assert len(name_inputs) == 1
+    role_inputs = [
+        c
+        for c in msgs[1].components
+        if c.type == "TextInput"
+        and c.properties.get("bind") == "proposed_team/0/role"
+    ]
+    assert len(role_inputs) == 1
+    objective = [
+        c
+        for c in msgs[1].components
+        if c.type == "TextArea"
+        and c.properties.get("bind") == "proposed_team/0/objective"
+    ]
+    assert len(objective) == 1
+
+
+def test_approve_button_present_with_action():
+    msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
+    buttons = [c for c in msgs[1].components if c.type == "Button"]
+    assert any(
+        c.properties.get("action", {}).get("name") == "approve_team"
+        for c in buttons
+    )
 
 
 def test_integration_becomes_tag():
