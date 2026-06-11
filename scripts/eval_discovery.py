@@ -145,6 +145,21 @@ PERSONAS: list[Persona] = [
             "/fim",
         ],
     ),
+    Persona(
+        id="advocacia",
+        name="Escritório de Advocacia",
+        description="Escritório de advocacia empresarial e trabalhista com 4 advogados",
+        expected_segment="servicos_b2b",
+        script=[
+            "Tenho um escritório de advocacia. Atendemos empresas em direito trabalhista e tributário.",
+            "Perdemos muito tempo respondendo clientes que perguntam sobre o andamento dos processos. Ligam toda semana.",
+            "Usamos o Astrea para gestão dos processos, e-mail e WhatsApp para falar com clientes, e Excel no financeiro.",
+            "Somos 4 advogados e 2 estagiários. Faturamos R$ 90 mil por mês.",
+            "Captação é fraca: dependemos só de indicação. Não temos presença digital nem produção de conteúdo jurídico.",
+            "Quero automatizar o informe de status dos processos e melhorar a captação de novos clientes empresariais.",
+            "/fim",
+        ],
+    ),
 ]
 
 
@@ -361,6 +376,98 @@ async def _run_persona(persona: Persona, tmp_dir: Path) -> SessionRun:
 
 # ─── Geração do relatório ────────────────────────────────────────────────────
 
+# (padrão presente nos issues, recomendação concreta)
+_RECOMMENDATION_MAP: list[tuple[str, str]] = [
+    (
+        "Segmento NÃO detectado",
+        "**Reforçar o `segment_lookup`** — o agente não classificou o segmento. "
+        "Verifique se o prompt exige a chamada na primeira resposta e se as "
+        "keywords da seed cobrem o vocabulário usado pelo empresário.",
+    ),
+    (
+        "Segmento detectado incorretamente",
+        "**Corrigir a classificação de segmento** — a chave gravada difere da "
+        "esperada. Confira a proteção de `company.segment` no `reflect` e se há "
+        "colisão de keywords entre segmentos na seed.",
+    ),
+    (
+        "agente proposto",
+        "**Reforçar o time mínimo no prompt** — blueprints saíram com menos de 3 "
+        "agentes. Revise a seção 'TIME MÍNIMO' do system prompt e o exemplo "
+        "few-shot.",
+    ),
+    (
+        "Nenhum agente proposto",
+        "**Blueprint sem time** — o JSON emitido veio com `proposed_team` vazio. "
+        "Endureça a instrução de qualidade do blueprint no prompt.",
+    ),
+    (
+        "Blueprint NÃO emitido",
+        "**Garantir a emissão do blueprint** — a entrevista terminou sem "
+        "`emit_blueprint`. Avalie aumentar `max_iters` em "
+        "`build_discovery_agent` ou reforçar a instrução de encerramento.",
+    ),
+    (
+        "Roadmap",
+        "**Exigir roadmap com 3+ etapas** — roadmaps superficiais ou vazios. "
+        "Reforce no prompt que o roadmap deve progredir do mais simples ao mais "
+        "complexo.",
+    ),
+    (
+        "processo",
+        "**Aprofundar o mapa de processos** — menos de 2 processos mapeados. O "
+        "agente deve explorar as 5 áreas obrigatórias antes de emitir.",
+    ),
+    (
+        "integração",
+        "**Melhorar captura de integrações** — o `reflect` não registrou as "
+        "ferramentas mencionadas. Confira o alerta de integrações vazias no "
+        "resultado do `reflect`.",
+    ),
+    (
+        "pergunta em aberto",
+        "**Documentar lacunas** — blueprints sem `open_questions`. Toda "
+        "informação não confirmada deve virar pergunta em aberto.",
+    ),
+    (
+        "Entrevista muito curta",
+        "**Aprofundar a entrevista** — poucas trocas antes de emitir. O agente "
+        "deve cobrir as 5 áreas antes de aceitar encerrar.",
+    ),
+]
+
+_MAINTENANCE_RECS = [
+    "Nenhum problema recorrente nesta rodada. Manter o avaliador como gate de "
+    "regressão: rode `python scripts/eval_discovery.py` após qualquer mudança "
+    "em `prompts.py`, `tools.py` ou na seed CNAE (há um smoke e2e opt-in via "
+    "`QWENPAW_EVAL_E2E=1` no pytest).",
+    "Adicionar personas de segmentos FORA da seed (ex.: pet shop, oficina "
+    "mecânica) para exercitar o caminho de raciocínio livre do "
+    "`segment_lookup`.",
+    "Evoluir o scoring com critérios qualitativos (clareza das perguntas, "
+    "empatia, não-repetição) usando LLM-as-judge em vez de só contagens.",
+]
+
+
+def _build_recommendations(runs: list[SessionRun]) -> list[str]:
+    """Deriva recomendações dos problemas realmente encontrados na rodada."""
+    all_issues = " | ".join(
+        issue
+        for run in runs
+        if not run.score.error
+        for issue in run.score.issues
+    )
+    recs = [rec for marker, rec in _RECOMMENDATION_MAP if marker in all_issues]
+    if any(run.score.error for run in runs):
+        failed = ", ".join(
+            run.persona.name for run in runs if run.score.error
+        )
+        recs.append(
+            f"**Investigar cenários com ERRO** ({failed}) — o traceback "
+            f"completo está na seção do cenário."
+        )
+    return recs or list(_MAINTENANCE_RECS)
+
 def _bar(score: float, max_score: float, width: int = 20) -> str:
     filled = int(round(score / max_score * width)) if max_score else 0
     return "█" * filled + "░" * (width - filled)
@@ -521,16 +628,10 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
             lines.append(f"- **{badge}** {issue}")
         lines.append("")
 
+    lines += ["### Recomendações de melhoria", ""]
+    for n, rec in enumerate(_build_recommendations(runs), 1):
+        lines.append(f"{n}. {rec}")
     lines += [
-        "### Recomendações de melhoria",
-        "",
-        "1. **Forçar chamada ao `segment_lookup` na primeira resposta** — o prompt deve instruir o agente a chamar `segment_lookup` imediatamente ao identificar o negócio, antes de prosseguir com perguntas.",
-        "2. **Exigir uso de `reflect` após cada resposta** — adicionar ao system prompt: 'VOCÊ DEVE chamar `reflect` após CADA resposta do empresário, sem exceção.'",
-        "3. **Aumentar `max_iters`** — sessões com 5+ respostas podem esgotar as iterações antes de emitir o blueprint. Ajustar para `max_iters=10`.",
-        "4. **Expandir seed CNAE** — os segmentos 'serviços B2B', 'tecnologia' e 'construção civil' são frequentes mas ainda não têm trilhos curados.",
-        "5. **Adicionar exemplos de blueprint no prompt** — o LLM performa melhor quando vê 1-2 exemplos de blueprints bem estruturados no system prompt (few-shot).",
-        "6. **Validar integrações no reflect** — o `reflect` deve incluir campo obrigatório `integrations` para garantir captura sistemática.",
-        "7. **Teste de regressão automatizado** — integrar este avaliador ao pipeline de CI/CD para detectar regressões de qualidade a cada mudança no prompt.",
         "",
         "---",
         "",
