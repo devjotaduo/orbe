@@ -53,13 +53,13 @@ interface SidebarProps {
   selectedKey: string;
   /** Controlled collapse state — driven by MainLayout so Header can toggle it too. */
   collapsed?: boolean;
-  /** Called when the user clicks the in-sidebar collapse toggle. */
-  onToggleCollapse?: () => void;
+  /** Sets collapse to a specific value (preferred over onToggleCollapse for programmatic use). */
+  onSetCollapsed?: (val: boolean) => void;
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────
 
-export default function Sidebar({ selectedKey, collapsed: collapsedProp, onToggleCollapse }: SidebarProps) {
+export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCollapsed }: SidebarProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { message } = useAppMessage();
@@ -77,10 +77,11 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onToggl
   const [collapsedLocal, setCollapsedLocal] = useState(false);
   const collapsed = collapsedProp ?? collapsedLocal;
   const setCollapsed = (val: boolean | ((prev: boolean) => boolean)) => {
-    if (onToggleCollapse) {
-      onToggleCollapse();
+    const next = typeof val === "function" ? val(collapsed) : val;
+    if (onSetCollapsed) {
+      onSetCollapsed(next);
     } else {
-      setCollapsedLocal(val);
+      setCollapsedLocal(next);
     }
   };
   const [isMobile, setIsMobile] = useState(isMobileSidebarViewport);
