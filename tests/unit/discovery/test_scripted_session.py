@@ -31,7 +31,11 @@ async def test_state_segment_set_after_first_answer():
 async def test_runs_to_a_blueprint_and_then_done():
     s = ScriptedDiscoverySession()
     r = await s.next_turn(None)
-    answers = ["e-commerce de roupas", "uso WhatsApp e planilha", "responder clientes"]
+    answers = [
+        "e-commerce de roupas",
+        "uso WhatsApp e planilha",
+        "responder clientes",
+    ]
     for a in answers:
         r = await s.next_turn(a)
     assert r.done is True

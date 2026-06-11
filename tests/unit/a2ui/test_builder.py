@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 from qwenpaw.a2ui.builder import build_blueprint_surface
-from qwenpaw.a2ui.schema import CreateSurface, UpdateComponents, UpdateDataModel
+from qwenpaw.a2ui.schema import (
+    CreateSurface,
+    UpdateComponents,
+    UpdateDataModel,
+)
 
 BLUEPRINT = {
     "company_profile": {"segment": "ecommerce", "name": "Loja X"},
-    "process_map": [{"area": "Atendimento", "processes": ["responder WhatsApp"]}],
+    "process_map": [
+        {"area": "Atendimento", "processes": ["responder WhatsApp"]}
+    ],
     "detected_integrations": [{"type": "messaging", "name": "WhatsApp"}],
     "proposed_team": [
         {
@@ -35,7 +41,11 @@ def test_one_card_per_team_member_with_name_text():
     comps = msgs[1].components
     cards = [c for c in comps if c.type == "Card"]
     assert len(cards) == 1
-    texts = [c.properties.get("text", "") for c in comps if c.type in ("Text", "Heading")]
+    texts = [
+        c.properties.get("text", "")
+        for c in comps
+        if c.type in ("Text", "Heading")
+    ]
     assert any("Atendente WhatsApp" in t for t in texts)
 
 

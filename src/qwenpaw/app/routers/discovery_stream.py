@@ -4,6 +4,13 @@
 One POST advances the session by one turn and streams that turn's AG-UI events.
 A2UI surfaces ride inside CUSTOM events (name="a2ui"). Sessions are held in
 memory keyed by session_id (multi-tenant is a future layer).
+
+Single-process / dev-only constraint: ``_sessions`` and ``_session_factory``
+are process-global, so this router assumes one worker and no horizontal
+scaling. The registry only evicts on the final blueprint turn, so an interview
+abandoned mid-way leaks its session for the life of the process — there is no
+TTL or size cap yet. Persistence, eviction, and multi-tenant isolation are
+deferred to a future layer.
 """
 from __future__ import annotations
 

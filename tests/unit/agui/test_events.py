@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
 from qwenpaw.agui.events import (
-    RunStartedEvent, RunErrorEvent, TextMessageContentEvent,
-    StateSnapshotEvent, CustomEvent,
+    RunStartedEvent,
+    RunErrorEvent,
+    TextMessageContentEvent,
+    StateSnapshotEvent,
+    CustomEvent,
 )
 
 
@@ -15,7 +18,11 @@ def test_run_started_serializes_camelcase_with_type():
 def test_text_message_content_carries_delta():
     ev = TextMessageContentEvent(message_id="m1", delta="Olá")
     data = json.loads(ev.model_dump_json(by_alias=True, exclude_none=True))
-    assert data == {"type": "TEXT_MESSAGE_CONTENT", "messageId": "m1", "delta": "Olá"}
+    assert data == {
+        "type": "TEXT_MESSAGE_CONTENT",
+        "messageId": "m1",
+        "delta": "Olá",
+    }
 
 
 def test_state_snapshot_holds_arbitrary_dict():
@@ -28,7 +35,11 @@ def test_state_snapshot_holds_arbitrary_dict():
 def test_custom_event_wraps_named_payload():
     ev = CustomEvent(name="a2ui", value={"messageType": "createSurface"})
     data = json.loads(ev.model_dump_json(by_alias=True, exclude_none=True))
-    assert data == {"type": "CUSTOM", "name": "a2ui", "value": {"messageType": "createSurface"}}
+    assert data == {
+        "type": "CUSTOM",
+        "name": "a2ui",
+        "value": {"messageType": "createSurface"},
+    }
 
 
 def test_run_error_omits_optional_code_when_absent():

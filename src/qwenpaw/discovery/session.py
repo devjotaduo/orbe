@@ -18,7 +18,7 @@ class TurnResult:
     """Outcome of advancing the interview by one turn."""
 
     state: dict[str, Any] = field(default_factory=dict)
-    question: str | None = None        # next agent question (None when done)
+    question: str | None = None  # next agent question (None when done)
     blueprint: dict[str, Any] | None = None  # set on the final turn
     done: bool = False
 
