@@ -1181,3 +1181,31 @@ git commit -m "chore(discovery): lint, suíte verde e gate do guardian aprovado"
 - §7 critérios de aceite → cobertos pelos testes do runner (caso e-commerce ponta-a-ponta) e CLI. ✅
 
 Consistência de tipos: `DiscoveryState`, `OpenArea`, `Integration`, `ReflectUpdate`, `TeamBlueprint`, `AgentSpec` usados com os mesmos nomes/campos em todas as tasks. `DiscoverySession(state, out_dir=...)` e métodos `segment_lookup/reflect/emit_blueprint/build_toolkit` consistentes entre Tasks 3, 5, 6. `run_discovery_session(session_id, out_dir)` consistente entre Tasks 6 e 7.
+
+---
+
+## Addendum — 2026-06-11 — reconciliação com a camada A2UI/AG-UI (OVERRIDE)
+
+Este plano foi escrito **antes** da camada A2UI/AG-UI (spec `2026-06-11-a2ui-agui-discovery-ui-design.md`, já implementada). Essa camada criou, em `src/qwenpaw/discovery/`, arquivos que **conflitam por nome** com este plano. As regras abaixo **têm precedência** sobre o corpo do plano sempre que houver conflito.
+
+### Já existe no código (não recriar, não sobrescrever)
+- `discovery/session.py` — `DiscoverySession` é uma **`Protocol`** de transporte: `async next_turn(user_message: str | None) -> TurnResult`; `TurnResult{state, question, blueprint, done}`. **É a costura canônica** entre o cérebro e o router SSE.
+- `discovery/scripted_session.py` — `ScriptedDiscoverySession` (sessão canned, sem LLM) que implementa a Protocol; usada hoje pelo `/discovery`.
+- `app/routers/discovery_stream.py` — expõe `set_session_factory(factory)`; por padrão usa a scriptada.
+- Testes da camada A2UI em `tests/unit/discovery/`.
+
+### Overrides obrigatórios neste plano
+1. **Renomear a classe concreta.** A classe de Task 3 (`tools.py`, hoje chamada `DiscoverySession`, que segura o estado mutável e expõe `segment_lookup/reflect/emit_blueprint/build_toolkit`) passa a se chamar **`InterviewSession`**. Atualizar TODAS as referências (Tasks 3, 5, 6, 7, imports nos testes, `__init__.py`). **Nunca** reusar o nome `DiscoverySession` para essa classe — esse nome pertence à Protocol em `session.py`.
+2. **`__init__.py`.** Exporta `InterviewSession`, `run_discovery_cli`/`run_discovery_session`, e re-exporta `DiscoverySession`+`TurnResult` de `session.py`. Não apagar o que a camada A2UI colocou lá.
+3. **Diretório de testes.** Todos os testes deste plano vão para **`tests/unit/discovery/`** (não `tests/discovery/`), convivendo com `test_scripted_session.py`. Ajustar os caminhos de todas as Tasks.
+4. **Novo arquivo de costura — `discovery/live_session.py` (nova Task 6b).** Uma classe `LiveDiscoverySession` que **implementa a Protocol `DiscoverySession`** (`next_turn`) dirigindo o agente real (Task 5/6) **um turno por vez**:
+   - `next_turn(None)` → roda o primeiro passo (sem resposta do usuário) e retorna a 1ª pergunta + `DiscoveryState` snapshot (`question` preenchido, `done=False`).
+   - `next_turn(texto)` → injeta a resposta, roda `reflect` + escolhe a próxima pergunta; retorna pergunta + estado. Quando o critério de parada dispara (ou o agente chama `emit_blueprint`), retorna `blueprint` (dict do `TeamBlueprint`) + `done=True`, `question=None`.
+   - Mantém o `InterviewSession`/`DiscoveryState` vivo entre chamadas (a instância guarda o estado; o router já mantém uma instância por `session_id`).
+   - Fábrica `make_live_session_factory()` (ou `LiveDiscoverySession` direto) + um ponto de wiring `set_session_factory(make_live_session_factory())` (ex.: chamado no startup do app ou via flag), para o `/discovery` passar a usar o cérebro real. **Não remover** a `ScriptedDiscoverySession` (continua útil para testes/offline).
+   - **Teste** (`tests/unit/discovery/test_live_session.py`, LLM mockado): com respostas canned de e-commerce, `next_turn` produz perguntas e, ao final, um `TurnResult` com `blueprint` válido contra `TeamBlueprint` e `done=True` — espelhando o teste do runner (Task 6) mas pela interface `next_turn`.
+5. **Reuso do builder A2UI.** O `blueprint` retornado por `next_turn`/`emit_blueprint` é o **dict do contrato `blueprint.json`** (o mesmo que `a2ui/builder.py::build_blueprint_surface` já consome). Não precisa mudar o builder; só garantir que o dict do `TeamBlueprint.model_dump()` bate com os campos que o builder lê (`company_profile`, `proposed_team[*].name/role/objective/tools_integrations`, `detected_integrations[*].name`, `open_questions`).
+
+### Critério de aceite adicional
+- `/discovery` (router já existente) passa a poder ser servido pelo **agente real** via `set_session_factory(make_live_session_factory())`, e o smoke ponta-a-ponta (entrevista → blueprint → surface A2UI) funciona com o cérebro real (LLM mockado nos testes; real no uso).
+- A `ScriptedDiscoverySession` e seus testes continuam verdes (nada quebrado na camada A2UI).
