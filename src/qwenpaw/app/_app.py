@@ -213,6 +213,24 @@ async def lifespan(  # pylint: disable=too-many-statements,too-many-branches
 
     auto_register_from_env()
 
+    # Opt-in: route /discovery to the real LLM-driven brain when
+    # QWENPAW_DISCOVERY_LIVE is set; otherwise the scripted session stays
+    # the safe default. Imported locally to avoid the discovery/agentscope
+    # import cost on every startup.
+    try:
+        from ..discovery.live_session import wire_live_session_if_enabled
+
+        if wire_live_session_if_enabled():
+            logger.info(
+                "Discovery /stream wired to the live LLM-driven session "
+                "(QWENPAW_DISCOVERY_LIVE enabled).",
+            )
+    except Exception:
+        logger.debug(
+            "Live discovery wiring skipped due to error",
+            exc_info=True,
+        )
+
     # Telemetry runs in a background thread to avoid blocking startup.
     def _maybe_collect_telemetry():
         try:
