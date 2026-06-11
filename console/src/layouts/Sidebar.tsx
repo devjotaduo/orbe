@@ -55,11 +55,15 @@ interface SidebarProps {
   collapsed?: boolean;
   /** Sets collapse to a specific value (preferred over onToggleCollapse for programmatic use). */
   onSetCollapsed?: (val: boolean) => void;
+  /** Controlled pixel width from MainLayout drag-to-resize (overrides internal calculation). */
+  siderWidth?: number;
+  /** mousedown handler for the drag handle, provided by MainLayout. */
+  onDragStart?: (e: React.MouseEvent) => void;
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────
 
-export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCollapsed }: SidebarProps) {
+export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCollapsed, siderWidth: siderWidthProp, onDragStart }: SidebarProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { message } = useAppMessage();
@@ -298,7 +302,11 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const siderWidth = collapsed ? (isMobile ? 56 : 72) : 260;
+  // If MainLayout provides a controlled width (drag-to-resize), use it.
+  // Otherwise fall back to the default AionUi values.
+  const siderWidth = siderWidthProp !== undefined
+    ? siderWidthProp
+    : collapsed ? (isMobile ? 56 : 72) : 260;
   // Sticky chat is active when on /chat* or /coding routes.
   const isChatActive =
     selectedKey === "core.chat" || selectedKey === "core.coding";
@@ -316,12 +324,21 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
     )}
     <Sider
       width={siderWidth}
+      style={{ position: 'relative' }}
       className={`${styles.sider}${
         collapsed ? ` ${styles.siderCollapsed}` : ""
       }${isDark ? ` ${styles.siderDark}` : ""}${
         isMobile ? ` ${styles.siderMobileOverlay}` : ""
       }${isMobile && !collapsed ? ` ${styles.siderMobileOverlayOpen}` : ""}`}
     >
+      {/* Drag-to-resize handle — AionUi canônico */}
+      {!collapsed && !isMobile && onDragStart && (
+        <div
+          className={styles.siderResizeHandle}
+          onMouseDown={onDragStart}
+          aria-hidden="true"
+        />
+      )}
       {/* AionUi BrandHeader — 52px, logo square + app name */}
       {!collapsed && (
         <div className={styles.brandHeader}>
