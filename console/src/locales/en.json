@@ -106,7 +106,10 @@
     "teamTitle": "Proposed team",
     "statePanel": "Discovery state (debug)",
     "errorPrefix": "Error",
-    "completed": "Interview complete. Here is your proposed team."
+    "completed": "Interview complete. Here is your proposed team.",
+    "approvedTitle": "Team approved",
+    "approved": "Your blueprint was validated and saved.",
+    "approveError": "Could not approve the team"
   },
   "inbox": {
     "title": "Inbox",

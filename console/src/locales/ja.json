@@ -2198,7 +2198,10 @@
     "teamTitle": "提案チーム",
     "statePanel": "ディスカバリーの状態（デバッグ）",
     "errorPrefix": "エラー",
-    "completed": "インタビューが完了しました。これが提案チームです。"
+    "completed": "インタビューが完了しました。これが提案チームです。",
+    "approvedTitle": "チームを承認しました",
+    "approved": "ブループリントは検証され保存されました。",
+    "approveError": "チームを承認できませんでした"
   },
   "inbox": {
     "title": "受信トレイ",

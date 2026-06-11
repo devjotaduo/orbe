@@ -4,10 +4,13 @@ import { renderWithProviders } from "@/test/common_setup";
 import type { AguiEvent } from "../../api/types/agui";
 import DiscoveryPage from "./index";
 
-const { mockStreamTurn } = vi.hoisted(() => ({ mockStreamTurn: vi.fn() }));
+const { mockStreamTurn, mockAction } = vi.hoisted(() => ({
+  mockStreamTurn: vi.fn(),
+  mockAction: vi.fn(),
+}));
 
 vi.mock("../../api/modules/discovery", () => ({
-  discoveryApi: { streamTurn: mockStreamTurn },
+  discoveryApi: { streamTurn: mockStreamTurn, action: mockAction },
 }));
 
 vi.mock("react-i18next", () => ({
@@ -70,9 +73,70 @@ const BLUEPRINT_TURN: AguiEvent[] = [
   { type: "RUN_FINISHED", threadId: "t", runId: "r" },
 ];
 
+/** Final turn delivering an editable surface (bound input + approve button). */
+const EDITABLE_TURN: AguiEvent[] = [
+  {
+    type: "CUSTOM",
+    name: "a2ui",
+    value: { messageType: "createSurface", surfaceId: "blueprint", root: "root" },
+  },
+  {
+    type: "CUSTOM",
+    name: "a2ui",
+    value: {
+      messageType: "updateComponents",
+      surfaceId: "blueprint",
+      components: [
+        { id: "root", type: "Column", properties: {}, children: ["n", "ok"] },
+        {
+          id: "n",
+          type: "TextInput",
+          properties: { bind: "proposed_team/0/name", label: "Nome" },
+          children: [],
+        },
+        {
+          id: "ok",
+          type: "Button",
+          properties: {
+            text: "Aprovar time",
+            variant: "primary",
+            action: { name: "approve_team" },
+          },
+          children: [],
+        },
+      ],
+    },
+  },
+  {
+    type: "CUSTOM",
+    name: "a2ui",
+    value: {
+      messageType: "updateDataModel",
+      surfaceId: "blueprint",
+      data: { proposed_team: [{ name: "Atendente" }] },
+    },
+  },
+  { type: "RUN_FINISHED", threadId: "t", runId: "r" },
+];
+
+/** Make discoveryApi.action drive `onEvent` with a scripted event list. */
+function scriptAction(events: AguiEvent[]) {
+  mockAction.mockImplementationOnce(
+    async (
+      _sessionId: string,
+      _name: string,
+      _data: Record<string, unknown>,
+      onEvent: (ev: AguiEvent) => void,
+    ) => {
+      for (const ev of events) onEvent(ev);
+    },
+  );
+}
+
 describe("DiscoveryPage", () => {
   beforeEach(() => {
     mockStreamTurn.mockReset();
+    mockAction.mockReset();
   });
   afterEach(() => {
     vi.clearAllMocks();
@@ -154,6 +218,58 @@ describe("DiscoveryPage", () => {
 
     await waitFor(() => expect(screen.getByText("discovery.start")).toBeTruthy());
     expect(screen.queryByText("Time proposto")).toBeNull();
+  });
+
+  it("editing a bound field and approving sends the edited data model", async () => {
+    scriptTurn(EDITABLE_TURN);
+    scriptAction([{ type: "RUN_FINISHED", threadId: "t", runId: "r" }]);
+    renderWithProviders(<DiscoveryPage />);
+
+    fireEvent.click(screen.getByText("discovery.start"));
+    await waitFor(() =>
+      expect(screen.getByDisplayValue("Atendente")).toBeTruthy(),
+    );
+
+    fireEvent.change(screen.getByDisplayValue("Atendente"), {
+      target: { value: "Vendedor" },
+    });
+    fireEvent.click(screen.getByText("Aprovar time"));
+
+    await waitFor(() =>
+      expect(screen.getByText("discovery.approvedTitle")).toBeTruthy(),
+    );
+    expect(mockAction).toHaveBeenCalledWith(
+      expect.any(String),
+      "approve_team",
+      { proposed_team: [{ name: "Vendedor" }] },
+      expect.any(Function),
+    );
+  });
+
+  it("a RUN_ERROR on approve shows an alert and preserves the edits", async () => {
+    scriptTurn(EDITABLE_TURN);
+    scriptAction([
+      { type: "RUN_ERROR", message: "blueprint invalido", code: "E422" },
+      { type: "RUN_FINISHED", threadId: "t", runId: "r" },
+    ]);
+    renderWithProviders(<DiscoveryPage />);
+
+    fireEvent.click(screen.getByText("discovery.start"));
+    await waitFor(() =>
+      expect(screen.getByDisplayValue("Atendente")).toBeTruthy(),
+    );
+
+    fireEvent.change(screen.getByDisplayValue("Atendente"), {
+      target: { value: "Vendedor" },
+    });
+    fireEvent.click(screen.getByText("Aprovar time"));
+
+    await waitFor(() =>
+      expect(screen.getByText(/blueprint invalido/)).toBeTruthy(),
+    );
+    // Not approved, and the edit is still in the input for a retry.
+    expect(screen.queryByText("discovery.approvedTitle")).toBeNull();
+    expect(screen.getByDisplayValue("Vendedor")).toBeTruthy();
   });
 
   it("surfaces a RUN_ERROR as a visible error alert", async () => {

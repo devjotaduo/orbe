@@ -106,7 +106,10 @@
     "teamTitle": "建议的团队",
     "statePanel": "探索状态（调试）",
     "errorPrefix": "错误",
-    "completed": "访谈完成。这是为你建议的团队。"
+    "completed": "访谈完成。这是为你建议的团队。",
+    "approvedTitle": "团队已批准",
+    "approved": "你的蓝图已通过校验并保存。",
+    "approveError": "无法批准团队"
   },
   "inbox": {
     "title": "收件箱",

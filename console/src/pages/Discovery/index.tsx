@@ -44,6 +44,13 @@ export default function DiscoveryPage() {
   const [started, setStarted] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Client-side editable copy of the surface data model (binds write here).
+  const [dataModel, setDataModel] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [approved, setApproved] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
 
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -104,7 +111,14 @@ export default function DiscoveryPage() {
         // turn). Gating on this — not on `surface !== null` at render time —
         // keeps the composer alive if a future mid-interview CUSTOM a2ui event
         // ever arrives without ending the run.
-        if (gotSurface) setDone(true);
+        if (gotSurface) {
+          setDone(true);
+          // Seed the editable data model from the surface exactly once, so
+          // later surface updates never clobber in-progress user edits.
+          setDataModel(
+            (prev) => prev ?? { ...(surfaceRef.current?.data ?? {}) },
+          );
+        }
       } catch (err) {
         // Aborts (unmount / restart / superseded turn) are intentional.
         if (controller.signal.aborted) return;
@@ -136,6 +150,42 @@ export default function DiscoveryPage() {
     await runTurn(msg);
   }, [input, busy, runTurn]);
 
+  // approve_team: POST the client-edited data model; the backend validates it
+  // against TeamBlueprint and persists blueprint.json/.md. RUN_ERROR keeps the
+  // edits intact so the user can fix the field and retry.
+  const approve = useCallback(async () => {
+    if (!dataModel || approving || approved) return;
+    setApproving(true);
+    setApproveError(null);
+    let failed = false;
+    try {
+      await discoveryApi.action(
+        sessionId,
+        "approve_team",
+        dataModel,
+        (ev: AguiEvent) => {
+          if (ev.type === "RUN_ERROR") {
+            failed = true;
+            setApproveError(ev.message);
+          }
+        },
+      );
+      if (!failed) setApproved(true);
+    } catch (err) {
+      setApproveError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setApproving(false);
+    }
+  }, [dataModel, approving, approved, sessionId]);
+
+  const handleAction = useCallback(
+    (name: string) => {
+      if (name === "approve_team") void approve();
+      // Structural actions (add/remove/move) arrive in Fase 2.
+    },
+    [approve],
+  );
+
   const restart = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -148,6 +198,10 @@ export default function DiscoveryPage() {
     setDone(false);
     setBusy(false);
     setStarted(false);
+    setDataModel(null);
+    setApproved(false);
+    setApproving(false);
+    setApproveError(null);
   }, []);
 
   const completed = done;
@@ -272,8 +326,33 @@ export default function DiscoveryPage() {
                     </Button>
                   }
                 >
-                  {surface && surface.root ? (
-                    <A2uiRenderer surface={surface} />
+                  {approved ? (
+                    <Alert
+                      type="success"
+                      showIcon
+                      message={t("discovery.approvedTitle")}
+                      description={t("discovery.approved")}
+                    />
+                  ) : surface && surface.root ? (
+                    <>
+                      {approveError && (
+                        <Alert
+                          type="error"
+                          showIcon
+                          className={styles.approveAlert}
+                          message={t("discovery.approveError")}
+                          description={approveError}
+                        />
+                      )}
+                      <Spin spinning={approving}>
+                        <A2uiRenderer
+                          surface={surface}
+                          data={dataModel ?? undefined}
+                          onDataChange={setDataModel}
+                          onAction={handleAction}
+                        />
+                      </Spin>
+                    </>
                   ) : (
                     <Empty
                       image={Empty.PRESENTED_IMAGE_SIMPLE}

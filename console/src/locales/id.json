@@ -81,7 +81,10 @@
     "teamTitle": "Tim yang diusulkan",
     "statePanel": "Status penemuan (debug)",
     "errorPrefix": "Kesalahan",
-    "completed": "Wawancara selesai. Inilah tim yang diusulkan untuk Anda."
+    "completed": "Wawancara selesai. Inilah tim yang diusulkan untuk Anda.",
+    "approvedTitle": "Tim disetujui",
+    "approved": "Blueprint Anda telah divalidasi dan disimpan.",
+    "approveError": "Tidak dapat menyetujui tim"
   },
   "header": {
     "changelog": "Catatan Perubahan",

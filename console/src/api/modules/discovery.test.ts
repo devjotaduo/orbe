@@ -131,6 +131,49 @@ describe("discoveryApi.streamTurn", () => {
     ).rejects.toThrow(/503/);
   });
 
+  it("action POSTs to /api/discovery/action and streams events", async () => {
+    (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+      streamResponse([
+        'data: {"type":"RUN_FINISHED","threadId":"t","runId":"r"}\n\n',
+      ]),
+    );
+
+    const seen: string[] = [];
+    await discoveryApi.action("s1", "approve_team", { a: 1 }, (ev) =>
+      seen.push(ev.type),
+    );
+
+    const [url, init] = (fetch as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0];
+    expect(url).toBe("/api/discovery/action");
+    expect(init.method).toBe("POST");
+    expect(init.headers).toMatchObject({
+      "Content-Type": "application/json",
+      Authorization: "Bearer test",
+    });
+    expect(JSON.parse(init.body)).toEqual({
+      session_id: "s1",
+      action: "approve_team",
+      data: { a: 1 },
+    });
+    expect(seen).toEqual(["RUN_FINISHED"]);
+  });
+
+  it("action forwards an AbortSignal to fetch when provided", async () => {
+    (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+      streamResponse([
+        'data: {"type":"RUN_FINISHED","threadId":"t","runId":"r"}\n\n',
+      ]),
+    );
+
+    const controller = new AbortController();
+    await discoveryApi.action("s1", "approve_team", {}, () => {}, controller.signal);
+
+    const [, init] = (fetch as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0];
+    expect(init.signal).toBe(controller.signal);
+  });
+
   it("decodes a multi-byte UTF-8 character split across two reads", async () => {
     // "é" (U+00E9) is two bytes in UTF-8 (0xC3 0xA9); split them across reads
     // to prove the streaming TextDecoder ({ stream: true }) reassembles it.

@@ -32,13 +32,61 @@ export function parseSseFrames(buffer: string): {
   return { events, rest };
 }
 
+/**
+ * POST `body` to `path` and stream the `text/event-stream` response, invoking
+ * `onEvent` for each parsed AG-UI event. Resolves when the stream ends.
+ *
+ * Shared by every discovery streaming endpoint — these are POSTs returning
+ * SSE, so we read the `ReadableStream` directly (EventSource only does GET).
+ */
+async function streamPost(
+  path: string,
+  body: Record<string, unknown>,
+  onEvent: (ev: AguiEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const resp = await fetch(getApiUrl(path), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(),
+    },
+    body: JSON.stringify(body),
+    signal,
+  });
+  if (!resp.ok) {
+    throw new Error(`discovery stream failed: ${resp.status}`);
+  }
+  if (!resp.body) {
+    throw new Error("discovery stream: no response body");
+  }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const { events, rest } = parseSseFrames(buffer);
+      buffer = rest;
+      for (const ev of events) onEvent(ev as AguiEvent);
+    }
+    // Flush any trailing multibyte sequence the streaming decoder held back,
+    // then parse a final frame that may not end in a blank line.
+    buffer += decoder.decode();
+    const tail = parseSseFrames(buffer);
+    for (const ev of tail.events) onEvent(ev as AguiEvent);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 export const discoveryApi = {
   /**
    * Advance the discovery interview by one turn, invoking `onEvent` for each
    * AG-UI event as it streams in. Resolves when the turn's stream ends.
-   *
-   * The turn is a POST that returns `text/event-stream`, so we read the
-   * `ReadableStream` directly (EventSource only supports GET).
    */
   async streamTurn(
     sessionId: string,
@@ -46,41 +94,30 @@ export const discoveryApi = {
     onEvent: (ev: AguiEvent) => void,
     signal?: AbortSignal,
   ): Promise<void> {
-    const resp = await fetch(getApiUrl("/discovery/stream"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...buildAuthHeaders(),
-      },
-      body: JSON.stringify({ session_id: sessionId, message }),
+    return streamPost(
+      "/discovery/stream",
+      { session_id: sessionId, message },
+      onEvent,
       signal,
-    });
-    if (!resp.ok) {
-      throw new Error(`discovery stream failed: ${resp.status}`);
-    }
-    if (!resp.body) {
-      throw new Error("discovery stream: no response body");
-    }
+    );
+  },
 
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    try {
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const { events, rest } = parseSseFrames(buffer);
-        buffer = rest;
-        for (const ev of events) onEvent(ev as AguiEvent);
-      }
-      // Flush any trailing multibyte sequence the streaming decoder held back,
-      // then parse a final frame that may not end in a blank line.
-      buffer += decoder.decode();
-      const tail = parseSseFrames(buffer);
-      for (const ev of tail.events) onEvent(ev as AguiEvent);
-    } finally {
-      reader.releaseLock();
-    }
+  /**
+   * Dispatch a surface action (e.g. `approve_team`) with the client-edited
+   * data model. Streams the backend's AG-UI confirmation/error events.
+   */
+  async action(
+    sessionId: string,
+    name: string,
+    data: Record<string, unknown>,
+    onEvent: (ev: AguiEvent) => void,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    return streamPost(
+      "/discovery/action",
+      { session_id: sessionId, action: name, data },
+      onEvent,
+      signal,
+    );
   },
 };

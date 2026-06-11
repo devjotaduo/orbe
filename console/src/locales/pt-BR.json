@@ -2237,7 +2237,10 @@
     "teamTitle": "Time proposto",
     "statePanel": "Estado da descoberta (debug)",
     "errorPrefix": "Erro",
-    "completed": "Entrevista concluída. Este é o seu time proposto."
+    "completed": "Entrevista concluída. Este é o seu time proposto.",
+    "approvedTitle": "Time aprovado",
+    "approved": "Seu blueprint foi validado e salvo.",
+    "approveError": "Não foi possível aprovar o time"
   },
   "inbox": {
     "title": "Colheita diária de IA",
