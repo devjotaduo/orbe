@@ -32,7 +32,7 @@
   padding: 0 !important;
   border-radius: 6px !important;
   color: @text-secondary !important;
-  transition: background 0.15s, color 0.15s !important;
+  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring !important;
 
   &:hover:not(:disabled) {
     background: @bg-hover !important;
@@ -161,11 +161,11 @@
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 // AionUi: 260px wide, bg-bg-2, border-r border-border-base, flex column
 .sider {
-  background: @bg-1 !important;
+  background: @bg-2 !important;
   border-right: 1px solid @border-base !important;
   overflow: auto;
   height: calc(100vh - @titlebar-height);
-  padding: 0 8px;
+  padding: 0 10px;
   display: flex;
   flex-direction: column;
 
@@ -194,13 +194,13 @@
     top: 0;
     z-index: 10;
     margin-bottom: 4px;
-    background: @bg-1;
+    background: @bg-3;
     border-radius: 0;
   }
 
   // Sticky Chat button — AionUi NavRow style, flat bg
   .stickyChatButton {
-    background: @bg-1;
+    background: @bg-2;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -213,11 +213,12 @@
     color: @text-secondary;
     font-size: @nav-font-size;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
 
     &:hover {
       background: @bg-hover;
       color: @text-primary;
+      transform: scale(0.98);
     }
   }
 
@@ -344,9 +345,40 @@
   }
 }
 
+// ─── Mobile overlay sidebar ───────────────────────────────────────────────────
+.siderMobileOverlay {
+  position: fixed !important;
+  left: 0 !important;
+  top: @titlebar-height !important;
+  height: calc(100vh - @titlebar-height) !important;
+  z-index: @z-sider-mobile !important;
+  transform: translateX(-100%) !important;
+  transition: transform @transition-medium @ease-spring !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.siderMobileOverlayOpen {
+  transform: translateX(0) !important;
+}
+
+.siderBackdrop {
+  position: fixed;
+  inset: 0;
+  top: @titlebar-height;
+  background: @mobile-backdrop-bg;
+  z-index: @z-sider-backdrop;
+  cursor: pointer;
+  animation: backdropIn @transition-medium @ease-spring forwards;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 // ─── Sidebar dark ─────────────────────────────────────────────────────────────
 .siderDark {
-  background: @bg-2-dark !important;
+  background: @bg-1-dark !important;
   border-right-color: @border-base-dark !important;
 
   .agentScopedSection {
@@ -355,7 +387,7 @@
   }
 
   .agentSelectorContainer {
-    background: @bg-1-dark;
+    background: @bg-2-dark;
   }
 
   .stickyChatButton {
@@ -375,7 +407,7 @@
 
   :global {
     .qwenpaw-menu {
-      background: @bg-2-dark !important;
+      background: @bg-1-dark !important;
       border-inline-end: 0 !important;
     }
 
@@ -453,7 +485,7 @@
 .collapseToggle {
   color: @text-muted;
   border-radius: @sidebar-radius;
-  transition: all 0.15s;
+  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
 
   &:hover {
     background: @bg-hover !important;
@@ -492,11 +524,16 @@
   background: transparent;
   cursor: pointer;
   color: @text-muted;
-  transition: background 0.15s, color 0.15s;
+  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
 
   &:hover {
     background: @bg-hover;
     color: @text-primary;
+    transform: scale(0.92);
+  }
+
+  &:active {
+    transform: scale(0.84);
   }
 }
 
@@ -799,4 +836,16 @@
   }
 
   .anticon, svg { color: inherit !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titlebarBtn,
+  .collapsedNavItem,
+  .stickyChatButton,
+  .authBtn,
+  .collapseToggle,
+  .brandLogoSquare {
+    transition: none !important;
+    transform: none !important;
+  }
 }
