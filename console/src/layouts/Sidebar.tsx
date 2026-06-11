@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppMessage } from "../hooks/useAppMessage";
 import AgentSelector from "../components/AgentSelector";
+import { SearchOutlined } from "@ant-design/icons";
 import {
   SparkChatTabFill,
   SparkExitFullscreenLine,
@@ -78,6 +79,7 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   const [accountForm] = Form.useForm();
   // collapsedProp from MainLayout is the source of truth; fall back to local state
   // for standalone use (e.g. tests that don't pass the prop).
+  const [searchQuery, setSearchQuery] = useState('');
   const [collapsedLocal, setCollapsedLocal] = useState(false);
   const collapsed = collapsedProp ?? collapsedLocal;
   const setCollapsed = (val: boolean | ((prev: boolean) => boolean)) => {
@@ -90,6 +92,11 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   };
   const [isMobile, setIsMobile] = useState(isMobileSidebarViewport);
   const [hasInboxUnread, setHasInboxUnread] = useState(false);
+
+  // Limpa o campo de busca sempre que sidebar colapsa.
+  useEffect(() => {
+    if (collapsed) setSearchQuery('');
+  }, [collapsed]);
 
   // Menu + route snapshots from registry (builtin + plugin registrations merged).
   const agentMenu = useMenuItems("primary.agentScoped");
@@ -118,6 +125,7 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
       setIsMobile(mediaQuery.matches);
       if (mediaQuery.matches) {
         setCollapsed(true);
+        setSearchQuery('');
       }
     };
 
@@ -153,6 +161,22 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
     return () => window.clearInterval(timer);
   }, []);
 
+  // ── Search filter ─────────────────────────────────────────────────────────
+
+  /** Filtra recursivamente um array de MenuItem pelo searchQuery (case-insensitive no label). */
+  const filterByQuery = (items: MenuItem[], query: string): MenuItem[] => {
+    if (!query) return items;
+    const lower = query.toLowerCase();
+    return items.reduce<MenuItem[]>((acc, item) => {
+      const label = typeof item.label === 'string' ? item.label : '';
+      const children = item.children ? filterByQuery(item.children as MenuItem[], query) : undefined;
+      if (label.toLowerCase().includes(lower) || (children && children.length > 0)) {
+        acc.push(children ? { ...item, children } : item);
+      }
+      return acc;
+    }, []);
+  };
+
   // ── Adapter: convert MenuItem trees to antd, with inbox badge decoration.
 
   /** Wrap the inbox label with the unread-Badge while keeping all other labels intact. */
@@ -166,15 +190,15 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   };
 
   const agentMenuItems = useMemo(
-    () => toAntdItems(agentMenu, { collapsed, decorateLabel }),
+    () => toAntdItems(filterByQuery(agentMenu, searchQuery), { collapsed, decorateLabel }),
     // hasInboxUnread closure inside decorateLabel — listed as dep explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [agentMenu, collapsed, hasInboxUnread],
+    [agentMenu, collapsed, hasInboxUnread, searchQuery],
   );
 
   const settingsMenuItems = useMemo(
-    () => toAntdItems(settingsMenu, { collapsed }),
-    [settingsMenu, collapsed],
+    () => toAntdItems(filterByQuery(settingsMenu, searchQuery), { collapsed }),
+    [settingsMenu, collapsed, searchQuery],
   );
 
   const derivedOpenKeys = useMemo(
@@ -404,6 +428,16 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
                 <SparkChatTabFill size={16} />
                 <span>{t("nav.chat")}</span>
               </button>
+            </div>
+            <div className={styles.siderSearch}>
+              <Input
+                prefix={<SearchOutlined style={{ fontSize: 12, opacity: 0.5 }} />}
+                placeholder={t('nav.search', 'Search...')}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                allowClear
+                size="small"
+              />
             </div>
             <Slot name="sider.top" kind="fill" />
             <Menu
