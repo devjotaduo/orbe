@@ -15,7 +15,9 @@ deferred to a future layer.
 from __future__ import annotations
 
 import logging
+import os
 import uuid
+from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import APIRouter
@@ -31,6 +33,7 @@ from qwenpaw.agui.events import (
     StateSnapshotEvent,
 )
 from qwenpaw.a2ui.builder import build_blueprint_surface
+from qwenpaw.discovery.finalize import finalize_blueprint
 from qwenpaw.discovery.scripted_session import ScriptedDiscoverySession
 from qwenpaw.discovery.session import DiscoverySession
 
@@ -77,13 +80,55 @@ async def discovery_stream(req: DiscoveryTurnRequest) -> StreamingResponse:
             if result.blueprint is not None:
                 for a2ui_msg in build_blueprint_surface(result.blueprint):
                     payload: dict[str, Any] = a2ui_msg.model_dump(
-                        by_alias=True
+                        by_alias=True,
                     )
                     yield sse(CustomEvent(name="a2ui", value=payload))
                 _sessions.pop(req.session_id, None)  # session complete
 
         except Exception as exc:  # surface, never swallow
             logger.exception("discovery turn failed")
+            yield sse(RunErrorEvent(message=str(exc)))
+        finally:
+            yield sse(RunFinishedEvent(thread_id=thread_id, run_id=run_id))
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+class DiscoveryActionRequest(BaseModel):
+    session_id: str
+    action: str
+    data: dict[str, Any] = {}
+
+
+def _action_out_dir(session_id: str) -> Path:
+    base = Path(
+        os.environ.get("QWENPAW_DISCOVERY_OUT", "discovery_sessions"),
+    )
+    return base / session_id
+
+
+@router.post("/discovery/action")
+async def discovery_action(req: DiscoveryActionRequest) -> StreamingResponse:
+    thread_id, run_id = req.session_id, uuid.uuid4().hex
+
+    async def generate():
+        yield sse(RunStartedEvent(thread_id=thread_id, run_id=run_id))
+        try:
+            if req.action != "approve_team":
+                raise ValueError(f"ação desconhecida: {req.action!r}")
+            bp = finalize_blueprint(
+                req.data,
+                _action_out_dir(req.session_id),
+            )
+            for ev in text_message_events(
+                uuid.uuid4().hex,
+                f"Time aprovado: {len(bp.proposed_team)} agente(s). "
+                "Blueprint gravado.",
+            ):
+                yield sse(ev)
+            _sessions.pop(req.session_id, None)
+        except Exception as exc:  # surface, never swallow
+            logger.exception("discovery action failed")
             yield sse(RunErrorEvent(message=str(exc)))
         finally:
             yield sse(RunFinishedEvent(thread_id=thread_id, run_id=run_id))
