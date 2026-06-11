@@ -28,8 +28,9 @@ def test_discovery_state_defaults_and_helpers():
         OpenArea(id="b", topic="B", confidence=0.2, priority=2),
     ]
     assert st.next_focus().id == "b"
-    # ready_to_emit() True only when all priority>=3 areas pass threshold
-    assert st.ready_to_emit(threshold=0.7) is True  # nenhuma área prio>=3
+    # ready_to_emit() True quando todas as áreas prio>=3 superam limiar
+    # (áreas "a" e "b" têm prio 1 e 2 — nenhuma é crítica, mas há áreas → True)
+    assert st.ready_to_emit(threshold=0.7) is True
 
 
 def test_blueprint_roundtrip_json():
@@ -86,3 +87,38 @@ def test_reflect_update_parses():
         '"company_updates":{"segment":"e-commerce"}}'
     )
     assert upd.new_areas[0].id == "logistica"
+
+
+# --- MISSING TESTS (flagged by reviewer) ------------------------------------
+
+def test_open_area_id_uniqueness_enforced():
+    """DiscoveryState deve rejeitar duas OpenArea com o mesmo id."""
+    with pytest.raises(ValidationError):
+        DiscoveryState(
+            session_id="s",
+            open_areas=[
+                OpenArea(id="dup", topic="A", confidence=0.1, priority=3),
+                OpenArea(id="dup", topic="B", confidence=0.2, priority=4),
+            ],
+        )
+
+
+def test_ready_to_emit_false_when_no_areas():
+    """ready_to_emit() retorna False quando open_areas está vazio."""
+    st = DiscoveryState(session_id="x")
+    assert st.open_areas == []
+    assert st.ready_to_emit() is False
+
+
+def test_reflect_update_confidence_updates():
+    """ReflectUpdate stores float confidence_updates keyed by area id."""
+    upd = ReflectUpdate(
+        learned="empresa usa planilha para controle",
+        confidence_updates={"area1": 0.85},
+    )
+    assert upd.confidence_updates["area1"] == pytest.approx(0.85)
+    # validate via JSON round-trip as well
+    from pydantic import TypeAdapter
+    raw_json = upd.model_dump_json()
+    upd2 = ReflectUpdate.model_validate_json(raw_json)
+    assert upd2.confidence_updates["area1"] == pytest.approx(0.85)
