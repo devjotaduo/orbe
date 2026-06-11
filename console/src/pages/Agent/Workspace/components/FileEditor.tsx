@@ -2,8 +2,8 @@ import React, { useState, useMemo } from "react";
 import { Button, Card, Input, Switch } from "@agentscope-ai/design";
 import { CopyOutlined, UndoOutlined, SaveOutlined } from "@ant-design/icons";
 import type { MarkdownFile } from "../../../../api/types";
-import { XMarkdown } from "@ant-design/x-markdown";
 import { useTranslation } from "react-i18next";
+import { ShadowMarkdown } from "../../../../components/ShadowMarkdown";
 import { useAppMessage } from "../../../../hooks/useAppMessage";
 import { stripFrontmatter } from "../../../../utils/markdown";
 import { mermaidComponents } from "../../../../components/MermaidCodeBlock";
@@ -119,7 +119,7 @@ export const FileEditor: React.FC<FileEditorProps> = ({
                 )}
               </div>
               {showMarkdown && isMarkdownFile ? (
-                <XMarkdown
+                <ShadowMarkdown
                   content={markdownContent}
                   className={styles.markdownViewer}
                   components={mermaidComponents}

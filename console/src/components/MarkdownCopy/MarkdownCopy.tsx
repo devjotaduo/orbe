@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button, Switch, Input } from "@agentscope-ai/design";
 import { CopyOutlined } from "@ant-design/icons";
-import { XMarkdown } from "@ant-design/x-markdown";
 import { useTranslation } from "react-i18next";
+import { ShadowMarkdown } from "../ShadowMarkdown";
 import type { CSSProperties } from "react";
 import { useAppMessage } from "../../hooks/useAppMessage";
 import { stripFrontmatter } from "../../utils/markdown";
@@ -176,9 +176,10 @@ export function MarkdownCopy({
 
       {localShowMarkdown ? (
         <div className={styles.markdownViewer}>
-          <XMarkdown
+          <ShadowMarkdown
             content={markdownContent}
-            {...defaultMarkdownViewerProps}
+            style={defaultMarkdownViewerProps.style}
+            className={defaultMarkdownViewerProps.className}
             components={mermaidComponents}
             dompurifyConfig={{
               ADD_TAGS: ["pre", "code"],
