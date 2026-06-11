@@ -40,8 +40,13 @@ class Persona:
     id: str
     name: str
     description: str
-    expected_segment: str
+    # Chave canônica da seed CNAE; None = segmento fora da taxonomia curada
+    # (exercita o caminho de raciocínio livre do segment_lookup).
+    expected_segment: Optional[str]
     script: list[str]   # respostas em ordem; última deve ser /fim
+    # Para personas fora da seed: o segmento descrito livremente pelo LLM
+    # é aceito se contiver qualquer um destes termos (lowercase).
+    expected_segment_contains: list[str] = field(default_factory=list)
 
 
 PERSONAS: list[Persona] = [
@@ -160,6 +165,36 @@ PERSONAS: list[Persona] = [
             "/fim",
         ],
     ),
+    Persona(
+        id="petshop",
+        name="Pet Shop (fora da seed)",
+        description="Pet shop com banho e tosa — segmento fora da taxonomia curada",
+        expected_segment=None,
+        expected_segment_contains=["pet", "animal"],
+        script=[
+            "Tenho um pet shop com banho e tosa. Também vendemos ração e acessórios na nossa lojinha.",
+            "O agendamento do banho e tosa é todo pelo WhatsApp e a gente se perde. Cliente reclama da demora pra responder.",
+            "Usamos WhatsApp, uma agenda de papel para os horários e a máquina de cartão. Nada é integrado.",
+            "Somos 4 pessoas: eu, minha esposa e dois banhistas. Faturamos uns R$ 20 mil por mês.",
+            "Queria lembrar os clientes da vacina e do banho mensal automaticamente, e parar de perder horário vazio.",
+            "/fim",
+        ],
+    ),
+    Persona(
+        id="oficina_mecanica",
+        name="Oficina Mecânica (fora da seed)",
+        description="Oficina de manutenção automotiva — segmento fora da taxonomia curada",
+        expected_segment=None,
+        expected_segment_contains=["mec", "auto", "oficina", "veic", "veíc", "carro"],
+        script=[
+            "Tenho uma oficina mecânica. Fazemos revisão, troca de óleo, freios e suspensão de carros de passeio.",
+            "O cliente liga toda hora perguntando se o carro ficou pronto. Isso interrompe os mecânicos o dia inteiro.",
+            "Orçamento é por WhatsApp com foto da peça. O controle dos serviços é num quadro branco e caderno.",
+            "Somos 6: eu, 4 mecânicos e uma moça no balcão. Faturamos R$ 70 mil por mês.",
+            "Quero avisar o cliente do status do carro automaticamente e agilizar a aprovação dos orçamentos.",
+            "/fim",
+        ],
+    ),
 ]
 
 
@@ -210,7 +245,30 @@ def score_session(
 
     # 1. Segmento detectado (20 pts)
     detected = state.company.segment
-    if detected == persona.expected_segment:
+    if persona.expected_segment is None:
+        # Fora da seed: aceita descrição livre que mencione o ramo
+        det_l = (detected or "").lower()
+        if det_l and any(t in det_l for t in persona.expected_segment_contains):
+            _add(result, "Segmento", 20, 20,
+                 f"Fora da seed — descrição livre coerente: `{detected}`")
+            result.positives.append(
+                f"Raciocínio livre funcionou: segmento descrito como `{detected}`"
+            )
+        elif det_l:
+            _add(result, "Segmento", 8, 20,
+                 f"Fora da seed — `{detected}` não menciona o ramo esperado "
+                 f"({', '.join(persona.expected_segment_contains)})")
+            result.issues.append(
+                f"Segmento detectado incorretamente: descrição livre `{detected}` "
+                f"não corresponde ao ramo do negócio"
+            )
+        else:
+            _add(result, "Segmento", 0, 20, "Não detectado")
+            result.issues.append(
+                "Segmento NÃO detectado — fora da seed, o raciocínio livre "
+                "deveria preencher company.segment via reflect"
+            )
+    elif detected == persona.expected_segment:
         _add(result, "Segmento", 20, 20, f"Correto: `{detected}`")
         result.positives.append(f"Segmento detectado corretamente: `{detected}`")
     elif detected:
@@ -323,6 +381,122 @@ def score_session(
     return result
 
 
+# ─── LLM-as-judge: avaliação qualitativa da transcrição ─────────────────────
+
+_JUDGE_PROMPT = """\
+Você é um auditor de qualidade conversacional especializado em agentes de IA
+de atendimento. Você receberá a transcrição de uma entrevista entre um
+consultor de IA (linhas "Consultor:") e um empresário (linhas "Você:").
+
+Avalie SOMENTE a conduta do Consultor, com notas inteiras de 0 a 10:
+
+- clareza: as perguntas são claras, específicas e fáceis de responder?
+- empatia: o consultor acolhe, reconhece as dores e adapta o tom ao
+  empresário leigo?
+- nao_repeticao: penalize repetir a mesma pergunta ou a mesma estrutura
+  várias vezes (10 = nunca repete; 0 = insiste na mesma pergunta sempre).
+
+Você DEVE chamar a tool `submit_evaluation` exatamente UMA vez com as três
+notas e uma justificativa curta (2-3 frases) em português do Brasil.
+"""
+
+_QUAL_CRITERIA = (
+    ("clareza", "Clareza das perguntas"),
+    ("empatia", "Empatia"),
+    ("nao_repeticao", "Não-repetição"),
+)
+
+
+class _JudgeSession:
+    """Captura a avaliação estruturada emitida pelo agente juiz."""
+
+    def __init__(self) -> None:
+        self.result: Optional[dict] = None
+
+    async def submit_evaluation(
+        self,
+        clareza: int,
+        empatia: int,
+        nao_repeticao: int,
+        justificativa: str,
+    ):
+        """Registra a avaliação qualitativa da transcrição.
+
+        Args:
+            clareza: Nota 0-10 para clareza das perguntas do consultor.
+            empatia: Nota 0-10 para empatia e acolhimento.
+            nao_repeticao: Nota 0-10; 10 = nunca repetiu pergunta/estrutura.
+            justificativa: Justificativa curta (2-3 frases) das notas.
+
+        Returns:
+            `ToolChunk` de confirmação.
+        """
+        from agentscope.message import TextBlock, ToolResultState
+        from agentscope.tool import ToolChunk
+
+        def clamp(v: int) -> int:
+            return max(0, min(10, int(v)))
+
+        self.result = {
+            "clareza": clamp(clareza),
+            "empatia": clamp(empatia),
+            "nao_repeticao": clamp(nao_repeticao),
+            "justificativa": str(justificativa),
+        }
+        return ToolChunk(
+            is_last=True,
+            state=ToolResultState.SUCCESS,
+            content=[TextBlock(type="text", text="Avaliação registrada.")],
+        )
+
+
+def _build_judge_agent(judge: _JudgeSession):
+    """Agente juiz — mesmo padrão de build_discovery_agent (agent.py)."""
+    from agentscope.agent import Agent, ReActConfig
+    from agentscope.permission import PermissionMode
+    from agentscope.tool import FunctionTool, Toolkit
+
+    from qwenpaw.agents.model_factory import create_model_and_formatter
+
+    model, formatter = create_model_and_formatter()
+    innermost = model
+    while hasattr(innermost, "_inner"):
+        innermost = innermost._inner
+    while hasattr(innermost, "_model"):
+        innermost = innermost._model
+    if hasattr(innermost, "formatter"):
+        innermost.formatter = formatter
+    agent = Agent(
+        name="JudgeAgent",
+        system_prompt=_JUDGE_PROMPT,
+        model=model,
+        toolkit=Toolkit(
+            tools=[FunctionTool(judge.submit_evaluation, is_read_only=False)]
+        ),
+        react_config=ReActConfig(max_iters=3),
+    )
+    agent.state.permission_context.mode = PermissionMode.BYPASS
+    return agent
+
+
+async def _judge_transcript(transcript_text: str) -> Optional[dict]:
+    """Roda o juiz sobre a transcrição; None se o juiz falhar."""
+    from agentscope.message import UserMsg
+
+    judge = _JudgeSession()
+    agent = _build_judge_agent(judge)
+    await agent.reply(
+        UserMsg(
+            name="user",
+            content=(
+                "Avalie a transcrição abaixo e chame submit_evaluation.\n\n"
+                + transcript_text
+            ),
+        )
+    )
+    return judge.result
+
+
 # ─── Execução de uma sessão ──────────────────────────────────────────────────
 
 @dataclass
@@ -332,9 +506,12 @@ class SessionRun:
     stdout_log: str
     session: object   # DiscoverySession
     out_dir: Path
+    qual: Optional[dict] = None   # resultado do LLM-as-judge
 
 
-async def _run_persona(persona: Persona, tmp_dir: Path) -> SessionRun:
+async def _run_persona(
+    persona: Persona, tmp_dir: Path, use_judge: bool = True
+) -> SessionRun:
     """Executa uma sessão completa com respostas pré-roteirizadas."""
     from qwenpaw.discovery import run_discovery_session
     import qwenpaw.discovery.runner as runner_mod
@@ -365,12 +542,28 @@ async def _run_persona(persona: Persona, tmp_dir: Path) -> SessionRun:
         session = None  # type: ignore[assignment]
         print(f"[ERRO] {persona.name}: {exc}", file=sys.stderr)
 
+    # Avaliação qualitativa (não derruba a rodada se o juiz falhar)
+    qual: Optional[dict] = None
+    if use_judge and score.error is None and buf.getvalue().strip():
+        try:
+            qual = await _judge_transcript(buf.getvalue())
+        except Exception as exc:
+            print(f"[JUDGE] falhou para {persona.name}: {exc}", file=sys.stderr)
+    if qual:
+        for key, label in _QUAL_CRITERIA:
+            if qual[key] < 6:
+                score.issues.append(
+                    f"Qualidade conversacional abaixo do esperado "
+                    f"({label.lower()}: {qual[key]}/10) — {qual['justificativa']}"
+                )
+
     return SessionRun(
         persona=persona,
         score=score,
         stdout_log=buf.getvalue(),
         session=session,
         out_dir=tmp_dir,
+        qual=qual,
     )
 
 
@@ -434,6 +627,14 @@ _RECOMMENDATION_MAP: list[tuple[str, str]] = [
         "**Aprofundar a entrevista** — poucas trocas antes de emitir. O agente "
         "deve cobrir as 5 áreas antes de aceitar encerrar.",
     ),
+    (
+        "Qualidade conversacional",
+        "**Melhorar a condução conversacional** — o LLM-juiz apontou notas "
+        "baixas em clareza, empatia ou não-repetição. Quando o empresário não "
+        "responde uma pergunta, o agente deve variar a abordagem (reformular, "
+        "dar exemplos diferentes ou seguir para outra área) em vez de repetir "
+        "a mesma pergunta; considere instruir isso no system prompt.",
+    ),
 ]
 
 _MAINTENANCE_RECS = [
@@ -467,6 +668,27 @@ def _build_recommendations(runs: list[SessionRun]) -> list[str]:
             f"completo está na seção do cenário."
         )
     return recs or list(_MAINTENANCE_RECS)
+
+def _segment_ok(run: SessionRun) -> bool:
+    """True quando o segmento detectado satisfaz a expectativa da persona."""
+    if not run.session:
+        return False
+    detected = run.session.state.company.segment
+    persona = run.persona
+    if persona.expected_segment is None:
+        det_l = (detected or "").lower()
+        return bool(det_l) and any(
+            t in det_l for t in persona.expected_segment_contains
+        )
+    return detected == persona.expected_segment
+
+
+def _qual_cell(run: SessionRun) -> str:
+    if not run.qual:
+        return "—"
+    total = sum(run.qual[k] for k, _ in _QUAL_CRITERIA)
+    return f"{total}/30"
+
 
 def _bar(score: float, max_score: float, width: int = 20) -> str:
     filled = int(round(score / max_score * width)) if max_score else 0
@@ -503,19 +725,20 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
     if valid:
         avg = sum(r.score.pct for r in valid) / len(valid)
         lines += [
-            f"| Cenário | Segmento | Blueprint | Score | Nota |",
-            f"|---------|----------|-----------|-------|------|",
+            "| Cenário | Segmento | Blueprint | Score | Qualidade | Nota |",
+            "|---------|----------|-----------|-------|-----------|------|",
         ]
         for run in runs:
             s = run.score
             if s.error:
-                lines.append(f"| {run.persona.name} | — | — | ERRO | — |")
+                lines.append(f"| {run.persona.name} | — | — | ERRO | — | — |")
                 continue
-            seg_ok = "✅" if run.session and run.session.state.company.segment == run.persona.expected_segment else "❌"
+            seg_ok = "✅" if _segment_ok(run) else "❌"
             bp_ok = "✅" if run.session and run.session.emitted else "❌"
             lines.append(
                 f"| {run.persona.name} | {seg_ok} | {bp_ok} "
                 f"| {s.total:.0f}/{s.max_total:.0f} ({s.pct:.0f}%) "
+                f"| {_qual_cell(run)} "
                 f"| {_grade(s.pct)} |"
             )
         lines += ["", f"**Média geral:** {avg:.1f}% — {_grade(avg)}", ""]
@@ -525,9 +748,15 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
     # Detalhes por cenário
     for run in runs:
         lines += ["---", "", f"## Cenário: {run.persona.name}", ""]
+        expected = (
+            f"`{run.persona.expected_segment}`"
+            if run.persona.expected_segment
+            else "fora da seed (raciocínio livre) — deve mencionar: "
+            + ", ".join(run.persona.expected_segment_contains)
+        )
         lines += [
             f"- **Descrição:** {run.persona.description}",
-            f"- **Segmento esperado:** `{run.persona.expected_segment}`",
+            f"- **Segmento esperado:** {expected}",
         ]
 
         if run.score.error:
@@ -566,6 +795,26 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
             bar = _bar(c.score, c.max_score, 10)
             lines.append(f"| {c.name} | {c.score:.0f} | {c.max_score:.0f} | `{bar}` | {c.note} |")
         lines.append("")
+
+        if run.qual:
+            total_q = sum(run.qual[k] for k, _ in _QUAL_CRITERIA)
+            lines += [
+                "### Avaliação qualitativa (LLM-as-judge)",
+                "",
+                "| Critério | Nota | Barra |",
+                "|----------|-----:|-------|",
+            ]
+            for key, label in _QUAL_CRITERIA:
+                lines.append(
+                    f"| {label} | {run.qual[key]}/10 "
+                    f"| `{_bar(run.qual[key], 10, 10)}` |"
+                )
+            lines += [
+                f"| **Total** | **{total_q}/30** | |",
+                "",
+                f"> {run.qual['justificativa']}",
+                "",
+            ]
 
         if run.score.positives:
             lines += ["### ✅ Pontos positivos", ""]
@@ -654,7 +903,14 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
     default=None,
     help="Rodar apenas um persona pelo ID (ex: ecommerce_roupas).",
 )
-def main(out_path: Optional[str], persona_id: Optional[str]) -> None:
+@click.option(
+    "--no-judge", "no_judge",
+    is_flag=True,
+    help="Pula a avaliação qualitativa LLM-as-judge (rodada mais rápida).",
+)
+def main(
+    out_path: Optional[str], persona_id: Optional[str], no_judge: bool
+) -> None:
     """Avalia o Discovery Agent com personas PME pré-roteirizadas."""
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_file = Path(out_path) if out_path else Path("reports") / f"discovery_eval_{ts}.md"
@@ -675,12 +931,18 @@ def main(out_path: Optional[str], persona_id: Optional[str]) -> None:
             click.echo(f"[{i}/{len(personas)}] {persona.name}...", nl=False)
             persona_dir = Path(tmp_root) / persona.id
             persona_dir.mkdir()
-            run = asyncio.run(_run_persona(persona, persona_dir))
+            run = asyncio.run(
+                _run_persona(persona, persona_dir, use_judge=not no_judge)
+            )
             runs.append(run)
             if run.score.error:
                 click.echo(" ❌ ERRO")
             else:
-                click.echo(f" {run.score.total:.0f}/{run.score.max_total:.0f} ({run.score.pct:.0f}%)")
+                qual_txt = f" | qualidade {_qual_cell(run)}" if run.qual else ""
+                click.echo(
+                    f" {run.score.total:.0f}/{run.score.max_total:.0f} "
+                    f"({run.score.pct:.0f}%){qual_txt}"
+                )
 
         # Lê arquivos antes de deletar o diretório temporário
         report = generate_report(runs, ts)
