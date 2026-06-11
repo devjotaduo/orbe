@@ -28,7 +28,7 @@ def _tag(cid: str, text: str) -> Component:
 def build_blueprint_surface(
     blueprint: dict[str, Any], surface_id: str = "blueprint"
 ) -> list[A2UIMessage]:
-    """Build [createSurface, updateComponents, updateDataModel] for a blueprint.
+    """Build createSurface + updateComponents + updateDataModel msgs.
 
     Layout: a root Column with a title, one Card per proposed team member
     (name Heading + role/objective Text + integration Tags), then an areas
@@ -56,19 +56,26 @@ def build_blueprint_surface(
             tid = f"card-{i}-tool-{j}"
             comps.append(_tag(tid, str(integ)))
             card_children.append(tid)
-        comps.append(Component(id=card_id, type="Card", children=card_children))
+        comps.append(
+            Component(id=card_id, type="Card", children=card_children)
+        )
         root_children.append(card_id)
 
     # Detected integrations as tags under a small section.
     integ_section_children: list[str] = []
-    for i, integ in enumerate(blueprint.get("detected_integrations", []) or []):
+    detected = blueprint.get("detected_integrations", []) or []
+    for i, integ in enumerate(detected):
         tid = f"integ-{i}"
         comps.append(_tag(tid, integ.get("name", str(integ))))
         integ_section_children.append(tid)
     if integ_section_children:
         comps.append(_heading("integ-title", "Integrações detectadas"))
         comps.append(
-            Component(id="integ-row", type="Row", children=integ_section_children)
+            Component(
+                id="integ-row",
+                type="Row",
+                children=integ_section_children,
+            )
         )
         root_children.extend(["integ-title", "integ-row"])
 
@@ -81,7 +88,9 @@ def build_blueprint_surface(
             comps.append(_text(qid, str(q)))
             oq_children.append(qid)
         comps.append(_heading("oq-title", "Perguntas em aberto"))
-        comps.append(Component(id="oq-list", type="List", children=oq_children))
+        comps.append(
+            Component(id="oq-list", type="List", children=oq_children)
+        )
         root_children.extend(["oq-title", "oq-list"])
 
     root = Component(id="root", type="Column", children=root_children)

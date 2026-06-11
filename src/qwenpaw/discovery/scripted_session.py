@@ -17,7 +17,9 @@ _QUESTIONS = [
 
 _BLUEPRINT = {
     "company_profile": {"segment": "ecommerce", "name": "Sua loja"},
-    "process_map": [{"area": "Atendimento", "processes": ["responder WhatsApp"]}],
+    "process_map": [
+        {"area": "Atendimento", "processes": ["responder WhatsApp"]}
+    ],
     "detected_integrations": [
         {"type": "messaging", "name": "WhatsApp"},
         {"type": "spreadsheet", "name": "Planilha"},
@@ -28,11 +30,17 @@ _BLUEPRINT = {
             "role": "atendimento",
             "objective": "responder clientes no WhatsApp",
             "tasks": ["responder dúvidas", "registrar pedidos"],
-            "tools_integrations": ["mcp:evolution-whatsapp", "mcp:google-sheets"],
+            "tools_integrations": [
+                "mcp:evolution-whatsapp",
+                "mcp:google-sheets",
+            ],
             "talks_to": [],
         }
     ],
-    "roadmap": [{"step": "atendimento WhatsApp"}, {"step": "registro em planilha"}],
+    "roadmap": [
+        {"step": "atendimento WhatsApp"},
+        {"step": "registro em planilha"},
+    ],
     "open_questions": ["Qual o volume médio de mensagens por dia?"],
 }
 
@@ -40,7 +48,11 @@ _BLUEPRINT = {
 class ScriptedDiscoverySession:
     def __init__(self) -> None:
         self._asked = 0
-        self._state: dict = {"company": {}, "open_areas": [], "integrations": []}
+        self._state: dict = {
+            "company": {},
+            "open_areas": [],
+            "integrations": [],
+        }
 
     async def next_turn(self, user_message: str | None) -> TurnResult:
         # Record the answer to the previously asked question.
@@ -53,7 +65,9 @@ class ScriptedDiscoverySession:
             return TurnResult(state=dict(self._state), question=q, done=False)
 
         # No more questions → emit the blueprint.
-        return TurnResult(state=dict(self._state), blueprint=_BLUEPRINT, done=True)
+        return TurnResult(
+            state=dict(self._state), blueprint=_BLUEPRINT, done=True
+        )
 
     def _absorb(self, answer: str) -> None:
         low = answer.lower()
@@ -65,6 +79,10 @@ class ScriptedDiscoverySession:
                 self._state["open_areas"].append({"topic": "validar segmento"})
         elif self._asked == 2:  # answer to the systems question
             if "whats" in low:
-                self._state["integrations"].append({"type": "messaging", "name": "WhatsApp"})
+                self._state["integrations"].append(
+                    {"type": "messaging", "name": "WhatsApp"}
+                )
             if "planilh" in low or "sheet" in low:
-                self._state["integrations"].append({"type": "spreadsheet", "name": "Planilha"})
+                self._state["integrations"].append(
+                    {"type": "spreadsheet", "name": "Planilha"}
+                )

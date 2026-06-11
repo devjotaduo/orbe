@@ -2,8 +2,8 @@
 """AG-UI event schemas (spec-compliant subset).
 
 Mirrors the AG-UI protocol (https://docs.ag-ui.com/): each event has a
-SCREAMING_SNAKE ``type`` discriminator and camelCase wire fields. Pure Pydantic,
-no agentscope dependency — testable in isolation.
+SCREAMING_SNAKE ``type`` discriminator and camelCase wire fields. Pure
+Pydantic, no agentscope dependency — testable in isolation.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def _camel(s: str) -> str:
 
 
 class BaseEvent(BaseModel):
-    """Common config: camelCase aliases on the wire, populate by python name."""
+    """camelCase aliases on the wire; populate by python field name."""
 
     model_config = ConfigDict(
         alias_generator=_camel,

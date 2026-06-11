@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """A2UI message + component schemas (adjacency-list model).
 
-Mirrors the A2UI protocol (https://a2ui.org/specification/v0.9-a2ui/): the UI is
-a flat list of components; the tree is built implicitly by ``children`` id refs.
-Server→client messages: createSurface / updateComponents / updateDataModel /
-deleteSurface. Pure Pydantic — testable in isolation.
+Mirrors the A2UI protocol (https://a2ui.org/specification/v0.9-a2ui/):
+the UI is a flat list of components; the tree is built implicitly by
+``children`` id refs. Server→client messages: createSurface /
+updateComponents / updateDataModel / deleteSurface. Pure Pydantic —
+testable in isolation.
 """
 from __future__ import annotations
 
@@ -54,4 +55,6 @@ class DeleteSurface(_A2UIModel):
     surface_id: str
 
 
-A2UIMessage = CreateSurface | UpdateComponents | UpdateDataModel | DeleteSurface
+A2UIMessage = (
+    CreateSurface | UpdateComponents | UpdateDataModel | DeleteSurface
+)

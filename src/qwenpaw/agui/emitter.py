@@ -12,7 +12,8 @@ from .events import (
 
 def sse(event: BaseEvent) -> str:
     """Serialize one AG-UI event as a text/event-stream frame."""
-    return f"data: {event.model_dump_json(by_alias=True, exclude_none=True)}\n\n"
+    body = event.model_dump_json(by_alias=True, exclude_none=True)
+    return f"data: {body}\n\n"
 
 
 def text_message_events(message_id: str, text: str) -> list[BaseEvent]:

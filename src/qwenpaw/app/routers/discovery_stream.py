@@ -63,12 +63,15 @@ async def discovery_stream(req: DiscoveryTurnRequest) -> StreamingResponse:
             yield sse(StateSnapshotEvent(snapshot=result.state))
 
             if result.question is not None:
-                for ev in text_message_events(uuid.uuid4().hex, result.question):
+                msg_id = uuid.uuid4().hex
+                for ev in text_message_events(msg_id, result.question):
                     yield sse(ev)
 
             if result.blueprint is not None:
                 for a2ui_msg in build_blueprint_surface(result.blueprint):
-                    payload: dict[str, Any] = a2ui_msg.model_dump(by_alias=True)
+                    payload: dict[str, Any] = a2ui_msg.model_dump(
+                        by_alias=True
+                    )
                     yield sse(CustomEvent(name="a2ui", value=payload))
                 _sessions.pop(req.session_id, None)  # session complete
 

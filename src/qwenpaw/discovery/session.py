@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Seam between the discovery interview and the AG-UI/A2UI transport.
 
-A DiscoverySession advances one turn at a time. The router feeds the user's
-message (None to start) and gets back the agent's next question + current state,
-or the final blueprint. The real LLM-driven runner (layer 1) and the scripted
-session for this cycle both implement this Protocol.
+A DiscoverySession advances one turn at a time. The router feeds the
+user's message (None to start) and gets back the agent's next question +
+current state, or the final blueprint. The real LLM-driven runner
+(layer 1) and the scripted session for this cycle both implement this
+Protocol.
 """
 from __future__ import annotations
 
