@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -108,6 +109,66 @@ def test_grade_thresholds(eval_mod):
     assert eval_mod._grade(65).startswith("C")
     assert eval_mod._grade(50).startswith("D")
     assert eval_mod._grade(10).startswith("F")
+
+
+def test_advocacia_persona_maps_to_servicos_b2b(eval_mod):
+    """A persona de advocacia existe e sua 1ª fala casa o segmento na seed."""
+    from qwenpaw.discovery.segments.taxonomy import lookup_segment
+
+    persona = next(p for p in eval_mod.PERSONAS if p.id == "advocacia")
+    assert persona.expected_segment == "servicos_b2b"
+    info = lookup_segment(persona.script[0])
+    assert info is not None
+    assert info.key == "servicos_b2b"
+
+
+def test_recommendations_derived_from_issues(eval_mod, make_session, tmp_path):
+    """Recomendações citam só os problemas encontrados na rodada."""
+    persona = eval_mod.PERSONAS[0]
+    session = make_session(segment="varejo")  # segmento errado de propósito
+    bp = _write_blueprint(tmp_path, agents=1)  # time insuficiente
+    score = eval_mod.score_session(persona, session, bp)
+    run = eval_mod.SessionRun(
+        persona=persona, score=score, stdout_log="", session=session,
+        out_dir=tmp_path,
+    )
+    recs = eval_mod._build_recommendations([run])
+    joined = " ".join(recs)
+    assert "classificação de segmento" in joined
+    assert "time mínimo" in joined
+    # nada de recomendação genérica de manutenção quando há problemas
+    assert "Nenhum problema recorrente" not in joined
+
+
+def test_recommendations_fall_back_to_maintenance(eval_mod, make_session, tmp_path):
+    """Rodada perfeita gera recomendações de manutenção, não de conserto."""
+    persona = eval_mod.PERSONAS[0]
+    session = make_session(segment=persona.expected_segment)
+    bp = _write_blueprint(tmp_path)
+    score = eval_mod.score_session(persona, session, bp)
+    assert score.total == score.max_total  # sanidade: rodada perfeita
+    run = eval_mod.SessionRun(
+        persona=persona, score=score, stdout_log="", session=session,
+        out_dir=tmp_path,
+    )
+    recs = eval_mod._build_recommendations([run])
+    assert any("Nenhum problema recorrente" in r for r in recs)
+
+
+@pytest.mark.skipif(
+    not os.environ.get("QWENPAW_EVAL_E2E"),
+    reason="smoke e2e usa LLM real — setar QWENPAW_EVAL_E2E=1 para rodar",
+)
+def test_e2e_smoke_single_persona(eval_mod, tmp_path):
+    """Gate de regressão: 1 persona real de ponta a ponta com o LLM ativo."""
+    import asyncio
+
+    persona = next(p for p in eval_mod.PERSONAS if p.id == "ecommerce_roupas")
+    run = asyncio.run(eval_mod._run_persona(persona, tmp_path))
+    assert run.score.error is None, run.score.error
+    assert run.score.pct >= 60, (
+        f"Regressão de qualidade: {run.score.pct:.0f}% < 60%"
+    )
 
 
 def test_report_includes_all_personas(eval_mod, make_session, tmp_path):
