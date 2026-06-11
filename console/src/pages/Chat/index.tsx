@@ -30,6 +30,7 @@ import { IconButton } from "@agentscope-ai/design";
 import ChatActionGroup from "./components/ChatActionGroup";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
+import { ChatThreePanel } from "./components/ChatThreePanel";
 import { ApprovalCard } from "../../components/ApprovalCard/ApprovalCard";
 import { commandsApi } from "../../api/modules/commands";
 import { useApprovalContext } from "../../contexts/ApprovalContext";
@@ -1752,7 +1753,7 @@ export default function ChatPage() {
     handleWhisperTranscription,
   ]);
 
-  return (
+  const chatContent = (
     <div
       style={{
         height: "100%",
@@ -1941,4 +1942,6 @@ export default function ChatPage() {
       </Modal>
     </div>
   );
+
+  return <ChatThreePanel chat={chatContent} />;
 }
