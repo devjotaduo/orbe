@@ -163,15 +163,20 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
 
   // ── Search filter ─────────────────────────────────────────────────────────
 
-  /** Filtra recursivamente um array de MenuItem pelo searchQuery (case-insensitive no label). */
-  const filterByQuery = (items: MenuItem[], query: string): MenuItem[] => {
+  type AntdItem = NonNullable<import("antd").MenuProps["items"]>[number] & {
+    children?: AntdItem[];
+    label?: React.ReactNode;
+  };
+
+  /** Filtra recursivamente antd menu items pelo searchQuery (case-insensitive no label string). */
+  const filterAntdItems = (items: AntdItem[], query: string): AntdItem[] => {
     if (!query) return items;
     const lower = query.toLowerCase();
-    return items.reduce<MenuItem[]>((acc, item) => {
+    return items.reduce<AntdItem[]>((acc, item) => {
       const label = typeof item.label === 'string' ? item.label : '';
-      const children = item.children ? filterByQuery(item.children as MenuItem[], query) : undefined;
-      if (label.toLowerCase().includes(lower) || (children && children.length > 0)) {
-        acc.push(children ? { ...item, children } : item);
+      const filteredChildren = item.children ? filterAntdItems(item.children, query) : undefined;
+      if (label.toLowerCase().includes(lower) || (filteredChildren && filteredChildren.length > 0)) {
+        acc.push(filteredChildren ? { ...item, children: filteredChildren } : item);
       }
       return acc;
     }, []);
@@ -189,17 +194,17 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
     );
   };
 
-  const agentMenuItems = useMemo(
-    () => toAntdItems(filterByQuery(agentMenu, searchQuery), { collapsed, decorateLabel }),
+  const agentMenuItems = useMemo(() => {
+    const items = toAntdItems(agentMenu, { collapsed, decorateLabel }) as AntdItem[];
+    return filterAntdItems(items, searchQuery);
     // hasInboxUnread closure inside decorateLabel — listed as dep explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [agentMenu, collapsed, hasInboxUnread, searchQuery],
-  );
+  }, [agentMenu, collapsed, hasInboxUnread, searchQuery]);
 
-  const settingsMenuItems = useMemo(
-    () => toAntdItems(filterByQuery(settingsMenu, searchQuery), { collapsed }),
-    [settingsMenu, collapsed, searchQuery],
-  );
+  const settingsMenuItems = useMemo(() => {
+    const items = toAntdItems(settingsMenu, { collapsed }) as AntdItem[];
+    return filterAntdItems(items, searchQuery);
+  }, [settingsMenu, collapsed, searchQuery]);
 
   const derivedOpenKeys = useMemo(
     () => [...deriveOpenKeys(agentMenu), ...deriveOpenKeys(settingsMenu)],
