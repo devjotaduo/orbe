@@ -141,3 +141,5 @@ e2e/__pycache__/
 
 # knowledge-base related
 graphify-out/
+# AgentScope guardian approval marker (local, ephemeral)
+.claude/.agentscope-guardian-approved
