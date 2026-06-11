@@ -41,6 +41,7 @@
   },
   "nav": {
     "chat": "Chat",
+    "discovery": "Penemuan",
     "control": "Kontrol",
     "channels": "Saluran",
     "sessions": "Sesi",
@@ -66,6 +67,21 @@
     "plugins": "Plugin",
     "pluginManager": "Manajer Plugin",
     "backups": "Cadangan"
+  },
+  "discovery": {
+    "title": "Penemuan",
+    "subtitle": "Wawancarai bisnis Anda dan dapatkan tim agen yang diusulkan",
+    "intro": "Jawab beberapa pertanyaan tentang perusahaan Anda dan kami akan mengusulkan tim agen AI, dipetakan ke integrasi yang siap digunakan.",
+    "start": "Mulai wawancara",
+    "restart": "Mulai ulang",
+    "you": "Anda",
+    "agent": "Agen",
+    "answerPlaceholder": "Ketik jawaban Anda…",
+    "send": "Kirim",
+    "teamTitle": "Tim yang diusulkan",
+    "statePanel": "Status penemuan (debug)",
+    "errorPrefix": "Kesalahan",
+    "completed": "Wawancara selesai. Inilah tim yang diusulkan untuk Anda."
   },
   "header": {
     "changelog": "Catatan Perubahan",
