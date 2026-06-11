@@ -301,10 +301,19 @@
       }
     }
 
-    // Show a subtle chevron so users know sections are collapsible
+    // Chevron collapse icon — visible, rotates on open/close
     .qwenpaw-menu-submenu-arrow {
-      font-size: 10px !important;
-      opacity: 0.45 !important;
+      display: inline-flex !important;
+      inset-inline-end: 10px !important;
+      color: @text-muted !important;
+      opacity: 0.7 !important;
+      font-size: 11px !important;
+      transition: transform 0.2s, opacity 0.15s !important;
+    }
+
+    .qwenpaw-menu-submenu-open > .qwenpaw-menu-submenu-title .qwenpaw-menu-submenu-arrow {
+      transform: rotate(180deg) !important;
+      opacity: 1 !important;
     }
 
     .qwenpaw-menu-item {
@@ -377,6 +386,10 @@
         background: @bg-hover-dark !important;
         color: @text-secondary-dark !important;
         border-radius: @sidebar-radius !important;
+      }
+
+      .qwenpaw-menu-submenu-arrow {
+        color: @text-muted-dark !important;
       }
     }
 
