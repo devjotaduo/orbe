@@ -1,78 +1,219 @@
 @import "../../../../styles/aionui-tokens.less";
 
-// ── Welcome screen ────────────────────────────────────────────────────────────
+// ── Root ──────────────────────────────────────────────────────────────────────
 .welcomeRoot {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  padding: 48px 24px 32px;
-  text-align: center;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 56px 24px 40px;
   gap: 0;
 }
 
-// ── Avatar / brand mark ───────────────────────────────────────────────────────
-.avatarWrap {
-  width: 72px;
-  height: 72px;
+// ── Title ─────────────────────────────────────────────────────────────────────
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: @text-primary;
+  text-align: center;
+  margin: 0 0 28px;
+  line-height: 1.2;
+}
+
+// ── Agent icon chips row ───────────────────────────────────────────────────────
+.agentChipsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 20px;
+  max-width: 600px;
+}
+
+.agentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px 0 6px;
+  border-radius: 18px;
+  border: 1.5px solid @border-base;
+  background: @bg-base;
+  cursor: pointer;
+  transition:
+    border-color @transition-fast @ease-spring,
+    box-shadow @transition-fast @ease-spring,
+    background @transition-fast @ease-spring;
+  font-size: 13px;
+  font-weight: 500;
+  color: @text-primary;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: @aou-4;
+    box-shadow: 0 2px 8px rgba(117, 131, 178, 0.18);
+  }
+}
+
+.agentChipActive {
+  border-color: @brand;
+  background: @brand-light;
+  color: @aou-7;
+  font-weight: 600;
+}
+
+.agentChipIconOnly {
+  // Chip without text label — just the avatar circle
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  justify-content: center;
+}
+
+.agentChipAvatar {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, @aou-5, @aou-7);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 20px rgba(117, 131, 178, 0.28);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
   flex-shrink: 0;
 }
 
-.avatarIcon {
+.agentChipMore {
+  border-style: dashed;
+  color: @text-muted;
+  font-weight: 600;
+  font-size: 16px;
   width: 36px;
   height: 36px;
-  color: #fff;
-  opacity: 0.95;
+  padding: 0;
+  justify-content: center;
 }
 
-// ── Text ──────────────────────────────────────────────────────────────────────
-.greeting {
-  font-size: 26px;
-  font-weight: 700;
-  color: @text-primary;
-  line-height: 1.2;
-  margin: 0 0 10px;
-  letter-spacing: -0.3px;
-}
-
-.description {
-  font-size: 14px;
-  color: @text-muted;
-  max-width: 440px;
-  line-height: 1.6;
-  margin: 0 0 32px;
-}
-
-// ── Prompt cards ──────────────────────────────────────────────────────────────
-.promptList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+// ── Input box ─────────────────────────────────────────────────────────────────
+.inputBox {
   width: 100%;
-  max-width: 480px;
+  background: @bg-base;
+  border: 1.5px solid @border-base;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  padding: 14px 14px 10px;
+  margin-bottom: 32px;
+  transition: border-color @transition-fast @ease-spring, box-shadow @transition-fast @ease-spring;
+
+  &:focus-within {
+    border-color: @aou-4;
+    box-shadow: 0 4px 20px rgba(117, 131, 178, 0.18);
+  }
 }
 
-.promptCard {
+.inputTextarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-size: 15px;
+  color: @text-primary;
+  line-height: 1.5;
+  font-family: inherit;
+  min-height: 46px;
+
+  &::placeholder { color: @text-muted; }
+}
+
+.inputBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  background: @bg-base;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.inputTags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.inputTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: @bg-2;
   border: 1px solid @border-base;
+  font-size: 12px;
+  font-weight: 500;
+  color: @text-secondary;
+  cursor: default;
+}
+
+.sendBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: @bg-3;
+  color: @text-muted;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  flex-shrink: 0;
+  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
+}
+
+.sendBtnActive {
+  background: @brand;
+  color: #fff;
+  cursor: pointer;
+
+  &:hover { background: @aou-7; }
+}
+
+// ── "Select an assistant" label ───────────────────────────────────────────────
+.selectLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: @text-muted;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 16px;
+}
+
+// ── Agent cards grid ───────────────────────────────────────────────────────────
+.agentGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.agentCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px;
+  background: @bg-base;
+  border: 1.5px solid @border-base;
   border-radius: @card-radius;
   cursor: pointer;
   text-align: left;
-  font-size: 14px;
-  color: @text-primary;
   transition:
     border-color @transition-fast @ease-spring,
     box-shadow @transition-fast @ease-spring,
@@ -84,53 +225,137 @@
     transform: translateY(-1px);
   }
 
-  &:active {
-    transform: translateY(0);
-    box-shadow: none;
+  &:active { transform: translateY(0); }
+}
+
+.agentCardMore {
+  border-style: dashed;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: @text-muted;
+  min-height: 72px;
+
+  &:hover {
+    border-color: @aou-5;
+    color: @brand;
   }
 }
 
-.promptLabel {
+.agentAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.agentCardInfo {
   flex: 1;
+  min-width: 0;
+}
+
+.agentCardName {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: @text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.agentCardDesc {
+  font-size: 11px;
+  color: @text-muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+// ── Prompt fallback (no agents) ───────────────────────────────────────────────
+.promptList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.promptCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: @bg-base;
+  border: 1.5px solid @border-base;
+  border-radius: @card-radius;
+  cursor: pointer;
+  text-align: left;
   font-size: 14px;
   color: @text-primary;
+  transition:
+    border-color @transition-fast @ease-spring,
+    box-shadow @transition-fast @ease-spring;
+
+  &:hover {
+    border-color: @aou-4;
+    box-shadow: 0 2px 10px rgba(117, 131, 178, 0.15);
+  }
 }
 
 .promptArrow {
-  flex-shrink: 0;
   color: @text-muted;
-  font-size: 13px;
-  transition: color @transition-fast @ease-spring, transform @transition-fast @ease-spring;
-
-  .promptCard:hover & {
-    color: @brand;
-    transform: translateX(2px);
-  }
+  .promptCard:hover & { color: @brand; }
 }
 
 // ── Dark mode ─────────────────────────────────────────────────────────────────
 :global(.dark-mode) {
-  .greeting { color: @text-primary-dark; }
-  .description { color: @text-muted-dark; }
-
-  .promptCard {
+  .title { color: @text-primary-dark; }
+  .agentChip {
     background: @bg-2-dark;
     border-color: @border-base-dark;
     color: @text-primary-dark;
-
-    &:hover {
-      border-color: @aou-7;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-    }
   }
-
-  .promptLabel { color: @text-primary-dark; }
-  .promptArrow { color: @text-muted-dark; }
-  .promptCard:hover .promptArrow { color: @brand-dark; }
+  .agentChipActive {
+    background: @brand-light-dark;
+    border-color: @brand-dark;
+    color: @brand-dark;
+  }
+  .inputBox {
+    background: @bg-1-dark;
+    border-color: @border-base-dark;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+    &:focus-within { border-color: @aou-7; }
+  }
+  .inputTextarea { color: @text-primary-dark; }
+  .inputTag { background: @bg-3-dark; border-color: @border-base-dark; color: @text-secondary-dark; }
+  .sendBtn { background: @bg-3-dark; color: @text-muted-dark; }
+  .sendBtnActive { background: @brand-dark; }
+  .selectLabel { color: @text-muted-dark; }
+  .agentCard {
+    background: @bg-1-dark;
+    border-color: @border-base-dark;
+    &:hover { border-color: @aou-7; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+  }
+  .agentCardMore { border-color: @border-base-dark; color: @text-muted-dark; }
+  .agentCardName { color: @text-primary-dark; }
+  .agentCardDesc { color: @text-muted-dark; }
+  .promptCard { background: @bg-1-dark; border-color: @border-base-dark; color: @text-primary-dark; }
 }
 
 // ── Reduced motion ────────────────────────────────────────────────────────────
 @media (prefers-reduced-motion: reduce) {
-  .promptCard { transition: none; }
-  .promptArrow { transition: none; }
+  .agentChip, .agentCard, .inputBox, .sendBtn, .promptCard { transition: none; }
 }
