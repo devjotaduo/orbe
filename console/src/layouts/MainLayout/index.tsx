@@ -56,7 +56,7 @@ export default function MainLayout() {
         <Sidebar
           selectedKey={selectedKey}
           collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+          onSetCollapsed={setSidebarCollapsed}
         />
         <Content className="page-container">
           <ConsolePollService />
