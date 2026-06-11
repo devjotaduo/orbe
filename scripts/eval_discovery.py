@@ -116,6 +116,35 @@ PERSONAS: list[Persona] = [
             "/fim",
         ],
     ),
+    Persona(
+        id="software_house",
+        name="Software House B2B",
+        description="Software house que desenvolve sistemas sob medida para empresas",
+        expected_segment="tecnologia",
+        script=[
+            "Tenho uma software house. Desenvolvemos sistemas sob medida e temos um SaaS de gestão para clínicas.",
+            "Nosso funil de vendas é todo manual. Leads chegam pelo site e LinkedIn e esfriam antes de receber proposta.",
+            "Usamos Pipedrive como CRM, Slack interno, e Jira para os projetos. Suporte é por e-mail e fica sobrecarregado.",
+            "Somos 12 pessoas: 8 devs, 2 comerciais, 1 designer e eu. Faturamos R$ 180 mil por mês.",
+            "Quero automatizar a qualificação de leads e o primeiro atendimento do suporte do SaaS.",
+            "/fim",
+        ],
+    ),
+    Persona(
+        id="construtora",
+        name="Construtora de Reformas",
+        description="Construtora focada em reformas residenciais e comerciais",
+        expected_segment="construcao",
+        script=[
+            "Tenho uma construtora especializada em reformas residenciais e comerciais. Também fazemos obras pequenas.",
+            "Orçamento é nossa maior dor. Cliente pede orçamento e a gente leva uma semana para responder. Muitos desistem.",
+            "Usamos WhatsApp para tudo, planilha Excel para custos e Google Agenda para as visitas técnicas.",
+            "Somos 15 pessoas entre engenheiros, mestres de obra e equipe. Faturamos uns R$ 250 mil por mês.",
+            "Os clientes reclamam que não sabem como está a obra. Ligam toda semana pedindo atualização.",
+            "Quero agilizar os orçamentos e dar visibilidade da obra para o cliente sem minha equipe parar para responder.",
+            "/fim",
+        ],
+    ),
 ]
 
 
