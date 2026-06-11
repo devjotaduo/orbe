@@ -10,10 +10,22 @@ from .agent import build_discovery_agent
 from .state import DiscoveryState, OpenArea, Turn
 from .tools import DiscoverySession
 
-_GREETING = (
-    "Olá! Vou te ajudar a montar um time de agentes para a sua empresa. "
-    "Me conta: o que a sua empresa faz?"
-)
+_GREETING = """\
+Olá! Seja muito bem-vindo(a). 🤝
+
+Meu nome é Orbe e sou especialista em implementação de inteligência \
+artificial para negócios. Já ajudei dezenas de empresas brasileiras a \
+montar times de agentes que trabalham 24 horas por dia — atendendo \
+clientes, criando conteúdo para redes sociais, gerenciando pedidos, \
+automatizando orçamentos e muito mais.
+
+Antes de qualquer proposta, quero entender bem a sua realidade. Não \
+existe solução pronta: o plano certo depende do que você faz, de como \
+você opera e de onde você quer chegar.
+
+Então me conta: **o que a sua empresa faz** e qual é o maior desafio \
+que você enfrenta hoje no dia a dia?\
+"""
 _SEED_AREA = OpenArea(
     id="segmento",
     topic="qual o segmento/negócio da empresa",
