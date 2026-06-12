@@ -119,6 +119,140 @@ const EDITABLE_TURN: AguiEvent[] = [
   { type: "RUN_FINISHED", threadId: "t", runId: "r" },
 ];
 
+/**
+ * Final turn with structural buttons (Fase 2): a Repeater over proposed_team
+ * plus add/remove/move agent buttons and add/remove item buttons for the
+ * first agent's tasks. All of them must mutate the LOCAL data model only.
+ */
+const STRUCTURAL_TURN: AguiEvent[] = [
+  {
+    type: "CUSTOM",
+    name: "a2ui",
+    value: { messageType: "createSurface", surfaceId: "blueprint", root: "root" },
+  },
+  {
+    type: "CUSTOM",
+    name: "a2ui",
+    value: {
+      messageType: "updateComponents",
+      surfaceId: "blueprint",
+      components: [
+        {
+          id: "root",
+          type: "Column",
+          properties: {},
+          children: ["rep", "trep", "add", "rm", "mv", "mv0", "addi", "rmi"],
+        },
+        {
+          id: "rep",
+          type: "Repeater",
+          properties: { bind: "proposed_team", itemTemplate: "tpl" },
+          children: [],
+        },
+        {
+          id: "tpl",
+          type: "TextInput",
+          properties: { bind: "name", label: "Nome" },
+          children: [],
+        },
+        {
+          id: "trep",
+          type: "Repeater",
+          properties: { bind: "proposed_team/0/tasks", itemTemplate: "ttpl" },
+          children: [],
+        },
+        {
+          id: "ttpl",
+          type: "TextInput",
+          properties: { bind: ".", label: "Tarefa" },
+          children: [],
+        },
+        {
+          id: "add",
+          type: "Button",
+          properties: { text: "Add agente", action: { name: "add_agent" } },
+          children: [],
+        },
+        {
+          id: "rm",
+          type: "Button",
+          properties: {
+            text: "Remover 0",
+            action: {
+              name: "remove_agent",
+              params: { path: "proposed_team", index: 0 },
+            },
+          },
+          children: [],
+        },
+        {
+          id: "mv",
+          type: "Button",
+          properties: {
+            text: "Subir 1",
+            action: {
+              name: "move_agent",
+              params: { path: "proposed_team", index: 1, dir: -1 },
+            },
+          },
+          children: [],
+        },
+        {
+          id: "mv0",
+          type: "Button",
+          properties: {
+            text: "Subir 0",
+            action: {
+              name: "move_agent",
+              params: { path: "proposed_team", index: 0, dir: -1 },
+            },
+          },
+          children: [],
+        },
+        {
+          id: "addi",
+          type: "Button",
+          properties: {
+            text: "+ Tarefa",
+            action: {
+              name: "add_item",
+              params: { path: "proposed_team/0/tasks" },
+            },
+          },
+          children: [],
+        },
+        {
+          id: "rmi",
+          type: "Button",
+          properties: {
+            text: "- Tarefa",
+            action: {
+              name: "remove_item",
+              params: { path: "proposed_team/0/tasks", index: 0 },
+            },
+          },
+          children: [],
+        },
+      ],
+    },
+  },
+  {
+    type: "CUSTOM",
+    name: "a2ui",
+    value: {
+      messageType: "updateDataModel",
+      surfaceId: "blueprint",
+      data: {
+        proposed_team: [
+          { name: "A1", tasks: ["t1"] },
+          { name: "A2", tasks: [] },
+        ],
+      },
+    },
+  },
+  { type: "RUN_FINISHED", threadId: "t", runId: "r" },
+];
+
 /** Make discoveryApi.action drive `onEvent` with a scripted event list. */
 function scriptAction(events: AguiEvent[]) {
   mockAction.mockImplementationOnce(
@@ -316,6 +450,75 @@ describe("DiscoveryPage", () => {
       expect(screen.getByDisplayValue("Atendente")).toBeTruthy(),
     );
     expect(screen.queryByText("discovery.approvedTitle")).toBeNull();
+  });
+
+  describe("structural actions (local, no backend)", () => {
+    async function renderStructural() {
+      scriptTurn(STRUCTURAL_TURN);
+      renderWithProviders(<DiscoveryPage />);
+      fireEvent.click(screen.getByText("discovery.start"));
+      await waitFor(() => expect(screen.getByDisplayValue("A1")).toBeTruthy());
+    }
+
+    it("add_agent appends a default agent locally", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("Add agente"));
+      await waitFor(() =>
+        expect(screen.getByDisplayValue("Novo agente")).toBeTruthy(),
+      );
+      expect(screen.getAllByLabelText("Nome")).toHaveLength(3);
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("remove_agent removes the agent at the given index locally", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("Remover 0"));
+      await waitFor(() =>
+        expect(screen.queryByDisplayValue("A1")).toBeNull(),
+      );
+      expect(screen.getByDisplayValue("A2")).toBeTruthy();
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("move_agent swaps neighbours locally", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("Subir 1"));
+      await waitFor(() => {
+        const names = screen
+          .getAllByLabelText("Nome")
+          .map((el) => (el as HTMLInputElement).value);
+        expect(names).toEqual(["A2", "A1"]);
+      });
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("move_agent out of bounds is a no-op", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("Subir 0"));
+      const names = screen
+        .getAllByLabelText("Nome")
+        .map((el) => (el as HTMLInputElement).value);
+      expect(names).toEqual(["A1", "A2"]);
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("add_item appends an empty string item locally", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("+ Tarefa"));
+      await waitFor(() =>
+        expect(screen.getAllByLabelText("Tarefa")).toHaveLength(2),
+      );
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("remove_item removes the string item locally", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("- Tarefa"));
+      await waitFor(() =>
+        expect(screen.queryByDisplayValue("t1")).toBeNull(),
+      );
+      expect(mockAction).not.toHaveBeenCalled();
+    });
   });
 
   it("surfaces a RUN_ERROR as a visible error alert", async () => {

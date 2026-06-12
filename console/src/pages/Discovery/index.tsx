@@ -25,9 +25,32 @@ import {
   emptySurface,
 } from "../../components/a2ui/surfaceReducer";
 import { A2uiRenderer } from "../../components/a2ui/A2uiRenderer";
+import { resolveBind, setPath } from "../../components/a2ui/binding";
 import styles from "./index.module.less";
 
 type Turn = { role: "agent" | "user"; text: string };
+
+// Default shape appended by the add_agent structural action. The name is a
+// data-model value (it lands in blueprint.json), not UI chrome — it ships in
+// pt-BR like every other builder-provided blueprint string.
+const EMPTY_AGENT = {
+  name: "Novo agente",
+  role: "",
+  objective: "",
+  tasks: [] as string[],
+  tools_integrations: [] as string[],
+  talks_to: [] as string[],
+};
+
+/** Immutable array edit at `path`: resolve, copy, transform, write back. */
+function mutateArray(
+  data: Record<string, unknown>,
+  path: string,
+  fn: (arr: unknown[]) => unknown[],
+): Record<string, unknown> {
+  const arr = resolveBind(data, path);
+  return setPath(data, path, fn(Array.isArray(arr) ? arr.slice() : []));
+}
 
 export default function DiscoveryPage() {
   const { t } = useTranslation();
@@ -191,10 +214,63 @@ export default function DiscoveryPage() {
     }
   }, [dataModel, approving, approved, sessionId]);
 
+  // Structural actions (add/remove/move agents and string items) mutate the
+  // LOCAL data model only — nothing hits the backend until approve_team.
   const handleAction = useCallback(
-    (name: string) => {
-      if (name === "approve_team") void approve();
-      // Structural actions (add/remove/move) arrive in Fase 2.
+    (name: string, params?: Record<string, unknown>) => {
+      const path = String(params?.path ?? "proposed_team");
+      const index = Number(params?.index ?? -1);
+      switch (name) {
+        case "add_agent":
+          setDataModel((d) =>
+            d
+              ? mutateArray(d, "proposed_team", (a) => [
+                  ...a,
+                  {
+                    ...EMPTY_AGENT,
+                    tasks: [],
+                    tools_integrations: [],
+                    talks_to: [],
+                  },
+                ])
+              : d,
+          );
+          return;
+        case "remove_agent":
+        case "remove_item":
+          setDataModel((d) =>
+            d
+              ? mutateArray(d, path, (a) => {
+                  a.splice(index, 1);
+                  return a;
+                })
+              : d,
+          );
+          return;
+        case "move_agent": {
+          const j = index + Number(params?.dir ?? 0);
+          setDataModel((d) =>
+            d
+              ? mutateArray(d, path, (a) => {
+                  if (index < 0 || j < 0 || j >= a.length) return a;
+                  [a[index], a[j]] = [a[j], a[index]];
+                  return a;
+                })
+              : d,
+          );
+          return;
+        }
+        case "add_item":
+          setDataModel((d) =>
+            d ? mutateArray(d, path, (a) => [...a, ""]) : d,
+          );
+          return;
+        case "approve_team":
+          void approve();
+          return;
+        default:
+          return;
+      }
     },
     [approve],
   );
