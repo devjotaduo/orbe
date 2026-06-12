@@ -106,6 +106,33 @@ def test_bridge_check_database_health_raises_when_db_unreachable(monkeypatch):
         enterprise.check_database_health()
 
 
+def test_auth_repository_none_when_db_disabled(monkeypatch):
+    monkeypatch.delenv("NEXORA_DB_URL", raising=False)
+    assert enterprise.auth_repository() is None
+
+
+def test_auth_repository_missing_sqlalchemy_points_to_enterprise_extra(
+    monkeypatch,
+):
+    """DB on but sqlalchemy missing: RuntimeError, not a raw ImportError.
+
+    The lazy ``repositories.auth_postgres`` import pulls sqlalchemy at
+    module level; without the ``[enterprise]`` extra the bridge must
+    re-raise a RuntimeError pointing to ``pip install qwenpaw[enterprise]``
+    (same contract as ``qwenpaw_ext.nexora.db.get_engine``).
+    """
+    monkeypatch.setenv("NEXORA_DB_URL", "postgresql://user:pw@localhost/cj")
+    # Drop any cached module and poison sqlalchemy so the lazy import fails.
+    monkeypatch.delitem(
+        sys.modules,
+        "qwenpaw_ext.nexora.repositories.auth_postgres",
+        raising=False,
+    )
+    monkeypatch.setitem(sys.modules, "sqlalchemy", None)
+    with pytest.raises(RuntimeError, match=r"qwenpaw\[enterprise\]"):
+        enterprise.auth_repository()
+
+
 def test_bridge_get_engine_delegates_when_db_enabled(monkeypatch):
     """DB enabled: the bridge returns the extension's engine, not None."""
     from qwenpaw_ext.nexora import db

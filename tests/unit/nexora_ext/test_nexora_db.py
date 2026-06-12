@@ -3,6 +3,8 @@
 
 # pylint: disable=protected-access,unused-argument
 
+import sys
+
 import pytest
 
 from qwenpaw_ext.nexora import db
@@ -45,6 +47,17 @@ def test_get_engine_raises_without_url(monkeypatch):
 def test_get_engine_raises_for_non_postgres_url(monkeypatch):
     monkeypatch.setenv(db.DB_URL_ENV, "mysql://user:pw@localhost/cj")
     with pytest.raises(RuntimeError, match="PostgreSQL"):
+        db.get_engine()
+
+
+def test_get_engine_missing_sqlalchemy_points_to_enterprise_extra(
+    monkeypatch,
+):
+    """sqlalchemy absent: RuntimeError must mention qwenpaw[enterprise]."""
+    monkeypatch.setenv(db.DB_URL_ENV, "postgresql://user:pw@localhost/cj")
+    # A None entry makes `from sqlalchemy import ...` raise ImportError.
+    monkeypatch.setitem(sys.modules, "sqlalchemy", None)
+    with pytest.raises(RuntimeError, match=r"qwenpaw\[enterprise\]"):
         db.get_engine()
 
 
