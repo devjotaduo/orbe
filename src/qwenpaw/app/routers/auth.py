@@ -290,6 +290,9 @@ async def me(request: Request):
         role = role_map.get(role_id)
         if role:
             effective_permissions.update(role["permissions"])
+    # Mirror user_has_permission semantics: broader permissions imply
+    # narrower ones (e.g. users.manage implies users.view).
+    effective_permissions = rbac.expand_permissions(effective_permissions)
     return CurrentUserResponse(
         username=username,
         roles=user["roles"],

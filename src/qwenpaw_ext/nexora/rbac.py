@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Ported from nexora-ai-platform (Apache-2.0), a fork of the same
 # QwenPaw upstream: https://github.com/lb08111/nexora-ai-platform
 """Nexora role-based access control extension.
@@ -6,16 +7,16 @@ This module keeps the platform-specific RBAC policy away from QwenPaw core
 modules.  Core auth still owns password/token persistence; this extension owns
 roles, permissions, user management, and API permission mapping.
 
-Port note (Phase 1): the user/role management functions below (list_roles,
+Port note: the user/role management functions below (list_roles,
 role_permissions, user_has_permission, require_permission, create_role,
 update_role, delete_role, list_users, get_user, create_user, update_user,
 delete_user) lazily import helpers from ``qwenpaw.app.auth``
-(_load_normalized_auth_data, _find_user, _public_user, _now) that do NOT
-exist yet in this fork's single-user auth module.  They stay DORMANT until
-Phase 2 extends ``qwenpaw.app.auth`` with multi-user support.  The module
+(_load_normalized_auth_data, _find_user, _public_user, _now) that were
+added in Phase 2 of the enterprise port (multi-user auth).  The module
 itself imports cleanly; constants (DEFAULT_PERMISSIONS, ROLE_DEFINITIONS,
 API_PERMISSION_PREFIXES, PERMISSION_IMPLICATIONS) and the pure helpers
-(default_roles, list_permissions, required_permission) work today.
+(default_roles, expand_permissions, list_permissions, required_permission)
+work without the core auth module.
 """
 
 # pylint: disable=protected-access,too-many-return-statements
@@ -175,6 +176,21 @@ def role_permissions(role_ids: list[str]) -> set[str]:
     return permissions
 
 
+def expand_permissions(permissions: set[str]) -> set[str]:
+    """Return *permissions* plus every permission they imply.
+
+    ``PERMISSION_IMPLICATIONS`` maps a permission to the broader
+    permissions that grant it (e.g. ``users.manage`` implies
+    ``users.view``).  Used by both ``user_has_permission`` and the
+    ``/api/auth/me`` endpoint so effective grants stay consistent.
+    """
+    expanded = set(permissions)
+    for implied, granted_by in PERMISSION_IMPLICATIONS.items():
+        if any(parent in permissions for parent in granted_by):
+            expanded.add(implied)
+    return expanded
+
+
 def user_has_permission(username: str, permission: str) -> bool:
     from qwenpaw.app import auth
 
@@ -185,11 +201,7 @@ def user_has_permission(username: str, permission: str) -> bool:
     roles = list(user.get("roles") or [])
     if "admin" in roles:
         return True
-    permissions = role_permissions(roles)
-    return permission in permissions or any(
-        implied_by in permissions
-        for implied_by in PERMISSION_IMPLICATIONS.get(permission, ())
-    )
+    return permission in expand_permissions(role_permissions(roles))
 
 
 def require_permission(username: str, permission: str) -> None:

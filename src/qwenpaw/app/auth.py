@@ -22,6 +22,7 @@ dependencies.  The password is stored as a salted SHA-256 hash in
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import hmac
 import json
@@ -320,6 +321,7 @@ def _save_auth_data(data: dict) -> None:
     file-backed for this phase so existing token handling stays
     compatible.
     """
+    _invalidate_auth_data_cache()
     repo = enterprise.auth_repository()
     if repo is not None:
         if _has_identity_payload(data):
@@ -471,12 +473,55 @@ def _normalize_db_auth_data(data: dict) -> dict:
     return data
 
 
+# Cache for normalized auth data: the middleware permission check reads
+# auth data on every authenticated request, which would otherwise cost a
+# file read (or Postgres round-trips) per request.  File-backed data is
+# keyed on the auth.json mtime (exact invalidation); DB-backed data uses
+# a short TTL.  ``_save_auth_data`` invalidates the cache on every write.
+_AUTH_DB_CACHE_TTL_SECONDS = 2.0
+_auth_data_cache: tuple = (None, 0.0, None)  # (source_key, expires_at, data)
+
+
+def _invalidate_auth_data_cache() -> None:
+    global _auth_data_cache  # noqa: PLW0603
+    _auth_data_cache = (None, 0.0, None)
+
+
 def _load_normalized_auth_data() -> dict:
-    """Load auth data in the multi-user schema (DB or auth.json)."""
+    """Load auth data in the multi-user schema (DB or auth.json).
+
+    Returns a deep copy so callers can mutate the result freely without
+    corrupting the cache.
+    """
+    global _auth_data_cache  # noqa: PLW0603
     repo = enterprise.auth_repository()
     if repo is not None:
-        return _normalize_db_auth_data(repo.load_auth_data())
-    return _normalize_auth_data(_load_auth_data())
+        cached_key, expires_at, cached = _auth_data_cache
+        if cached_key == "db" and time.time() < expires_at:
+            return copy.deepcopy(cached)
+        data = _normalize_db_auth_data(repo.load_auth_data())
+        if not data.get("_auth_load_error"):
+            _auth_data_cache = (
+                "db",
+                time.time() + _AUTH_DB_CACHE_TTL_SECONDS,
+                copy.deepcopy(data),
+            )
+        return data
+
+    try:
+        mtime_ns = AUTH_FILE.stat().st_mtime_ns
+    except OSError:
+        mtime_ns = 0
+    source_key = (str(AUTH_FILE), mtime_ns)
+    cached_key, _, cached = _auth_data_cache
+    if cached_key == source_key:
+        return copy.deepcopy(cached)
+    # _normalize_auth_data may persist a migration, changing the mtime;
+    # the stale key then simply misses once on the next call.
+    data = _normalize_auth_data(_load_auth_data())
+    if not data.get("_auth_load_error"):
+        _auth_data_cache = (source_key, 0.0, copy.deepcopy(data))
+    return data
 
 
 def _find_user(data: dict, username: str) -> tuple[int, dict | None]:
@@ -685,7 +730,8 @@ def update_credentials(
 
     Requires the current password for verification.  Returns a new
     token on success (because the username may have changed), or
-    ``None`` if verification fails.
+    ``None`` if verification fails or the new username is already
+    taken by another user.
 
     Args:
         current_password: The current password for verification.
@@ -711,7 +757,15 @@ def update_credentials(
         return None
 
     if new_username and new_username.strip():
-        user["username"] = new_username.strip()
+        candidate = new_username.strip()
+        other_idx, other = _find_user(data, candidate)
+        if other is not None and other_idx != user_idx:
+            logger.warning(
+                "Username '%s' is already taken; rename rejected",
+                candidate,
+            )
+            return None
+        user["username"] = candidate
 
     if new_password:
         pw_hash, salt = _hash_password(new_password)
@@ -892,6 +946,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
             )
 
         user = payload.get("sub", "")
+        # request.state.roles mirrors the token's "roles" claim, so it can
+        # lag behind storage until the token is reissued.  Permission
+        # enforcement below always checks live data through the bridge.
         roles = payload.get("roles")
         if roles is None:  # tokens issued before the roles claim
             roles = _roles_for_user(user)
@@ -941,6 +998,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Only protect /api/ routes
         if not path.startswith("/api/"):
             return True
+
+        # A logged-in request must always pass through RBAC and the audit
+        # trail, even when it comes from an allow_no_auth_hosts address
+        # (ported from nexora-ai-platform).
+        if AuthMiddleware._extract_token(request):
+            return False
 
         # Check if client host is in allow_no_auth_hosts whitelist
         client_host = _resolve_client_ip(request)
