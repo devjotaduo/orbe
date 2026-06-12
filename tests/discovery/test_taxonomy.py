@@ -118,3 +118,21 @@ def test_new_segments_have_complete_rails():
         assert seg.typical_processes, f"{key} sem typical_processes"
         assert seg.common_pains, f"{key} sem common_pains"
         assert seg.common_integrations, f"{key} sem common_integrations"
+
+
+# ---------------------------------------------------------------------------
+# Vocabulário canônico de integration_kind (spec known-connectors)
+# ---------------------------------------------------------------------------
+
+
+def test_common_integrations_are_canonical():
+    """Todo valor de common_integrations deve estar no vocabulário canônico."""
+    from qwenpaw.discovery.segments.taxonomy import (
+        CANONICAL_INTEGRATION_KINDS,
+    )
+
+    for seg in load_segments():
+        for kind in seg.common_integrations:
+            assert kind in CANONICAL_INTEGRATION_KINDS, (
+                f"Segmento '{seg.key}' usa kind não-canônico: '{kind}'"
+            )
