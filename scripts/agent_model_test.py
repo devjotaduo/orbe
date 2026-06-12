@@ -10,7 +10,7 @@ and writes a comparative report (Markdown + JSON) under
 Usage (PYTHONPATH=src):
     .venv/Scripts/python.exe scripts/agent_model_test.py            # full run
     .venv/Scripts/python.exe scripts/agent_model_test.py --smoke    # 1 model, 2 scenarios
-    .venv/Scripts/python.exe scripts/agent_model_test.py --models dashscope:qwen3-max,openrouter:openai/gpt-chat-latest
+    .venv/Scripts/python.exe scripts/agent_model_test.py --models dashscope:qwen3-max
 
 Only providers with credentials configured (dashscope, openrouter) are usable.
 This makes REAL API calls (costs tokens).
@@ -23,7 +23,6 @@ import json
 import sys
 import tempfile
 import time
-import traceback
 from pathlib import Path
 
 # --- Models under test (provider_id:model). Override with --models. ----------
@@ -51,7 +50,7 @@ SAFE_TOOLS = {
 
 
 def _check_contains(*needles):
-    def f(text, tool_used):
+    def f(text, _tool_used):
         low = (text or "").lower()
         hit = next((n for n in needles if n.lower() in low), None)
         return (
@@ -62,7 +61,7 @@ def _check_contains(*needles):
     return f
 
 
-def _check_json_array(text, tool_used):
+def _check_json_array(text, _tool_used):
     s = (text or "").strip()
     # strip code fences if present
     if "```" in s:
@@ -98,7 +97,7 @@ def _response_shows_tool(text) -> bool:
     return bool(re.search(r"\d{1,2}:\d{2}", t)) or "utc" in t.lower()
 
 
-def _check_tool(text, tool_used):
+def _check_tool(_text, tool_used):
     return (
         tool_used,
         "hora via ferramenta" if tool_used else "sem evidência de ferramenta",
@@ -139,7 +138,7 @@ SCENARIOS = [
 ]
 
 
-def _build_test_agent(
+def build_test_agent(
     provider_id: str,
     model: str,
     workspace_dir: Path,
@@ -225,7 +224,7 @@ async def _run_one(provider_id: str, model: str, scenarios, timeout_s: float):
     sid = f"test-{provider_id}-{int(time.time())}"
     with tempfile.TemporaryDirectory(prefix="qp_test_") as wd:
         try:
-            agent = _build_test_agent(provider_id, model, Path(wd), sid)
+            agent = build_test_agent(provider_id, model, Path(wd), sid)
         except Exception as e:
             for sc in scenarios:
                 results.append(
@@ -312,7 +311,7 @@ def _write_reports(run, out_dir: Path, stamp: str):
         f"- Tools habilitadas (read-only): `{', '.join(sorted(SAFE_TOOLS))}`",
     )
     md.append(
-        f"- Gerado por `scripts/agent_model_test.py` (agente completo, ReAct).",
+        "- Gerado por `scripts/agent_model_test.py` (agente completo, ReAct).",
     )
     md.append("")
 
@@ -407,8 +406,7 @@ async def main():
         models = models[:1]
         scenarios = SCENARIOS[:2]
 
-    stamp = time.strftime("%Y%m%d-%H%M%S") if False else None
-    # Date.now-style stamp must come from the OS clock at runtime:
+    # Stamp must come from the OS clock at runtime.
     import datetime
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")

@@ -20,7 +20,6 @@ from __future__ import annotations
 import asyncio
 import datetime
 import json
-import sys
 import tempfile
 import traceback
 from pathlib import Path
@@ -32,7 +31,7 @@ _spec = _u.spec_from_file_location(
     "amt",
     str(Path(__file__).with_name("agent_model_test.py")),
 )
-assert _spec is not None
+assert _spec is not None and _spec.loader is not None
 amt = _u.module_from_spec(_spec)
 _spec.loader.exec_module(amt)
 
@@ -72,7 +71,7 @@ async def feat_streaming(timeout):
     """1. reply_stream emits the typed 2.0 event lifecycle."""
     pid, model = MODEL.split(":", 1)
     with tempfile.TemporaryDirectory() as wd:
-        agent = amt._build_test_agent(pid, model, Path(wd), "feat-stream")
+        agent = amt.build_test_agent(pid, model, Path(wd), "feat-stream")
         seen, _ = await _collect_events(
             agent,
             "Diga 'olá' em uma palavra.",
@@ -89,7 +88,7 @@ async def feat_tool_events(timeout):
     """2. ToolCall*/ToolResult* events fire during a real tool run."""
     pid, model = MODEL.split(":", 1)
     with tempfile.TemporaryDirectory() as wd:
-        agent = amt._build_test_agent(pid, model, Path(wd), "feat-tool")
+        agent = amt.build_test_agent(pid, model, Path(wd), "feat-tool")
         seen, _ = await _collect_events(
             agent,
             "Que horas são? Use a ferramenta get_current_time.",
@@ -99,10 +98,11 @@ async def feat_tool_events(timeout):
     has_call = any("ToolCall" in k for k in kinds)
     has_result = any("ToolResult" in k for k in kinds)
     ok = has_call and has_result
+    tool_kinds = [k for k in sorted(kinds) if "Tool" in k]
     return (
         ok,
         f"ToolCall={has_call} ToolResult={has_result}; "
-        f"tipos tool: {[k for k in sorted(kinds) if 'Tool' in k]}",
+        f"tipos tool: {tool_kinds}",
     )
 
 
@@ -110,7 +110,7 @@ async def feat_thinking(timeout):
     """3. ThinkingBlock* events from a reasoning model."""
     pid, model = THINKING_MODEL.split(":", 1)
     with tempfile.TemporaryDirectory() as wd:
-        agent = amt._build_test_agent(pid, model, Path(wd), "feat-think")
+        agent = amt.build_test_agent(pid, model, Path(wd), "feat-think")
         seen, _ = await _collect_events(
             agent,
             "Quanto é 17 x 23? Pense passo a passo.",
@@ -120,13 +120,12 @@ async def feat_thinking(timeout):
     has_think = any("ThinkingBlock" in k for k in kinds)
     return (
         has_think,
-        "ThinkingBlock events: "
-        f"{[k for k in sorted(kinds) if 'Thinking' in k] or 'nenhum'}",
+        f"ThinkingBlock events: {[k for k in sorted(kinds) if 'Thinking' in k] or 'nenhum'}",
     )
 
 
 async def feat_structured_output(timeout):
-    """4. ChatModel.generate_structured_output returns a validated pydantic obj."""  # noqa: E501
+    """4. ChatModel.generate_structured_output returns a validated pydantic obj."""
     from pydantic import BaseModel, Field
     from qwenpaw.providers.provider_manager import ProviderManager
 
@@ -153,29 +152,28 @@ async def feat_state_roundtrip(timeout):
     """5. AgentState state_dict() / load_state_dict() round-trips."""
     pid, model = MODEL.split(":", 1)
     with tempfile.TemporaryDirectory() as wd:
-        a1 = amt._build_test_agent(pid, model, Path(wd), "feat-state-1")
+        a1 = amt.build_test_agent(pid, model, Path(wd), "feat-state-1")
         await asyncio.wait_for(
             a1.reply(_msg("Meu nome é Duo. Responda 'ok'.")),
             timeout=timeout,
         )
         dumped = a1.state_dict()
         is_v2 = isinstance(dumped, dict) and "state" in dumped
-        a2 = amt._build_test_agent(pid, model, Path(wd), "feat-state-2")
+        a2 = amt.build_test_agent(pid, model, Path(wd), "feat-state-2")
         a2.load_state_dict(dumped)
         restored = a2.state_dict()
         ok = is_v2 and restored.get("state") is not None
     return (
         ok,
-        f"state_dict 2.0={is_v2}; round-trip "
-        f"carregou={restored.get('state') is not None}",
+        f"state_dict 2.0={is_v2}; round-trip carregou={restored.get('state') is not None}",
     )
 
 
-async def feat_middleware(timeout):
+async def feat_middleware(_timeout):
     """6. qwenpaw MiddlewareBase chain is wired on the agent."""
     pid, model = MODEL.split(":", 1)
     with tempfile.TemporaryDirectory() as wd:
-        agent = amt._build_test_agent(pid, model, Path(wd), "feat-mw")
+        agent = amt.build_test_agent(pid, model, Path(wd), "feat-mw")
         # AgentScope 2.0 stores middlewares per hook position.
         mws = []
         for attr in (
@@ -207,8 +205,7 @@ FEATURES = [
 async def main():
     timeout = 150.0
     print(
-        f"== Testando {len(FEATURES)} features novas "
-        f"do AgentScope 2.0 no qwenpaw ==",
+        f"== Testando {len(FEATURES)} features novas do AgentScope 2.0 no qwenpaw ==",
     )
     results = []
     for title, fn in FEATURES:
@@ -243,8 +240,7 @@ async def main():
         f"# AgentScope 2.0 — teste de features novas no qwenpaw ({stamp})",
         "",
         f"agentscope instalado: **{run['installed_agentscope']}** · "
-        f"agente real `QwenPawAgent`, modelo `{MODEL}` "
-        f"(thinking: `{THINKING_MODEL}`).",
+        f"agente real `QwenPawAgent`, modelo `{MODEL}` (thinking: `{THINKING_MODEL}`).",
         "",
         "| Feature 2.0 | Resultado | Evidência |",
         "|---|---|---|",

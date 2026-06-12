@@ -23,8 +23,8 @@ def test_open_area_confidence_bounds():
 
 def test_discovery_state_defaults_and_helpers():
     st = DiscoveryState(session_id="s1")
-    assert st.open_areas == []
-    assert st.integrations == []
+    assert not st.open_areas
+    assert not st.integrations
     # next_focus picks lowest-confidence, highest-priority open area
     st.open_areas = [
         OpenArea(id="a", topic="A", confidence=0.9, priority=1),
