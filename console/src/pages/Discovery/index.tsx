@@ -155,6 +155,12 @@ export default function DiscoveryPage() {
   // edits intact so the user can fix the field and retry.
   const approve = useCallback(async () => {
     if (!dataModel || approving || approved) return;
+    // Own an AbortController (same pattern as runTurn) so restart()/unmount
+    // cancels an in-flight approve and a late resolution can never mark a
+    // freshly restarted session as approved.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setApproving(true);
     setApproveError(null);
     let failed = false;
@@ -169,12 +175,19 @@ export default function DiscoveryPage() {
             setApproveError(ev.message);
           }
         },
+        controller.signal,
       );
-      if (!failed) setApproved(true);
+      if (!controller.signal.aborted && !failed) setApproved(true);
     } catch (err) {
+      // Aborts (restart / unmount / superseded request) are intentional.
+      if (controller.signal.aborted) return;
       setApproveError(err instanceof Error ? err.message : String(err));
     } finally {
-      setApproving(false);
+      // Only the latest request clears the busy flag / its controller.
+      if (abortRef.current === controller) {
+        setApproving(false);
+        abortRef.current = null;
+      }
     }
   }, [dataModel, approving, approved, sessionId]);
 

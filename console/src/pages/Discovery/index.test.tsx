@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen, waitFor, fireEvent } from "@testing-library/react";
+import { screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { renderWithProviders } from "@/test/common_setup";
 import type { AguiEvent } from "../../api/types/agui";
 import DiscoveryPage from "./index";
@@ -243,6 +243,7 @@ describe("DiscoveryPage", () => {
       "approve_team",
       { proposed_team: [{ name: "Vendedor" }] },
       expect.any(Function),
+      expect.any(AbortSignal),
     );
   });
 
@@ -270,6 +271,51 @@ describe("DiscoveryPage", () => {
     // Not approved, and the edit is still in the input for a retry.
     expect(screen.queryByText("discovery.approvedTitle")).toBeNull();
     expect(screen.getByDisplayValue("Vendedor")).toBeTruthy();
+  });
+
+  it("restart aborts an in-flight approve; its late resolution cannot approve the next session", async () => {
+    scriptTurn(EDITABLE_TURN);
+    let resolveAction!: () => void;
+    let actionSignal: AbortSignal | undefined;
+    mockAction.mockImplementationOnce(
+      async (
+        _sessionId: string,
+        _name: string,
+        _data: Record<string, unknown>,
+        _onEvent: (ev: AguiEvent) => void,
+        signal?: AbortSignal,
+      ) => {
+        actionSignal = signal;
+        await new Promise<void>((res) => {
+          resolveAction = res;
+        });
+      },
+    );
+    renderWithProviders(<DiscoveryPage />);
+
+    fireEvent.click(screen.getByText("discovery.start"));
+    await waitFor(() =>
+      expect(screen.getByDisplayValue("Atendente")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByText("Aprovar time"));
+    await waitFor(() => expect(mockAction).toHaveBeenCalled());
+
+    // Restart while the approve request is still in flight.
+    fireEvent.click(screen.getByText("discovery.restart"));
+    expect(actionSignal?.aborted).toBe(true);
+
+    // The stale promise resolves only now; with the abort guard it must not
+    // flip `approved` for the session started next.
+    await act(async () => {
+      resolveAction();
+    });
+
+    scriptTurn(EDITABLE_TURN);
+    fireEvent.click(screen.getByText("discovery.start"));
+    await waitFor(() =>
+      expect(screen.getByDisplayValue("Atendente")).toBeTruthy(),
+    );
+    expect(screen.queryByText("discovery.approvedTitle")).toBeNull();
   });
 
   it("surfaces a RUN_ERROR as a visible error alert", async () => {
