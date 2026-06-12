@@ -79,6 +79,33 @@ function chatData(): AnyRec {
   };
 }
 
+/** Like chatData() but with a custom seed-data `name`, fresh object each call. */
+function chatDataNamed(name: string): AnyRec {
+  return {
+    content: [
+      { type: "tool_use", data: {} },
+      {
+        type: "tool_result",
+        data: {
+          output: {
+            surface: [
+              { messageType: "createSurface", surfaceId: "s", root: "root" },
+              {
+                messageType: "updateComponents",
+                surfaceId: "s",
+                components: [
+                  { id: "root", type: "Column", properties: {}, children: [] },
+                ],
+              },
+              { messageType: "updateDataModel", surfaceId: "s", data: { name } },
+            ],
+          },
+        },
+      },
+    ],
+  };
+}
+
 interface HostOverrides {
   fetch?: unknown;
   getCurrentSessionId?: unknown;
@@ -309,5 +336,93 @@ describe("A2uiToolRender — fallbacks", () => {
       expect(container.textContent).toContain("A2UI: surface inválida"),
     );
     expect(lastRendererProps).toBeNull();
+  });
+});
+
+describe("A2uiToolRender — hooks stability & re-seed", () => {
+  const unparseable: AnyRec = {
+    content: [
+      { type: "tool_use", data: {} },
+      { type: "tool_result", data: { output: "not-json{" } },
+    ],
+  };
+
+  it("survives a surface null -> real transition on the same instance", async () => {
+    // A conditional early-return before the hooks would make React throw
+    // "rendered more hooks than during the previous render" here.
+    const Renderer = await loadBundle();
+    const { rerender, container } = render(
+      React.createElement(Renderer, { data: unparseable }),
+    );
+    await waitFor(() =>
+      expect(container.textContent).toContain("A2UI: surface inválida"),
+    );
+    expect(lastRendererProps).toBeNull();
+
+    rerender(React.createElement(Renderer, { data: chatData() }));
+    await waitFor(() => expect(lastRendererProps).not.toBeNull());
+    expect(lastRendererProps!.surface).toBeTruthy();
+  });
+
+  it("re-seeds the editable data model when a new surface arrives in-place", async () => {
+    const fetchMock = vi.fn(async (p: string) => {
+      if (p === "/tools/render_ui/config") {
+        return {
+          ok: true,
+          json: async () => ({ interactivity: "editable" }),
+        } as unknown as Response;
+      }
+      return { ok: true, json: async () => ({}) } as unknown as Response;
+    });
+    const Renderer = await loadBundle({ fetch: fetchMock });
+    const { rerender } = render(
+      React.createElement(Renderer, { data: chatDataNamed("Ada") }),
+    );
+    await waitFor(() =>
+      expect(lastRendererProps?.onAction).toBeInstanceOf(Function),
+    );
+    expect(lastRendererProps!.data).toEqual({ name: "Ada" });
+
+    rerender(React.createElement(Renderer, { data: chatDataNamed("Bob") }));
+    await waitFor(() =>
+      expect(lastRendererProps!.data).toEqual({ name: "Bob" }),
+    );
+  });
+
+  it("preserves user edits across a re-render with the same surface identity", async () => {
+    const fetchMock = vi.fn(async (p: string) => {
+      if (p === "/tools/render_ui/config") {
+        return {
+          ok: true,
+          json: async () => ({ interactivity: "editable" }),
+        } as unknown as Response;
+      }
+      return { ok: true, json: async () => ({}) } as unknown as Response;
+    });
+    const Renderer = await loadBundle({ fetch: fetchMock });
+    const { rerender } = render(
+      React.createElement(Renderer, { data: chatDataNamed("Ada") }),
+    );
+    await waitFor(() =>
+      expect(lastRendererProps?.onAction).toBeInstanceOf(Function),
+    );
+
+    // User edits the model in place.
+    await act(async () => {
+      (lastRendererProps!.onDataChange as (n: AnyRec) => void)({
+        name: "Edited",
+      });
+    });
+    await waitFor(() =>
+      expect(lastRendererProps!.data).toEqual({ name: "Edited" }),
+    );
+
+    // Re-render with a fresh object of the SAME identity (same seed data):
+    // the edit must survive — no spurious re-seed.
+    rerender(React.createElement(Renderer, { data: chatDataNamed("Ada") }));
+    await waitFor(() =>
+      expect(lastRendererProps?.onAction).toBeInstanceOf(Function),
+    );
+    expect(lastRendererProps!.data).toEqual({ name: "Edited" });
   });
 });
