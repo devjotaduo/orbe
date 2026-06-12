@@ -81,10 +81,14 @@ def test_plugin_registers_render_ui_tool():
     mod = _load("a2ui_plugin", "plugin.py")
 
     calls = []
+    routers = []
 
     class FakeApi:
         def register_tool(self, **kw):
             calls.append(kw)
+
+        def register_http_router(self, router, *, prefix, tags=None):
+            routers.append({"router": router, "prefix": prefix})
 
     mod.plugin.register(FakeApi())
     names = [c["tool_name"] for c in calls]
@@ -93,6 +97,10 @@ def test_plugin_registers_render_ui_tool():
     assert callable(rendered["tool_func"])
     assert rendered["enabled"] is False
     assert rendered["icon"] == "🎨"
+
+    assert len(routers) == 1
+    assert routers[0]["prefix"] == "/a2ui"
+    assert routers[0]["router"] is not None
 
 
 def test_manifest_valid():

@@ -58,13 +58,36 @@ function parseSurface(output: unknown): AnyRec | null {
   return surf;
 }
 
+/**
+ * Read the `interactivity` config for the render_ui tool from the host.
+ *
+ * The real source is the tool-config endpoint
+ * (`GET /api/tools/render_ui/config`), reached via the auth-aware
+ * `host.fetch`. There is no global `window.QwenPaw.config` object — the
+ * tool renderer only receives `{ data }`. On any failure we fall back to
+ * the safe default `"read-only"`.
+ */
+async function fetchInteractivity(host: AnyRec): Promise<string> {
+  const fetcher = host.fetch as
+    | ((p: string, init?: AnyRec) => Promise<Response>)
+    | undefined;
+  if (typeof fetcher !== "function") return "read-only";
+  try {
+    const res = await fetcher("/tools/render_ui/config");
+    if (!res.ok) return "read-only";
+    const cfg = (await res.json()) as AnyRec;
+    const value = cfg?.interactivity;
+    return value === "editable" ? "editable" : "read-only";
+  } catch {
+    return "read-only";
+  }
+}
+
 function A2uiToolRender({ data }: { data: AnyRec }) {
   const QP = (window as unknown as AnyRec).QwenPaw as AnyRec | undefined;
   const host = QP?.host as AnyRec | undefined;
   const React = host?.React as typeof import("react") | undefined;
-  const Renderer = host?.A2uiRenderer as
-    | React.FC<{ surface: AnyRec }>
-    | undefined;
+  const Renderer = host?.A2uiRenderer as React.FC<AnyRec> | undefined;
 
   if (!React) return null;
 
@@ -85,13 +108,64 @@ function A2uiToolRender({ data }: { data: AnyRec }) {
       msg,
     );
 
-  if (!Renderer) return fallback("A2UI: renderer indisponível no host");
+  // Parse once per render of `data`; surface carries its own data model.
+  const surf = React.useMemo(() => {
+    const output = extractToolOutput(data);
+    return parseSurface(output);
+  }, [data]);
 
-  const output = extractToolOutput(data);
-  const surf = parseSurface(output);
+  // Editable data model lives in React state (seeded from the surface).
+  const initialData = (surf?.data as AnyRec | undefined) ?? {};
+  const [model, setModel] = React.useState<AnyRec>(initialData);
+
+  // Resolve the configured interactivity (read-only by default).
+  const [editable, setEditable] = React.useState(false);
+  React.useEffect(() => {
+    let alive = true;
+    if (!host) return;
+    fetchInteractivity(host).then((mode) => {
+      if (alive) setEditable(mode === "editable");
+    });
+    return () => {
+      alive = false;
+    };
+  }, [host]);
+
+  if (!Renderer) return fallback("A2UI: renderer indisponível no host");
   if (!surf) return fallback("A2UI: surface inválida");
 
-  return React.createElement(Renderer, { surface: surf });
+  const props: AnyRec = { surface: surf };
+  if (editable) {
+    props.data = model;
+    props.onDataChange = (next: AnyRec) => setModel(next);
+    props.onAction = async (name: string, params?: AnyRec) => {
+      if (!host) return;
+      const fetcher = host.fetch as
+        | ((p: string, init?: AnyRec) => Promise<Response>)
+        | undefined;
+      if (typeof fetcher !== "function") return;
+      const getSid = host.getCurrentSessionId as
+        | (() => string | null)
+        | undefined;
+      const sid = (typeof getSid === "function" ? getSid() : null) ?? "chat";
+      try {
+        await fetcher("/a2ui/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session_id: sid,
+            action: name,
+            data: model,
+            params,
+          }),
+        });
+      } catch {
+        // Action delivery is best-effort; surface stays usable.
+      }
+    };
+  }
+
+  return React.createElement(Renderer, props);
 }
 
 function install() {
