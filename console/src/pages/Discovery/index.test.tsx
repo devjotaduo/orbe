@@ -593,6 +593,95 @@ describe("DiscoveryPage", () => {
       expect(mockAction).not.toHaveBeenCalled();
     });
 
+    it("add_item on a path resolving to a non-array creates the array locally", async () => {
+      // tools_integrations is ABSENT from the data model: resolveBind yields
+      // undefined and mutateArray's `[]` fallback must create the array.
+      const NONARRAY_TURN: AguiEvent[] = [
+        {
+          type: "CUSTOM",
+          name: "a2ui",
+          value: {
+            messageType: "createSurface",
+            surfaceId: "blueprint",
+            root: "root",
+          },
+        },
+        {
+          type: "CUSTOM",
+          name: "a2ui",
+          value: {
+            messageType: "updateComponents",
+            surfaceId: "blueprint",
+            components: [
+              {
+                id: "root",
+                type: "Column",
+                properties: {},
+                children: ["frep", "addf"],
+              },
+              {
+                id: "frep",
+                type: "Repeater",
+                properties: {
+                  bind: "proposed_team/0/tools_integrations",
+                  itemTemplate: "ftpl",
+                },
+                children: [],
+              },
+              {
+                id: "ftpl",
+                type: "TextInput",
+                properties: { bind: ".", label: "Ferramenta" },
+                children: [],
+              },
+              {
+                id: "addf",
+                type: "Button",
+                properties: {
+                  text: "+ Ferramenta",
+                  action: {
+                    name: "add_item",
+                    params: { path: "proposed_team/0/tools_integrations" },
+                  },
+                },
+                children: [],
+              },
+            ],
+          },
+        },
+        {
+          type: "CUSTOM",
+          name: "a2ui",
+          value: {
+            messageType: "updateDataModel",
+            surfaceId: "blueprint",
+            data: { proposed_team: [{ name: "A1" }] },
+          },
+        },
+        { type: "RUN_FINISHED", threadId: "t", runId: "r" },
+      ];
+      scriptTurn(NONARRAY_TURN);
+      renderWithProviders(<DiscoveryPage />);
+      fireEvent.click(screen.getByText("discovery.start"));
+      await waitFor(() =>
+        expect(screen.getByText("+ Ferramenta")).toBeTruthy(),
+      );
+      // Before the click the repeater has nothing to render (non-array).
+      expect(screen.queryByLabelText("Ferramenta")).toBeNull();
+
+      fireEvent.click(screen.getByText("+ Ferramenta"));
+
+      await waitFor(() =>
+        expect(screen.getAllByLabelText("Ferramenta")).toHaveLength(1),
+      );
+      // A second click appends to the now-existing array.
+      fireEvent.click(screen.getByText("+ Ferramenta"));
+      await waitFor(() =>
+        expect(screen.getAllByLabelText("Ferramenta")).toHaveLength(2),
+      );
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
     it("move_agent with a stale index === array length is a no-op", async () => {
       await renderStructural();
       // index 2 on a 2-agent team: j = 1 passes a naive `j < length` guard,

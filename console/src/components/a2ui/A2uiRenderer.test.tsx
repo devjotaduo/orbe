@@ -351,6 +351,74 @@ describe("A2uiRenderer (Repeater)", () => {
     );
   });
 
+  it("nested Repeater: the innermost repeater context wins for indexFromRepeater", () => {
+    const msgs: A2uiMessage[] = [
+      { messageType: "createSurface", surfaceId: "bp", root: "root" },
+      {
+        messageType: "updateComponents",
+        surfaceId: "bp",
+        components: [
+          { id: "root", type: "Column", properties: {}, children: ["rep"] },
+          {
+            id: "rep",
+            type: "Repeater",
+            properties: { bind: "proposed_team", itemTemplate: "card" },
+            children: [],
+          },
+          { id: "card", type: "Row", properties: {}, children: ["trep"] },
+          {
+            id: "trep",
+            type: "Repeater",
+            properties: { bind: "tasks", itemTemplate: "del" },
+            children: [],
+          },
+          {
+            id: "del",
+            type: "Button",
+            properties: {
+              text: "Del",
+              action: {
+                name: "remove_item",
+                params: { indexFromRepeater: true },
+              },
+            },
+            children: [],
+          },
+        ],
+      },
+      {
+        messageType: "updateDataModel",
+        surfaceId: "bp",
+        data: {
+          proposed_team: [{ tasks: ["t1", "t2"] }, { tasks: ["x1"] }],
+        },
+      },
+    ];
+    const onAction = vi.fn();
+    render(
+      <A2uiRenderer surface={buildRepeatSurface(msgs)} onAction={onAction} />,
+    );
+    // Render order: agent0/t1, agent0/t2, agent1/x1.
+    const buttons = screen.getAllByText("Del");
+    expect(buttons).toHaveLength(3);
+
+    // Agent 0, second task: the OUTER repeater would inject index 0 /
+    // path "proposed_team" — the inner one must win with index 1 and the
+    // item-scoped tasks array path.
+    fireEvent.click(buttons[1]);
+    expect(onAction).toHaveBeenLastCalledWith(
+      "remove_item",
+      expect.objectContaining({ index: 1, path: "proposed_team/0/tasks" }),
+    );
+
+    // Agent 1, first task: inner index resets to 0 under the second agent.
+    fireEvent.click(buttons[2]);
+    expect(onAction).toHaveBeenLastCalledWith(
+      "remove_item",
+      expect.objectContaining({ index: 0, path: "proposed_team/1/tasks" }),
+    );
+  });
+
   it("shows a visible fallback when the bound value is not an array", () => {
     const msgs: A2uiMessage[] = [
       REPEAT_MSGS[0],
