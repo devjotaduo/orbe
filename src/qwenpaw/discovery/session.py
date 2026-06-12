@@ -27,4 +27,4 @@ class TurnResult:
 class DiscoverySession(Protocol):
     async def next_turn(self, user_message: str | None) -> TurnResult:
         """Advance one turn. ``user_message`` is None on the opening turn."""
-        ...
+        raise NotImplementedError

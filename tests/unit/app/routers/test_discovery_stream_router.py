@@ -22,7 +22,8 @@ def _client() -> TestClient:
 def test_opening_turn_streams_run_started_text_and_state():
     client = _client()
     r = client.post(
-        "/discovery/stream", json={"session_id": "s1", "message": None}
+        "/discovery/stream",
+        json={"session_id": "s1", "message": None},
     )
     assert r.status_code == 200
     types = [e["type"] for e in _events_from(r.text)]
@@ -35,7 +36,8 @@ def test_opening_turn_streams_run_started_text_and_state():
 def test_final_turn_emits_custom_a2ui_surface():
     client = _client()
     client.post(
-        "/discovery/stream", json={"session_id": "s2", "message": None}
+        "/discovery/stream",
+        json={"session_id": "s2", "message": None},
     )
     for msg in [
         "e-commerce de roupas",
@@ -43,7 +45,8 @@ def test_final_turn_emits_custom_a2ui_surface():
         "responder clientes",
     ]:
         r = client.post(
-            "/discovery/stream", json={"session_id": "s2", "message": msg}
+            "/discovery/stream",
+            json={"session_id": "s2", "message": msg},
         )
     events = _events_from(r.text)
     custom = [
@@ -60,11 +63,13 @@ def test_final_turn_emits_custom_a2ui_surface():
 def test_unknown_segment_still_completes(monkeypatch):
     client = _client()
     client.post(
-        "/discovery/stream", json={"session_id": "s3", "message": None}
+        "/discovery/stream",
+        json={"session_id": "s3", "message": None},
     )
     for msg in ["consultoria jurídica", "uso email", "organizar processos"]:
         r = client.post(
-            "/discovery/stream", json={"session_id": "s3", "message": msg}
+            "/discovery/stream",
+            json={"session_id": "s3", "message": msg},
         )
     types = [e["type"] for e in _events_from(r.text)]
     assert types[-1] == "RUN_FINISHED"

@@ -113,12 +113,14 @@ class LiveDiscoverySession:
         # Fallback ``ready_to_emit``: encerra quando o perfil mínimo (segmento)
         # está preenchido E toda área prioritária (priority>=3) foi satisfeita
         # — seja por confiança alta, seja por ter sido fechada via
-        # ``close_area_ids``. NÃO exigimos que ainda haja área crítica *aberta*:
-        # como fechar áreas as remove de ``open_areas``, esse antigo guard
-        # ``critical_exists`` travava o fim assim que o agente concluía todas as
-        # ramificações. O perfil mínimo já basta para evitar um blueprint
-        # degenerado (a área-semente ``segmento`` começa com confiança 0, então
-        # ``ready_to_emit`` segura o fim prematuro no primeiro turno).
+        # ``close_area_ids``. NÃO exigimos que ainda haja área crítica
+        # *aberta*:
+        # como fechar áreas as remove de ``open_areas``, esse antigo
+        # guard ``critical_exists`` travava o fim assim que o agente concluía
+        # todas as ramificações. O perfil mínimo já basta para evitar um
+        # blueprint degenerado (a área-semente ``segmento`` começa com
+        # confiança 0, então ``ready_to_emit`` segura o fim prematuro no
+        # primeiro turno).
         has_profile = bool(self._state.company.segment)
         return has_profile and self._state.ready_to_emit()
 

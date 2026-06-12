@@ -9,8 +9,6 @@ também é mockado — nenhum terminal nem LLM real é tocado.
 
 import json
 
-import pytest
-
 from qwenpaw.discovery import runner as runner_mod
 from qwenpaw.discovery.tools import InterviewSession
 from qwenpaw.discovery.state import TeamBlueprint

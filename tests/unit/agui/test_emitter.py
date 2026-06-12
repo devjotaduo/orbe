@@ -14,7 +14,9 @@ def test_sse_wraps_event_as_event_stream_frame():
 def test_text_message_events_brackets_content_with_start_end():
     evs = text_message_events("m1", "oi")
     assert [e.type for e in evs] == [
-        "TEXT_MESSAGE_START", "TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_END",
+        "TEXT_MESSAGE_START",
+        "TEXT_MESSAGE_CONTENT",
+        "TEXT_MESSAGE_END",
     ]
     content = [e for e in evs if isinstance(e, TextMessageContentEvent)][0]
     assert content.message_id == "m1"
