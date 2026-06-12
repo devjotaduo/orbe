@@ -13,6 +13,11 @@ import ReactDOM from "react-dom";
 import * as antd from "antd";
 import * as antdIcons from "@ant-design/icons";
 import { getApiUrl, getApiToken } from "../api/config";
+import { A2uiRenderer } from "../components/a2ui/A2uiRenderer";
+import {
+  applyA2uiMessage,
+  emptySurface,
+} from "../components/a2ui/surfaceReducer";
 import {
   buildAuditNamespace,
   buildMenuNamespace,
@@ -54,6 +59,10 @@ export interface HostExternals {
   getSelectedAgentId?: () => string;
   getCurrentSessionId?: () => string | null;
   fetch?: (path: string, init?: RequestInit) => Promise<Response>;
+  // ── A2UI surface renderer (read-only generative UI in chat bubbles) ───────
+  A2uiRenderer?: typeof A2uiRenderer;
+  applyA2uiMessage?: typeof applyA2uiMessage;
+  emptySurface?: typeof emptySurface;
 }
 
 export interface PluginRouteDeclaration {
@@ -239,6 +248,9 @@ export function installHostExternals(): void {
       apiBaseUrl,
       getApiUrl,
       getApiToken,
+      A2uiRenderer,
+      applyA2uiMessage,
+      emptySurface,
     };
   }
 

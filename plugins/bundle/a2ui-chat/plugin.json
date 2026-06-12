@@ -1,0 +1,40 @@
+{
+  "id": "a2ui-chat",
+  "name": "A2UI Chat",
+  "version": "1.0.0",
+  "type": "general",
+  "description": "Renderiza UI generativa A2UI no chat. Agentes chamam a tool render_ui(surface) para desenhar cards, listas, inputs e botões na resposta.",
+  "description_i18n": {
+    "zh-CN": "在对话中渲染 A2UI 生成式界面。智能体调用 render_ui(surface) 工具，在回复气泡中绘制卡片、列表、输入框和按钮。",
+    "en-US": "Render A2UI generative UI in chat. Agents call the render_ui(surface) tool to draw cards, lists, inputs and buttons in the reply."
+  },
+  "author": "QwenPaw Team",
+  "entry": {
+    "backend": "plugin.py",
+    "frontend": "ui/dist/index.js"
+  },
+  "dependencies": [],
+  "min_version": "1.1.6",
+  "meta": {
+    "category": "generative-ui",
+    "tools": [
+      {
+        "name": "render_ui",
+        "description": "Renderiza uma surface A2UI no chat",
+        "icon": "🎨",
+        "requires_config": false,
+        "config_fields": [
+          {
+            "name": "interactivity",
+            "label": "Interatividade",
+            "type": "select",
+            "required": false,
+            "default": "read-only",
+            "options": ["read-only", "editable"],
+            "help": "read-only renderiza estático; editable habilita edição + envio ao agente."
+          }
+        ]
+      }
+    ]
+  }
+}
