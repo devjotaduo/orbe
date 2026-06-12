@@ -9,6 +9,7 @@
     "pt-BR": "Destilação inteligente de memória: title-diffing para detectar informação nova nas daily notes (~92% menos ruído), atualização incremental do MEMORY.md."
   },
   "author": "QwenPaw Community",
+  "type": "tool",
   "entry": {
     "backend": "memory_distill_plugin.py"
   },

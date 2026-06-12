@@ -20,6 +20,7 @@ from typing import List, Optional, Set
 
 from agentscope.message import TextBlock
 from agentscope.tool import ToolResponse
+from agentscope.tool._response import ToolResultState
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +63,6 @@ _KNOWN_TEMPLATE_TITLES: Set[str] = {
     "scratch pad",
 }
 
-# Subdirectory names that are safe to archive from (never delete outside them).
-_SAFE_DIRS: Set[str] = {"memory", "tool_results", "logs", "archive"}
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +201,8 @@ async def distill_memory(
         wd = _resolve_working_dir(working_dir)
     except ValueError as exc:
         return ToolResponse(
-            content=[TextBlock(type="text", text=str(exc))]
+            content=[TextBlock(type="text", text=str(exc))],
+            state=ToolResultState.ERROR,
         )
 
     memory_file = wd / "MEMORY.md"
@@ -269,8 +269,7 @@ async def distill_memory(
         tmp_path.write_text(new_content, encoding="utf-8")
         os.replace(str(tmp_path), str(memory_file))
     finally:
-        if tmp_path.exists():
-            tmp_path.unlink(missing_ok=True)
+        tmp_path.unlink(missing_ok=True)
 
     result = (
         f"[distill_memory] Appended {len(new_discoveries)} new discovery(ies) "
@@ -304,7 +303,8 @@ async def consolidate_memory(
         wd = _resolve_working_dir(working_dir)
     except ValueError as exc:
         return ToolResponse(
-            content=[TextBlock(type="text", text=str(exc))]
+            content=[TextBlock(type="text", text=str(exc))],
+            state=ToolResultState.ERROR,
         )
 
     daily_dir_name = _resolve_daily_dir_name()
@@ -317,7 +317,8 @@ async def consolidate_memory(
         working_dir=str(wd), days=days, dry_run=dry_run
     )
     distill_text = distill_result.content[0].text if distill_result.content else ""
-    report_lines.append(f"  [1/4 distill] {distill_text.splitlines()[0]}")
+    first_line = (distill_text.splitlines() or ["(no output)"])[0]
+    report_lines.append(f"  [1/4 distill] {first_line}")
 
     # --- Step 2: Archive old daily notes ---
     archived = 0
@@ -392,7 +393,8 @@ async def inspect_memory(
         wd = _resolve_working_dir(working_dir)
     except ValueError as exc:
         return ToolResponse(
-            content=[TextBlock(type="text", text=str(exc))]
+            content=[TextBlock(type="text", text=str(exc))],
+            state=ToolResultState.ERROR,
         )
 
     daily_dir_name = _resolve_daily_dir_name()
