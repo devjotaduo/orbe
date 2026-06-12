@@ -7,6 +7,7 @@ from pathlib import Path
 from agentscope.message import UserMsg
 
 from .agent import build_discovery_agent
+from .requirements import build_requirements_agent, build_requirements_input
 from .state import DiscoveryState, OpenArea, Turn
 from .tools import DiscoverySession
 
@@ -67,18 +68,66 @@ async def run_discovery_session(
             # pede ao agente que feche com o que já sabe
             close_text = (
                 "Pode encerrar a entrevista e gerar o blueprint com o "
-                "que já temos, listando o que ficou em aberto."
+                "que já temos, listando o que ficou em aberto. Antes de "
+                "emitir, peça meu WhatsApp para o onboarding."
             )
             state.transcript.append(Turn(role="user", text="/fim"))
             reply = await agent.reply(UserMsg(name="user", content=close_text))
             _persist(state, out_dir)
             print(f"\nConsultor: {reply.get_text_content()}")
+            if not session.emitted:
+                break
+            # /fim com onboarding pendente: dá UMA chance de informar o número
+            if state.onboarding is None:
+                try:
+                    contact = _read_user_input("\nVocê: ").strip()
+                except EOFError:
+                    break
+                if contact:
+                    state.transcript.append(Turn(role="user", text=contact))
+                    reply = await agent.reply(
+                        UserMsg(name="user", content=contact)
+                    )
+                    _persist(state, out_dir)
+                    print(f"\nConsultor: {reply.get_text_content()}")
             break
         state.transcript.append(Turn(role="user", text=user_text))
         reply = await agent.reply(UserMsg(name="user", content=user_text))
         _persist(state, out_dir)
         print(f"\nConsultor: {reply.get_text_content()}")
 
-    if not session.emitted:
+    if session.emitted:
+        await _run_requirements_phase(session)
+        _persist(state, out_dir)
+    else:
         print("\n(Entrevista encerrada sem blueprint — estado salvo para retomar.)")
     return session
+
+
+async def _run_requirements_phase(session: DiscoverySession) -> None:
+    """Fase pós-blueprint: levanta informações pendentes por agente."""
+    print("\n(Levantando as informações que faltam para o seu time começar...)")
+    try:
+        agent = build_requirements_agent(session)
+        await agent.reply(
+            UserMsg(name="user", content=build_requirements_input(session))
+        )
+    except Exception as exc:  # não derruba a sessão: blueprint já está salvo
+        print(f"\n(Não consegui gerar a lista de pendências agora: {exc})")
+        return
+    if not session.requirements_emitted or session.requirements is None:
+        print("\n(Lista de pendências não foi gerada — tente novamente depois.)")
+        return
+    report = session.requirements
+    print(f"\nConsultor: {report.summary_for_owner}")
+    print("\nO que vamos pedir no grupo do WhatsApp:")
+    for item in report.items:
+        if not item.requests:
+            continue
+        print(f"\n  {item.agent_name}:")
+        for req in item.requests:
+            print(f"   - {req.item}")
+    print(
+        f"\n(Detalhes em {session.out_dir / 'informacoes_pendentes.md'} e "
+        f"mensagens prontas em {session.out_dir / 'mensagens_grupo.md'})"
+    )

@@ -8,12 +8,16 @@ from pathlib import Path
 from agentscope.message import TextBlock, ToolResultState
 from agentscope.tool import FunctionTool, ToolChunk, Toolkit
 
+import re
+
 from .segments.taxonomy import lookup_connectors, lookup_segment
 from .state import (
     DiscoveryState,
     Integration,
+    OnboardingInfo,
     OpenArea,
     ReflectUpdate,
+    RequirementsReport,
     TeamBlueprint,
     Turn,
 )
@@ -35,50 +39,162 @@ def _err(text: str) -> ToolChunk:
     )
 
 
+def _friendly_tool_name(ref: str, bp: TeamBlueprint) -> str:
+    """Converte 'origin:slug' no nome amigável do conector, se houver."""
+    slug = ref.split(":", 1)[1] if ":" in ref else ref
+    for c in bp.recommended_connectors:
+        if c.slug_or_url and c.slug_or_url == slug:
+            return c.name
+        if c.name.lower() == slug.lower():
+            return c.name
+    return slug.replace("-", " ").replace("_", " ").strip().title()
+
+
 def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
-    lines: list[str] = ["# Blueprint do Time de Agentes\n"]
+    """Relatório do empresário: linguagem simples, sem jargão, sem prazos."""
     cp = bp.company_profile
-    lines.append("## Perfil da empresa")
-    lines.append(f"- Segmento: {cp.segment or '—'}")
-    lines.append(f"- Porte: {cp.size or '—'}")
-    lines.append(f"- Modelo de negócio: {cp.business_model or '—'}")
+    lines: list[str] = ["# Seu Time de Agentes\n"]
+    lines.append(
+        "Preparamos este plano com base na nossa conversa. Aqui está o que "
+        "entendemos do seu negócio e o time que vamos montar para você.\n"
+    )
+
+    lines.append("## O que entendemos do seu negócio")
+    if cp.business_model:
+        lines.append(f"- O que a empresa faz: {cp.business_model}")
+    if cp.size:
+        lines.append(f"- Tamanho da operação: {cp.size}")
     if cp.pains:
-        lines.append(f"- Dores: {', '.join(cp.pains)}")
-    lines.append("\n## Mapa de processos")
-    for p in bp.process_map:
-        lines.append(f"- **{p.name}**: {p.description}")
-    lines.append("\n## Integrações detectadas")
-    for i in bp.detected_integrations:
-        loc = i.data_location or "—"
-        lines.append(f"- {i.kind} — {i.name} (dados em: {loc})")
-    lines.append("\n## Time de agentes proposto")
+        lines.append("- Desafios que você nos contou:")
+        for pain in cp.pains:
+            lines.append(f"  - {pain}")
+
+    if bp.process_map:
+        lines.append("\n## Como o trabalho acontece hoje")
+        for p in bp.process_map:
+            lines.append(f"- **{p.name}**: {p.description}")
+
+    if bp.detected_integrations:
+        lines.append("\n## Ferramentas que você já usa")
+        for i in bp.detected_integrations:
+            loc = f" (fica em: {i.data_location})" if i.data_location else ""
+            lines.append(f"- {i.name}{loc}")
+
+    lines.append("\n## Quem vai trabalhar para você")
     for a in bp.proposed_team:
         lines.append(f"### {a.name} — {a.role}")
-        lines.append(f"- Objetivo: {a.objective}")
+        lines.append(f"- Missão: {a.objective}")
         if a.tasks:
-            lines.append(f"- Tarefas: {', '.join(a.tasks)}")
+            lines.append("- O que ele faz no dia a dia:")
+            for task in a.tasks:
+                lines.append(f"  - {task}")
         if a.tools_integrations:
-            lines.append(f"- Integrações: {', '.join(a.tools_integrations)}")
-        if a.talks_to:
-            lines.append(f"- Conversa com: {', '.join(a.talks_to)}")
-    lines.append("\n## Roadmap")
-    for r in sorted(bp.roadmap, key=lambda x: x.order):
-        lines.append(f"{r.order}. **{r.title}** — {r.rationale}")
-    if bp.recommended_connectors:
-        lines.append("\n## Conectores recomendados")
-        for c in bp.recommended_connectors:
-            ref = f"{c.origin}:{c.slug_or_url}" if c.slug_or_url else c.origin
-            entry = (
-                f"- **{c.name}** ({c.integration_kind}) — `{ref}`"
-                f" — status: {c.status}"
+            friendly = sorted(
+                {_friendly_tool_name(t, bp) for t in a.tools_integrations}
             )
-            if c.notes:
-                entry += f" — {c.notes}"
-            lines.append(entry)
+            lines.append(f"- Vai trabalhar com: {', '.join(friendly)}")
+        if a.talks_to:
+            lines.append(f"- Trabalha junto com: {', '.join(a.talks_to)}")
+
+    if bp.roadmap:
+        lines.append("\n## Por onde vamos começar")
+        lines.append(
+            "Cada etapa entra no ar quando a anterior estiver redonda — "
+            "você acompanha e aprova tudo."
+        )
+        for r in sorted(bp.roadmap, key=lambda x: x.order):
+            lines.append(f"{r.order}. **{r.title}** — {r.rationale}")
+
     if bp.open_questions:
-        lines.append("\n## Perguntas em aberto")
+        lines.append("\n## O que ainda vamos confirmar com você")
         for q in bp.open_questions:
             lines.append(f"- {q}")
+
+    lines.append("\n## Próximos passos")
+    if bp.onboarding:
+        contato = (
+            f"{bp.onboarding.responsible_name} "
+            f"({bp.onboarding.whatsapp_number})"
+        )
+    else:
+        contato = "você"
+    lines.append(
+        "1. Vamos conectar o WhatsApp da sua empresa — ele será o canal "
+        "oficial de atendimento do seu time de agentes."
+    )
+    lines.append(
+        f"2. Vamos criar um grupo no WhatsApp com {contato} para "
+        "acompanhar tudo de perto."
+    )
+    lines.append(
+        "3. Pelo grupo, você nos passa as informações que faltarem e "
+        "testa o atendente antes de ele começar a falar com seus clientes."
+    )
+    lines.append(
+        "\nVamos montar o seu time de agentes — e você acompanha cada "
+        "passo pelo grupo. 🤝"
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _requirements_to_markdown(
+    report: RequirementsReport, state: DiscoveryState
+) -> str:
+    """Relatório leigo de informações pendentes, por agente."""
+    lines: list[str] = ["# O que falta para o seu time começar\n"]
+    if report.summary_for_owner:
+        lines.append(report.summary_for_owner + "\n")
+    for item in report.items:
+        lines.append(f"## {item.agent_name}")
+        if not item.requests:
+            lines.append("- Nada pendente — pronto para começar! ✅")
+            continue
+        for req in item.requests:
+            lines.append(f"- **{req.item}**")
+            lines.append(f"  - Por quê: {req.why}")
+        lines.append("")
+    contato = state.onboarding
+    if contato:
+        lines.append(
+            f"\n_Vamos pedir essas informações no grupo do WhatsApp com "
+            f"{contato.responsible_name} ({contato.whatsapp_number})._"
+        )
+    else:
+        lines.append(
+            "\n_Vamos pedir essas informações no grupo do WhatsApp assim "
+            "que o contato for confirmado._"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _group_messages_markdown(
+    report: RequirementsReport, state: DiscoveryState
+) -> str:
+    """Mensagens prontas para enviar no grupo de onboarding."""
+    lines: list[str] = ["# Mensagens prontas para o grupo do WhatsApp\n"]
+    contato = state.onboarding
+    if contato:
+        lines.append(
+            f"_Grupo de onboarding com {contato.responsible_name} "
+            f"({contato.whatsapp_number})._\n"
+        )
+    lines.append("## Mensagem de abertura\n")
+    lines.append("```")
+    lines.append(
+        report.summary_for_owner
+        or "Olá! Este é o grupo de acompanhamento do seu time de agentes. "
+        "Por aqui vamos pedir as informações que faltam e você testa o "
+        "atendente antes de ele falar com seus clientes."
+    )
+    lines.append("```\n")
+    for item in report.items:
+        if not item.requests:
+            continue
+        lines.append(f"## Para o {item.agent_name}\n")
+        for req in item.requests:
+            lines.append("```")
+            lines.append(req.group_message)
+            lines.append("```\n")
     return "\n".join(lines) + "\n"
 
 
@@ -89,6 +205,8 @@ class DiscoverySession:
         self.state = state
         self.out_dir = Path(out_dir)
         self.emitted = False
+        self.requirements_emitted = False
+        self.requirements: RequirementsReport | None = None
 
     # --- tools -----------------------------------------------------------
 
@@ -278,12 +396,57 @@ class DiscoverySession:
             )
         return _ok(msg)
 
+    async def register_onboarding(
+        self,
+        whatsapp_number: str,
+        responsible_name: str,
+        is_owner: bool = True,
+    ) -> ToolChunk:
+        """Registra o WhatsApp do empresário (ou responsável) para onboarding.
+
+        Chame assim que o empresário informar o número. Esse contato será
+        usado para conectar o WhatsApp da empresa como canal oficial e criar
+        o grupo de acompanhamento (informações faltantes + testes do
+        atendente). Peça SEMPRE antes de encerrar a entrevista.
+
+        Args:
+            whatsapp_number: Número com DDD, ex.: "11 98765-4321" ou
+                "+55 11 98765-4321".
+            responsible_name: Nome de quem vai responder no grupo.
+            is_owner: True se for o próprio dono; False se for outra pessoa
+                responsável pela parte técnica.
+
+        Returns:
+            `ToolChunk`: confirmação, ou erro se o número for inválido.
+        """
+        digits = re.sub(r"\D", "", whatsapp_number or "")
+        if digits.startswith("55") and len(digits) > 11:
+            digits = digits[2:]
+        if len(digits) not in (10, 11):
+            return _err(
+                f"Número '{whatsapp_number}' inválido — esperado DDD + "
+                f"número (10-11 dígitos). Confirme com o empresário e "
+                f"chame register_onboarding de novo."
+            )
+        normalized = f"+55 ({digits[:2]}) {digits[2:-4]}-{digits[-4:]}"
+        self.state.onboarding = OnboardingInfo(
+            whatsapp_number=normalized,
+            responsible_name=(responsible_name or "").strip() or "Responsável",
+            is_owner=is_owner,
+        )
+        return _ok(
+            f"Contato registrado: {self.state.onboarding.responsible_name} "
+            f"— {normalized}. Será usado para conectar o canal oficial e "
+            f"criar o grupo de onboarding."
+        )
+
     async def emit_blueprint(self, blueprint_json: str) -> ToolChunk:
         """Valida e grava o blueprint final do time de agentes.
 
         Só chame quando as áreas prioritárias estiverem suficientemente
         compreendidas (ou o empresário sinalizar fim). Grava blueprint.json
-        e blueprint.md no diretório da sessão.
+        e blueprint.md no diretório da sessão. Antes de chamar, peça o
+        WhatsApp do responsável via register_onboarding.
 
         Args:
             blueprint_json: JSON conforme o schema TeamBlueprint.
@@ -298,6 +461,9 @@ class DiscoverySession:
                 f"Blueprint inválido ({exc}). Corrija o JSON conforme o "
                 f"schema TeamBlueprint e chame emit_blueprint de novo."
             )
+        # o contato de onboarding vive no estado — fonte da verdade
+        if self.state.onboarding is not None:
+            bp.onboarding = self.state.onboarding
         self.out_dir.mkdir(parents=True, exist_ok=True)
         (self.out_dir / "blueprint.json").write_text(
             bp.model_dump_json(indent=2), encoding="utf-8"
@@ -308,8 +474,60 @@ class DiscoverySession:
         self.emitted = True
         j = self.out_dir / "blueprint.json"
         m = self.out_dir / "blueprint.md"
+        msg = f"Blueprint gravado em {j} e {m}. Entrevista concluída."
+        if self.state.onboarding is None:
+            msg += (
+                " ATENÇÃO: nenhum contato de WhatsApp registrado — se a "
+                "conversa permitir, peça o número e chame "
+                "register_onboarding antes de se despedir."
+            )
+        return _ok(msg)
+
+    async def emit_requirements(self, requirements_json: str) -> ToolChunk:
+        """Valida e grava o relatório de informações pendentes por agente.
+
+        Use na fase pós-blueprint: para CADA agente do time proposto, liste
+        as informações concretas que faltam para ele operar. Grava
+        requirements.json, informacoes_pendentes.md e mensagens_grupo.md
+        no diretório da sessão.
+
+        Args:
+            requirements_json: JSON conforme o schema RequirementsReport:
+                items (list de {agent_name, requests: [{item, why,
+                group_message}]}) e summary_for_owner (parágrafo leigo que
+                abre o grupo de WhatsApp).
+
+        Returns:
+            `ToolChunk`: confirmação com os caminhos, ou o erro de validação.
+        """
+        try:
+            report = RequirementsReport.model_validate_json(requirements_json)
+        except Exception as exc:
+            return _err(
+                f"Relatório inválido ({exc}). Corrija o JSON conforme o "
+                f"schema RequirementsReport e chame emit_requirements de novo."
+            )
+        if not report.items:
+            return _err(
+                "Relatório vazio — liste as informações pendentes de cada "
+                "agente do blueprint (mínimo 1 agente)."
+            )
+        self.out_dir.mkdir(parents=True, exist_ok=True)
+        (self.out_dir / "requirements.json").write_text(
+            report.model_dump_json(indent=2), encoding="utf-8"
+        )
+        (self.out_dir / "informacoes_pendentes.md").write_text(
+            _requirements_to_markdown(report, self.state), encoding="utf-8"
+        )
+        (self.out_dir / "mensagens_grupo.md").write_text(
+            _group_messages_markdown(report, self.state), encoding="utf-8"
+        )
+        self.requirements_emitted = True
+        self.requirements = report
         return _ok(
-            f"Blueprint gravado em {j} e {m}. Entrevista concluída."
+            f"Relatório de pendências gravado em "
+            f"{self.out_dir / 'informacoes_pendentes.md'} e mensagens do "
+            f"grupo em {self.out_dir / 'mensagens_grupo.md'}."
         )
 
     # --- toolkit ---------------------------------------------------------
@@ -319,7 +537,16 @@ class DiscoverySession:
             tools=[
                 FunctionTool(self.segment_lookup, is_read_only=False),
                 FunctionTool(self.reflect, is_read_only=False),
+                FunctionTool(self.register_onboarding, is_read_only=False),
                 FunctionTool(self.emit_blueprint, is_read_only=False),
                 FunctionTool(self.connector_lookup, is_read_only=True),
+            ]
+        )
+
+    def build_requirements_toolkit(self) -> Toolkit:
+        """Toolkit da fase de requisitos (pós-blueprint)."""
+        return Toolkit(
+            tools=[
+                FunctionTool(self.emit_requirements, is_read_only=False),
             ]
         )
