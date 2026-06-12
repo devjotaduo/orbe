@@ -11,10 +11,11 @@ import { useAppMessage } from "../../../../hooks/useAppMessage";
 import { Alert, ConfigProvider } from "antd";
 import { LinkOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormInstance } from "antd";
 import { getChannelLabel, type ChannelKey } from "./constants";
 import { QrcodeAuthBlock } from "./QrcodeAuthBlock";
+import { api } from "../../../../api";
 import styles from "../index.module.less";
 import { useAgentStore } from "../../../../stores/agentStore";
 import { openExternalLink } from "../../../../utils/openExternalLink";
@@ -28,6 +29,7 @@ const CHANNELS_WITH_ACCESS_CONTROL: ChannelKey[] = [
   "mattermost",
   "matrix",
   "wechat",
+  "whatsapp",
   "imessage",
   "onebot",
   "qq",
@@ -54,6 +56,7 @@ const CHANNEL_DOC_EN_URLS: Partial<Record<ChannelKey, string>> = {
     "https://qwenpaw.agentscope.io/docs/channels/?lang=en#WeCom-WeChat-Work",
   wechat:
     "https://qwenpaw.agentscope.io/docs/channels/?lang=en#WeChat-Personal-iLink",
+  whatsapp: "https://qwenpaw.agentscope.io/docs/channels/?lang=en#WhatsApp",
   xiaoyi:
     "https://developer.huawei.com/consumer/cn/doc/service/openclaw-0000002518410344",
   yuanbao: "https://qwenpaw.agentscope.io/docs/channels/?lang=en#Yuanbao",
@@ -76,6 +79,7 @@ const CHANNEL_DOC_ZH_URLS: Partial<Record<ChannelKey, string>> = {
   sip: "https://qwenpaw.agentscope.io/docs/channels/?lang=zh#SIP",
   wecom: "https://qwenpaw.agentscope.io/docs/channels/?lang=zh#企业微信",
   wechat: "https://qwenpaw.agentscope.io/docs/channels/?lang=zh#微信个人iLink",
+  whatsapp: "https://qwenpaw.agentscope.io/docs/channels/?lang=zh#WhatsApp",
   xiaoyi:
     "https://developer.huawei.com/consumer/cn/doc/service/openclaw-0000002518410344",
   yuanbao:
@@ -139,6 +143,92 @@ export function ChannelDrawer({
       form.setFieldsValue({ auth_method: "password" });
     }
   }, [open, activeKey, initialValues, form]);
+
+  // ── WhatsApp pairing state (pair code / QR via neonize) ──────────────────
+  const [waPhone, setWaPhone] = useState<string>("");
+  const [waPairCode, setWaPairCode] = useState<string>("");
+  const [waQrImage, setWaQrImage] = useState<string>("");
+  const [waPairLoading, setWaPairLoading] = useState(false);
+  const [waPairStatus, setWaPairStatus] = useState<string>("idle");
+  const waPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [waLinked, setWaLinked] = useState(false);
+  const stopWaPoll = useCallback(() => {
+    if (waPollRef.current) {
+      clearInterval(waPollRef.current);
+      waPollRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeKey === "whatsapp") {
+      // Bootstrap the drawer state from /status so the "connected" UI
+      // shows up immediately on open without requiring the user to first
+      // click Pair.
+      api
+        .getWhatsappStatus()
+        .then((s) => {
+          setWaLinked(s.linked);
+          if (s.linked) setWaPairStatus("connected");
+        })
+        .catch(() => {});
+    }
+    return () => {
+      stopWaPoll();
+    };
+  }, [activeKey, stopWaPoll]);
+
+  const handleWhatsappPair = useCallback(async () => {
+    stopWaPoll();
+    setWaPairLoading(true);
+    setWaPairCode("");
+    setWaQrImage("");
+    setWaPairStatus("pairing");
+    try {
+      const data = await api.startWhatsappPair(waPhone);
+      if (data.pair_code) {
+        setWaPairCode(data.pair_code);
+        setWaPairStatus("waiting_pair");
+      }
+      if (data.qr_image) {
+        setWaQrImage(data.qr_image);
+        setWaPairStatus("waiting_qr");
+      }
+      // Poll for connection
+      waPollRef.current = setInterval(async () => {
+        try {
+          const s = await api.checkWhatsappPairStatus();
+          if (s.status === "connected") {
+            stopWaPoll();
+            setWaPairCode("");
+            setWaQrImage("");
+            setWaPairStatus("connected");
+            setWaPairLoading(false);
+            message.success(t("channels.whatsappLinkedSuccess"));
+          }
+        } catch {
+          /* ignore */
+        }
+      }, 3000);
+    } catch {
+      message.error(t("channels.whatsappPairFailed"));
+      setWaPairStatus("idle");
+    } finally {
+      setWaPairLoading(false);
+    }
+  }, [stopWaPoll, message, t, waPhone]);
+
+  const handleWhatsappUnbind = useCallback(async () => {
+    try {
+      await api.unbindWhatsapp();
+      setWaPairCode("");
+      setWaQrImage("");
+      setWaPairStatus("idle");
+      setWaLinked(false);
+      message.success(t("channels.whatsappUnlinked"));
+    } catch {
+      message.error(t("channels.whatsappUnbindFailed"));
+    }
+  }, [message, t]);
 
   // ── Access control fields (shared across multiple channels) ──────────────
 
@@ -1218,6 +1308,186 @@ export function ChannelDrawer({
             </Form.Item>
             <Form.Item name="media_dir" label={t("channels.wechatMediaDir")}>
               <Input placeholder={defaultMediaDir} />
+            </Form.Item>
+          </>
+        );
+
+
+      case "whatsapp":
+        return (
+          <>
+            <Form.Item label={t("channels.whatsappConnection")}>
+              {waPairStatus === "connected" || waLinked ? (
+                <>
+                  <Alert
+                    type="success"
+                    showIcon
+                    message={t("channels.whatsappConnected")}
+                    description={t("channels.whatsappSessionActive")}
+                    style={{ marginBottom: 12 }}
+                  />
+                  <Button
+                    danger
+                    block
+                    loading={waPairLoading}
+                    onClick={handleWhatsappUnbind}
+                  >
+                    {t("channels.whatsappUnbind")}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Input
+                    placeholder={t("channels.whatsappPhonePlaceholder")}
+                    value={waPhone}
+                    onChange={(e) => setWaPhone(e.target.value)}
+                    style={{ marginBottom: 8 }}
+                  />
+                  <Button
+                    type="primary"
+                    block
+                    loading={waPairLoading}
+                    onClick={handleWhatsappPair}
+                    disabled={!waPhone}
+                  >
+                    {t("channels.whatsappGetPairCode")}
+                  </Button>
+                  <Button
+                    style={{ marginTop: 8 }}
+                    block
+                    onClick={async () => {
+                      setWaPairLoading(true);
+                      setWaQrImage("");
+                      try {
+                        const data = await api.getWhatsappQrcode();
+                        if (data.qr_image) {
+                          setWaQrImage(data.qr_image);
+                          setWaPairStatus("waiting_qr");
+                        }
+                      } catch {
+                        /* ignore */
+                      }
+                      setWaPairLoading(false);
+                    }}
+                  >
+                    {t("channels.whatsappShowQR")}
+                  </Button>
+                  {waPairCode && (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        marginTop: 12,
+                        padding: "16px",
+                        background: "rgba(0,0,0,0.05)",
+                        borderRadius: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 24,
+                          fontWeight: "bold",
+                          letterSpacing: 4,
+                        }}
+                      >
+                        {waPairCode}
+                      </div>
+                      <div style={{ marginTop: 8, fontSize: 12, opacity: 0.6 }}>
+                        {t("channels.whatsappPairInstructions")}
+                      </div>
+                    </div>
+                  )}
+                  {waQrImage && (
+                    <div style={{ textAlign: "center", marginTop: 12 }}>
+                      <img
+                        src={`data:image/png;base64,${waQrImage}`}
+                        alt="WhatsApp QR Code"
+                        style={{ width: 200, height: 200 }}
+                      />
+                      <div style={{ marginTop: 8, fontSize: 12, opacity: 0.6 }}>
+                        {t("channels.whatsappScanQR")}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </Form.Item>
+            <ConfigProvider prefixCls="ant">
+              <Alert
+                type="info"
+                showIcon
+                message={t("channels.whatsappAuthInfo")}
+                style={{ marginBottom: 16 }}
+              />
+            </ConfigProvider>
+            <Form.Item
+              name="auth_dir"
+              label={t("channels.whatsappAuthDir")}
+              tooltip={t("channels.whatsappAuthDirTooltip")}
+            >
+              {/* Intentionally no initialValue — leave the field empty so the
+                  backend resolves the default via `_resolve_wa_auth_dir`
+                  (explicit > workspace_dir > WORKING_DIR). */}
+              <Input placeholder="$WORKING_DIR/credentials/whatsapp/default (auto)" />
+            </Form.Item>
+            <Form.Item
+              name="send_read_receipts"
+              label={t("channels.whatsappReadReceipts")}
+              valuePropName="checked"
+              initialValue={true}
+            >
+              <Switch defaultChecked />
+            </Form.Item>
+            <Form.Item
+              name="text_chunk_limit"
+              label={t("channels.whatsappTextChunkLimit")}
+              tooltip={t("channels.whatsappTextChunkLimitTooltip")}
+              initialValue={4096}
+            >
+              <InputNumber
+                min={256}
+                max={8192}
+                step={256}
+                style={{ width: "100%" }}
+              />
+            </Form.Item>
+            <Form.Item
+              name="self_chat_mode"
+              label={t("channels.whatsappSelfChatMode")}
+              valuePropName="checked"
+              tooltip={t("channels.whatsappSelfChatModeTooltip")}
+            >
+              <Switch />
+            </Form.Item>
+            <Form.Item
+              name="groups"
+              label={t("channels.whatsappGroupAllowlist")}
+              tooltip={t("channels.whatsappGroupAllowlistTooltip")}
+            >
+              <Select
+                mode="tags"
+                placeholder="120363421135228220@g.us"
+                tokenSeparators={[",", " ", "\n"]}
+              />
+            </Form.Item>
+            <Form.Item
+              name="group_allow_from"
+              label={t("channels.whatsappGroupAllowFrom")}
+              tooltip={t("channels.whatsappGroupAllowFromTooltip")}
+            >
+              <Select
+                mode="tags"
+                placeholder="* (everyone)"
+                tokenSeparators={[",", " "]}
+              />
+            </Form.Item>
+            <Form.Item
+              name="reply_to_trigger"
+              label={t("channels.replyToTrigger")}
+              valuePropName="checked"
+              tooltip={t("channels.replyToTriggerTooltip")}
+              initialValue={true}
+            >
+              <Switch defaultChecked />
             </Form.Item>
           </>
         );

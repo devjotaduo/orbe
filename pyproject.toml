@@ -130,6 +130,17 @@ sip-livekit = [
     "livekit>=1.0.0",
     "livekit-api>=0.6.0",
 ]
+whatsapp = [
+    # neonize-qwenpaw is a fork of krypton-byte/neonize with proto stubs
+    # regenerated against protoc 30.2 (gencode 6.30.2) so it cohabitates
+    # with the protobuf 6.x ecosystem that QwenPaw already depends on.
+    # Once krypton-byte/neonize#180 is merged upstream we can swap this
+    # dep to the canonical `neonize` package.
+    "neonize-qwenpaw>=0.3.16.1",
+    # QR code endpoint (/config/channels/whatsapp/qrcode) renders the
+    # linking QR via segno. Without it, the QR endpoint 500s.
+    "segno>=1.6.1",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
