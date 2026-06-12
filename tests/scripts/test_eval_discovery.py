@@ -28,10 +28,16 @@ def eval_mod():
 
 @pytest.fixture()
 def make_session(tmp_path):
-    from qwenpaw.discovery.state import DiscoveryState, Integration, Turn
+    from qwenpaw.discovery.state import (
+        DiscoveryState,
+        Integration,
+        OnboardingInfo,
+        Turn,
+    )
     from qwenpaw.discovery.tools import DiscoverySession
 
-    def _make(*, segment=None, emitted=True, n_integrations=2, n_turns=6):
+    def _make(*, segment=None, emitted=True, n_integrations=2, n_turns=6,
+              onboarding=True):
         state = DiscoveryState(session_id="t")
         state.company.segment = segment
         state.integrations = [
@@ -40,11 +46,35 @@ def make_session(tmp_path):
         state.transcript = [
             Turn(role="user", text=f"resposta {i}") for i in range(n_turns)
         ]
+        if onboarding:
+            state.onboarding = OnboardingInfo(
+                whatsapp_number="+55 (11) 98765-4321",
+                responsible_name="João",
+            )
         session = DiscoverySession(state, out_dir=tmp_path)
         session.emitted = emitted
         return session
 
     return _make
+
+
+def _write_requirements(tmp_path, *, agents=3):
+    rep = {
+        "summary_for_owner": "Olá! Por aqui vamos pedir o que falta.",
+        "items": [
+            {
+                "agent_name": f"A{i}",
+                "requests": [
+                    {"item": "info", "why": "necessária",
+                     "group_message": "Pode nos mandar?"}
+                ],
+            }
+            for i in range(agents)
+        ],
+    }
+    path = tmp_path / "requirements.json"
+    path.write_text(json.dumps(rep), encoding="utf-8")
+    return path
 
 
 def _write_blueprint(tmp_path, *, agents=3, roadmap=3, processes=2, questions=2):
@@ -67,12 +97,35 @@ def _write_blueprint(tmp_path, *, agents=3, roadmap=3, processes=2, questions=2)
     return path
 
 
-def test_perfect_session_scores_100(eval_mod, make_session, tmp_path):
+def test_perfect_session_scores_full(eval_mod, make_session, tmp_path):
     persona = eval_mod.PERSONAS[0]  # ecommerce_roupas
     session = make_session(segment="ecommerce")
     bp = _write_blueprint(tmp_path, agents=3, roadmap=3, processes=2, questions=2)
+    _write_requirements(tmp_path, agents=3)
     result = eval_mod.score_session(persona, session, bp)
-    assert result.total == result.max_total == 100
+    # 100 originais + 10 onboarding + 10 requisitos
+    assert result.total == result.max_total == 120
+
+
+def test_missing_onboarding_flagged(eval_mod, make_session, tmp_path):
+    persona = eval_mod.PERSONAS[0]
+    session = make_session(segment="ecommerce", onboarding=False)
+    bp = _write_blueprint(tmp_path)
+    _write_requirements(tmp_path)
+    result = eval_mod.score_session(persona, session, bp)
+    ob = next(c for c in result.criteria if c.name == "Onboarding WhatsApp")
+    assert ob.score == 0
+    assert any("Onboarding NÃO registrado" in i for i in result.issues)
+
+
+def test_missing_requirements_flagged(eval_mod, make_session, tmp_path):
+    persona = eval_mod.PERSONAS[0]
+    session = make_session(segment="ecommerce")
+    bp = _write_blueprint(tmp_path)  # sem requirements.json
+    result = eval_mod.score_session(persona, session, bp)
+    req = next(c for c in result.criteria if c.name == "Requisitos por agente")
+    assert req.score == 0
+    assert any("Requisitos NÃO gerados" in i for i in result.issues)
 
 
 def test_wrong_segment_partial_credit(eval_mod, make_session, tmp_path):
@@ -145,6 +198,7 @@ def test_recommendations_fall_back_to_maintenance(eval_mod, make_session, tmp_pa
     persona = eval_mod.PERSONAS[0]
     session = make_session(segment=persona.expected_segment)
     bp = _write_blueprint(tmp_path)
+    _write_requirements(tmp_path)
     score = eval_mod.score_session(persona, session, bp)
     assert score.total == score.max_total  # sanidade: rodada perfeita
     run = eval_mod.SessionRun(
@@ -215,6 +269,7 @@ def test_qualitative_issue_maps_to_recommendation(eval_mod, make_session, tmp_pa
         persona=persona, score=score, stdout_log="", session=session,
         out_dir=tmp_path,
         qual={"clareza": 9, "empatia": 9, "nao_repeticao": 4,
+              "linguagem_simples": 9,
               "justificativa": "repetiu a mesma pergunta 4 vezes"},
     )
     recs = eval_mod._build_recommendations([run])
@@ -230,11 +285,12 @@ def test_report_renders_qualitative_section(eval_mod, make_session, tmp_path):
         persona=persona, score=score, stdout_log="Você: oi", session=session,
         out_dir=tmp_path,
         qual={"clareza": 8, "empatia": 9, "nao_repeticao": 7,
+              "linguagem_simples": 9,
               "justificativa": "Condução clara e acolhedora."},
     )
     report = eval_mod.generate_report([run], "20260611_000000")
     assert "LLM-as-judge" in report
-    assert "24/30" in report
+    assert "33/40" in report
     assert "Condução clara e acolhedora." in report
 
 

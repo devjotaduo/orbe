@@ -62,6 +62,7 @@ PERSONAS: list[Persona] = [
             "Faturamos em torno de R$ 30 mil por mês. Somos 3 pessoas: eu, uma assistente e uma responsável pelo estoque.",
             "Vendo também na Shopee e no Mercado Livre. Tenho problemas com devoluções que ficam sem resposta.",
             "Meu sonho é conseguir vender enquanto durmo — automação total do atendimento e rastreio de pedidos.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -76,6 +77,7 @@ PERSONAS: list[Persona] = [
             "Uso o iFood, WhatsApp para delivery próprio, e o sistema da operadora de cartão. Tudo separado.",
             "Faturamos em torno de R$ 60 mil por mês. Temos 8 funcionários incluindo cozinha e salão.",
             "Quero um agente que responda clientes no WhatsApp sobre cardápio, horários e reservas automaticamente.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -90,6 +92,7 @@ PERSONAS: list[Persona] = [
             "Usamos um software de clínica chamado Nuvem, integrado com Google Calendar. Também WhatsApp para confirmações.",
             "Atendemos convênios Unimed e Bradesco Saúde, e particular. Faturamos R$ 120 mil por mês.",
             "Quero automação de agendamento pelo WhatsApp com confirmação automática 24 horas antes da consulta.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -104,6 +107,7 @@ PERSONAS: list[Persona] = [
             "Uso Instagram para captar alunos, WhatsApp para contato, e planilhas Google para controle de matrículas.",
             "Tenho 120 alunos ativos e 5 professores. Faturamento de R$ 45 mil por mês.",
             "Quero um agente que qualifique os leads automaticamente e agende a aula experimental.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -118,6 +122,7 @@ PERSONAS: list[Persona] = [
             "Usamos um app de agendamento chamado Booksy e WhatsApp para confirmações manuais.",
             "Faturamos R$ 25 mil por mês. Sou eu mais 4 profissionais autônomos.",
             "Quero confirmação automática 48h e 2h antes pelo WhatsApp, com link para remarcar se necessário.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -132,6 +137,7 @@ PERSONAS: list[Persona] = [
             "Usamos Pipedrive como CRM, Slack interno, e Jira para os projetos. Suporte é por e-mail e fica sobrecarregado.",
             "Somos 12 pessoas: 8 devs, 2 comerciais, 1 designer e eu. Faturamos R$ 180 mil por mês.",
             "Quero automatizar a qualificação de leads e o primeiro atendimento do suporte do SaaS.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -147,6 +153,7 @@ PERSONAS: list[Persona] = [
             "Somos 15 pessoas entre engenheiros, mestres de obra e equipe. Faturamos uns R$ 250 mil por mês.",
             "Os clientes reclamam que não sabem como está a obra. Ligam toda semana pedindo atualização.",
             "Quero agilizar os orçamentos e dar visibilidade da obra para o cliente sem minha equipe parar para responder.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -162,6 +169,7 @@ PERSONAS: list[Persona] = [
             "Somos 4 advogados e 2 estagiários. Faturamos R$ 90 mil por mês.",
             "Captação é fraca: dependemos só de indicação. Não temos presença digital nem produção de conteúdo jurídico.",
             "Quero automatizar o informe de status dos processos e melhorar a captação de novos clientes empresariais.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -177,6 +185,7 @@ PERSONAS: list[Persona] = [
             "Usamos WhatsApp, uma agenda de papel para os horários e a máquina de cartão. Nada é integrado.",
             "Somos 4 pessoas: eu, minha esposa e dois banhistas. Faturamos uns R$ 20 mil por mês.",
             "Queria lembrar os clientes da vacina e do banho mensal automaticamente, e parar de perder horário vazio.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -192,6 +201,7 @@ PERSONAS: list[Persona] = [
             "Orçamento é por WhatsApp com foto da peça. O controle dos serviços é num quadro branco e caderno.",
             "Somos 6: eu, 4 mecânicos e uma moça no balcão. Faturamos R$ 70 mil por mês.",
             "Quero avisar o cliente do status do carro automaticamente e agilizar a aprovação dos orçamentos.",
+            "Pode ser no meu número mesmo: 11 98765-4321. Sou eu que cuido disso, pode me chamar de João.",
             "/fim",
         ],
     ),
@@ -378,6 +388,56 @@ def score_session(
         _add(result, "Profundidade da entrevista", 0, 10, "Nenhum turno capturado")
         result.issues.append("Nenhum turno de usuário na transcrição — erro de captura")
 
+    # 6. Onboarding WhatsApp (10 pts)
+    onboarding = getattr(state, "onboarding", None)
+    if onboarding is not None:
+        _add(result, "Onboarding WhatsApp", 10, 10,
+             f"Contato registrado: {onboarding.responsible_name}")
+        result.positives.append(
+            f"WhatsApp do responsável capturado ({onboarding.responsible_name})"
+        )
+    else:
+        _add(result, "Onboarding WhatsApp", 0, 10, "Contato NÃO registrado")
+        result.issues.append(
+            "Onboarding NÃO registrado — o agente não pediu o WhatsApp do "
+            "empresário antes de encerrar"
+        )
+
+    # 7. Requisitos por agente (10 pts)
+    req_path = (
+        blueprint_path.parent / "requirements.json"
+        if blueprint_path else None
+    )
+    req_items = 0
+    if req_path and req_path.exists():
+        try:
+            from qwenpaw.discovery.state import RequirementsReport
+            report = RequirementsReport.model_validate_json(
+                req_path.read_text(encoding="utf-8")
+            )
+            req_items = len(report.items)
+        except Exception as exc:
+            result.issues.append(f"requirements.json inválido: {exc}")
+    if req_items >= max(1, agents_count):
+        _add(result, "Requisitos por agente", 10, 10,
+             f"{req_items} agente(s) com pendências mapeadas")
+        result.positives.append(
+            "Fase de requisitos cobriu todos os agentes do time"
+        )
+    elif req_items >= 1:
+        _add(result, "Requisitos por agente", 6, 10,
+             f"{req_items}/{agents_count} agentes cobertos")
+        result.issues.append(
+            f"Requisitos cobriram só {req_items} de {agents_count} agentes "
+            f"do time"
+        )
+    else:
+        _add(result, "Requisitos por agente", 0, 10, "Não gerados")
+        result.issues.append(
+            "Requisitos NÃO gerados — a fase pós-blueprint não produziu "
+            "requirements.json"
+        )
+
     return result
 
 
@@ -386,7 +446,8 @@ def score_session(
 _JUDGE_PROMPT = """\
 Você é um auditor de qualidade conversacional especializado em agentes de IA
 de atendimento. Você receberá a transcrição de uma entrevista entre um
-consultor de IA (linhas "Consultor:") e um empresário (linhas "Você:").
+consultor de IA (linhas "Consultor:") e um empresário (linhas "Você:"),
+seguida do RELATÓRIO FINAL entregue ao empresário (quando houver).
 
 Avalie SOMENTE a conduta do Consultor, com notas inteiras de 0 a 10:
 
@@ -395,15 +456,20 @@ Avalie SOMENTE a conduta do Consultor, com notas inteiras de 0 a 10:
   empresário leigo?
 - nao_repeticao: penalize repetir a mesma pergunta ou a mesma estrutura
   várias vezes (10 = nunca repete; 0 = insiste na mesma pergunta sempre).
+- linguagem_simples: o texto final ao empresário (despedida + relatório)
+  é 100%% leigo? Penalize CADA jargão técnico (blueprint, JSON, API,
+  integração, schema, roadmap, endpoint, deploy...) e QUALQUER menção a
+  prazo ou estimativa de tempo (10 = zero tecnês e zero prazos).
 
-Você DEVE chamar a tool `submit_evaluation` exatamente UMA vez com as três
-notas e uma justificativa curta (2-3 frases) em português do Brasil.
+Você DEVE chamar a tool `submit_evaluation` exatamente UMA vez com as
+quatro notas e uma justificativa curta (2-3 frases) em português do Brasil.
 """
 
 _QUAL_CRITERIA = (
     ("clareza", "Clareza das perguntas"),
     ("empatia", "Empatia"),
     ("nao_repeticao", "Não-repetição"),
+    ("linguagem_simples", "Linguagem simples"),
 )
 
 
@@ -418,6 +484,7 @@ class _JudgeSession:
         clareza: int,
         empatia: int,
         nao_repeticao: int,
+        linguagem_simples: int,
         justificativa: str,
     ):
         """Registra a avaliação qualitativa da transcrição.
@@ -426,6 +493,8 @@ class _JudgeSession:
             clareza: Nota 0-10 para clareza das perguntas do consultor.
             empatia: Nota 0-10 para empatia e acolhimento.
             nao_repeticao: Nota 0-10; 10 = nunca repetiu pergunta/estrutura.
+            linguagem_simples: Nota 0-10; 10 = texto final ao empresário sem
+                nenhum jargão técnico e sem nenhuma menção a prazos.
             justificativa: Justificativa curta (2-3 frases) das notas.
 
         Returns:
@@ -441,6 +510,7 @@ class _JudgeSession:
             "clareza": clamp(clareza),
             "empatia": clamp(empatia),
             "nao_repeticao": clamp(nao_repeticao),
+            "linguagem_simples": clamp(linguagem_simples),
             "justificativa": str(justificativa),
         }
         return ToolChunk(
@@ -479,21 +549,24 @@ def _build_judge_agent(judge: _JudgeSession):
     return agent
 
 
-async def _judge_transcript(transcript_text: str) -> Optional[dict]:
-    """Roda o juiz sobre a transcrição; None se o juiz falhar."""
+async def _judge_transcript(
+    transcript_text: str, final_report: str = ""
+) -> Optional[dict]:
+    """Roda o juiz sobre a transcrição + relatório; None se o juiz falhar."""
     from agentscope.message import UserMsg
 
     judge = _JudgeSession()
     agent = _build_judge_agent(judge)
-    await agent.reply(
-        UserMsg(
-            name="user",
-            content=(
-                "Avalie a transcrição abaixo e chame submit_evaluation.\n\n"
-                + transcript_text
-            ),
-        )
+    content = (
+        "Avalie a transcrição abaixo e chame submit_evaluation.\n\n"
+        + transcript_text
     )
+    if final_report:
+        content += (
+            "\n\n=== RELATÓRIO FINAL ENTREGUE AO EMPRESÁRIO ===\n"
+            + final_report
+        )
+    await agent.reply(UserMsg(name="user", content=content))
     return judge.result
 
 
@@ -545,8 +618,13 @@ async def _run_persona(
     # Avaliação qualitativa (não derruba a rodada se o juiz falhar)
     qual: Optional[dict] = None
     if use_judge and score.error is None and buf.getvalue().strip():
+        report_md = tmp_dir / "blueprint.md"
+        final_report = (
+            report_md.read_text(encoding="utf-8")
+            if report_md.exists() else ""
+        )
         try:
-            qual = await _judge_transcript(buf.getvalue())
+            qual = await _judge_transcript(buf.getvalue(), final_report)
         except Exception as exc:
             print(f"[JUDGE] falhou para {persona.name}: {exc}", file=sys.stderr)
     if qual:
@@ -635,6 +713,33 @@ _RECOMMENDATION_MAP: list[tuple[str, str]] = [
         "dar exemplos diferentes ou seguir para outra área) em vez de repetir "
         "a mesma pergunta; considere instruir isso no system prompt.",
     ),
+    (
+        "linguagem simples",
+        "**Eliminar tecnês e prazos do texto final** — o juiz flagrou jargão "
+        "técnico ou menção a prazos na mensagem/relatório ao empresário. "
+        "Reforce as regras inegociáveis da seção ENCERRAMENTO do prompt e a "
+        "tradução leiga do `_blueprint_to_markdown`.",
+    ),
+    (
+        "Onboarding NÃO registrado",
+        "**Garantir a coleta do WhatsApp** — o agente encerrou sem chamar "
+        "`register_onboarding`. Verifique a seção ENCERRAMENTO & ONBOARDING "
+        "do prompt e o turno extra pós-/fim no runner.",
+    ),
+    (
+        "Requisitos NÃO gerados",
+        "**Corrigir a fase de requisitos** — `requirements.json` não foi "
+        "gerado após o blueprint. Confira `_run_requirements_phase` no "
+        "runner e o prompt do RequirementsAgent (emit_requirements deve ser "
+        "chamado exatamente uma vez).",
+    ),
+    (
+        "Requisitos cobriram só",
+        "**Cobrir todos os agentes na fase de requisitos** — o "
+        "RequirementsAgent deixou agentes do time sem levantamento de "
+        "pendências; reforce a regra 'para CADA agente do plano' no prompt "
+        "de requirements.py.",
+    ),
 ]
 
 _MAINTENANCE_RECS = [
@@ -687,7 +792,7 @@ def _qual_cell(run: SessionRun) -> str:
     if not run.qual:
         return "—"
     total = sum(run.qual[k] for k, _ in _QUAL_CRITERIA)
-    return f"{total}/30"
+    return f"{total}/40"
 
 
 def _bar(score: float, max_score: float, width: int = 20) -> str:
@@ -810,7 +915,7 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
                     f"| `{_bar(run.qual[key], 10, 10)}` |"
                 )
             lines += [
-                f"| **Total** | **{total_q}/30** | |",
+                f"| **Total** | **{total_q}/40** | |",
                 "",
                 f"> {run.qual['justificativa']}",
                 "",
