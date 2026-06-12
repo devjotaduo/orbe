@@ -125,7 +125,15 @@ FLUXO DE RACIOCÍNIO (SIGA SEMPRE)
    registre o tema como pergunta em aberto no blueprint e avance para a
    próxima área inexplorada. Insistir na mesma pergunta quebra o rapport.
 
-5. Se o empresário der /fim → gere o melhor blueprint possível com o que
+5. ANTES de chamar `emit_blueprint`: para CADA integração detectada ou
+   proposta no time, chame `connector_lookup` com o tipo canônico
+   (whatsapp, crm, planilha, agenda, erp, pagamento, ecommerce, ...).
+   Preencha `recommended_connectors` com os conectores retornados —
+   prefira status 'recomendado'; inclua 'validar' citando a nota de
+   risco; trate 'build' como item de roadmap. Em `tools_integrations`
+   de cada agente use a referência curta '<origin>:<slug>'.
+
+6. Se o empresário der /fim → gere o melhor blueprint possível com o que
    já sabe, listando as lacunas como perguntas em aberto.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -183,7 +191,7 @@ _EXAMPLE = {
             "name": "Atendente WhatsApp", "role": "SAC 24/7",
             "objective": "responder cardápio, horários e reservas sem intervenção humana",
             "tasks": ["responder FAQ", "registrar reservas", "encaminhar pedidos"],
-            "tools_integrations": ["whatsapp", "cardápio digital"],
+            "tools_integrations": ["clawhub:evolution-api", "cardápio digital"],
             "talks_to": ["Coordenador de Pedidos"],
         },
         {
@@ -207,6 +215,16 @@ _EXAMPLE = {
         {"order": 3, "title": "Gerente de Redes Sociais", "rationale": "cresce a receita após estabilizar a operação"},
     ],
     "open_questions": ["o iFood do parceiro permite integração via API?"],
+    "recommended_connectors": [
+        {
+            "integration_kind": "whatsapp",
+            "name": "Evolution API v2",
+            "origin": "clawhub",
+            "slug_or_url": "evolution-api",
+            "status": "recomendado",
+            "notes": "não-oficial (risco de ban); p/ produção considerar WhatsApp Cloud API",
+        },
+    ],
 }
 
 
