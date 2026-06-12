@@ -63,6 +63,7 @@
   },
   "nav": {
     "chat": "Chat",
+    "discovery": "Discovery",
     "control": "Controle",
     "channels": "Canais",
     "sessions": "Sessoes",
@@ -111,6 +112,24 @@
       "refreshSuccess": "Logs atualizados",
       "copyBackend": "Copiar logs do backend"
     }
+  },
+  "discovery": {
+    "title": "Discovery",
+    "subtitle": "Interview your business and get a proposed agent team",
+    "intro": "Answer a few questions about your company and we'll propose an AI agent team, mapped to ready-to-use integrations.",
+    "start": "Start interview",
+    "restart": "Start over",
+    "you": "You",
+    "agent": "Agent",
+    "answerPlaceholder": "Type your answer...",
+    "send": "Send",
+    "teamTitle": "Proposed team",
+    "statePanel": "Discovery state (debug)",
+    "errorPrefix": "Error",
+    "completed": "Interview complete. Here is your proposed team.",
+    "approvedTitle": "Team approved",
+    "approved": "Your blueprint was validated and saved.",
+    "approveError": "Could not approve the team"
   },
   "acp": {
     "title": "ACP",

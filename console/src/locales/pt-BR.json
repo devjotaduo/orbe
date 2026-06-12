@@ -63,6 +63,7 @@
   },
   "nav": {
     "chat": "Chat",
+    "discovery": "Descoberta",
     "control": "Controle",
     "channels": "Canais",
     "sessions": "Sessoes",
@@ -2246,6 +2247,24 @@
       "done": "Done",
       "abandoned": "Abandoned"
     }
+  },
+  "discovery": {
+    "title": "Descoberta",
+    "subtitle": "Entreviste o seu negócio e receba um time de agentes proposto",
+    "intro": "Responda algumas perguntas sobre a sua empresa e vamos propor um time de agentes de IA, mapeado para integrações prontas para usar.",
+    "start": "Começar entrevista",
+    "restart": "Recomeçar",
+    "you": "Você",
+    "agent": "Agente",
+    "answerPlaceholder": "Digite a sua resposta…",
+    "send": "Enviar",
+    "teamTitle": "Time proposto",
+    "statePanel": "Estado da descoberta (debug)",
+    "errorPrefix": "Erro",
+    "completed": "Entrevista concluída. Este é o seu time proposto.",
+    "approvedTitle": "Time aprovado",
+    "approved": "Seu blueprint foi validado e salvo.",
+    "approveError": "Não foi possível aprovar o time"
   },
   "inbox": {
     "title": "Colheita diária de IA",

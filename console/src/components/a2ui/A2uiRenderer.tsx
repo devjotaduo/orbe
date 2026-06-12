@@ -82,6 +82,10 @@ function renderNode(
         <Field
           value={value}
           aria-label={label || bindPath}
+          // Read-only surfaces (e.g. plugin chat bubbles) omit onDataChange.
+          // Without a sink, edits would be silently discarded — mark the
+          // field readOnly so the UX matches reality.
+          readOnly={!onDataChange}
           onChange={(e) =>
             onDataChange?.(setPath(data, bindPath, e.target.value))
           }

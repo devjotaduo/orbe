@@ -61,6 +61,7 @@
   },
   "nav": {
     "chat": "チャット",
+    "discovery": "ディスカバリー",
     "control": "コントロール",
     "channels": "チャンネル",
     "sessions": "セッション",
@@ -2207,6 +2208,24 @@
       "done": "完了",
       "abandoned": "中止"
     }
+  },
+  "discovery": {
+    "title": "ディスカバリー",
+    "subtitle": "ビジネスをヒアリングし、提案エージェントチームを取得します",
+    "intro": "会社についていくつかの質問に答えると、すぐに使える連携にマッピングされた AI エージェントチームを提案します。",
+    "start": "インタビューを開始",
+    "restart": "最初からやり直す",
+    "you": "あなた",
+    "agent": "エージェント",
+    "answerPlaceholder": "回答を入力…",
+    "send": "送信",
+    "teamTitle": "提案チーム",
+    "statePanel": "ディスカバリーの状態（デバッグ）",
+    "errorPrefix": "エラー",
+    "completed": "インタビューが完了しました。これが提案チームです。",
+    "approvedTitle": "チームを承認しました",
+    "approved": "ブループリントは検証され保存されました。",
+    "approveError": "チームを承認できませんでした"
   },
   "inbox": {
     "title": "受信トレイ",
