@@ -14,6 +14,23 @@ interface SurfaceMsg {
   surfaceId?: string;
 }
 
+// Minimal shapes for the bits of React we use. React itself comes from the
+// host at runtime (window.QwenPaw.host.React); typing it locally keeps this
+// bundle compilable WITHOUT `react` being resolvable in every context that
+// type-checks it (e.g. the console's `tsc -b`, where the plugin's own
+// node_modules is not installed).
+interface ReactLike {
+  createElement: (
+    type: unknown,
+    props?: AnyRec | null,
+    ...children: unknown[]
+  ) => unknown;
+  useMemo: <T>(factory: () => T, deps: unknown[]) => T;
+  useState: <T>(initial: T) => [T, (next: T) => void];
+  useEffect: (effect: () => void | (() => void), deps: unknown[]) => void;
+}
+type FCLike = (props: AnyRec) => unknown;
+
 /** Pull the render_ui tool's string output out of the chat `data` prop. */
 function extractToolOutput(data: AnyRec): unknown {
   const content = data?.content as AnyRec[] | undefined;
@@ -86,8 +103,8 @@ async function fetchInteractivity(host: AnyRec): Promise<string> {
 function A2uiToolRender({ data }: { data: AnyRec }) {
   const QP = (window as unknown as AnyRec).QwenPaw as AnyRec | undefined;
   const host = QP?.host as AnyRec | undefined;
-  const React = host?.React as typeof import("react") | undefined;
-  const Renderer = host?.A2uiRenderer as React.FC<AnyRec> | undefined;
+  const React = host?.React as ReactLike | undefined;
+  const Renderer = host?.A2uiRenderer as FCLike | undefined;
 
   if (!React) return null;
 
