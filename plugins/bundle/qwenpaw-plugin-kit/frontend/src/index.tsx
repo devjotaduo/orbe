@@ -67,23 +67,23 @@ function PluginKitPage() {
             showIcon: true,
           })
         : data.loading
-          ? React.createElement(Spin, null)
-          : React.createElement(List, {
-              dataSource: data.items,
-              renderItem: (item: {
-                id: string;
-                name: string;
-                description: string;
-              }) =>
-                React.createElement(
-                  List.Item,
-                  { key: item.id },
-                  React.createElement(List.Item.Meta, {
-                    title: item.name,
-                    description: item.description,
-                  }),
-                ),
-            }),
+        ? React.createElement(Spin, null)
+        : React.createElement(List, {
+            dataSource: data.items,
+            renderItem: (item: {
+              id: string;
+              name: string;
+              description: string;
+            }) =>
+              React.createElement(
+                List.Item,
+                { key: item.id },
+                React.createElement(List.Item.Meta, {
+                  title: item.name,
+                  description: item.description,
+                }),
+              ),
+          }),
     ),
   );
 }
