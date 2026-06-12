@@ -38,6 +38,7 @@ class FakeAgent:
                                   "data_location": "celular", "confidence": 0.9}],
                 "company_updates": {}, "confidence_updates": {}}))
             await s.connector_lookup("whatsapp")
+            await s.register_onboarding("11 98765-4321", "Maria")
             bp = {
                 "company_profile": {"segment": "ecommerce", "size": "micro",
                     "business_model": "venda online de roupas",
@@ -73,6 +74,29 @@ class _MsgStub:
         return self._t
 
 
+class FakeRequirementsAgent:
+    """Fase de requisitos sem LLM: emite um RequirementsReport mínimo."""
+
+    def __init__(self, session: DiscoverySession):
+        self.session = session
+
+    async def reply(self, msg):
+        await self.session.emit_requirements(json.dumps({
+            "summary_for_owner": "Olá! Por este grupo vamos pedir o que "
+                                 "falta e você testa o atendente.",
+            "items": [{
+                "agent_name": "Atendente WhatsApp",
+                "requests": [{
+                    "item": "perguntas frequentes dos clientes",
+                    "why": "para o atendente responder sozinho",
+                    "group_message": "Pode nos mandar as 5 perguntas que "
+                                     "seus clientes mais fazem?",
+                }],
+            }],
+        }))
+        return _MsgStub("Pendências levantadas.")
+
+
 @pytest.mark.asyncio
 async def test_runner_scripted_interview(tmp_path, monkeypatch):
     # respostas do empresário. Nota: o loop sai quando session.emitted=True após o
@@ -83,6 +107,8 @@ async def test_runner_scripted_interview(tmp_path, monkeypatch):
     monkeypatch.setattr(runner_mod, "_read_user_input", lambda prompt: next(inputs))
     monkeypatch.setattr(runner_mod, "build_discovery_agent",
                         lambda session, **kw: FakeAgent(session))
+    monkeypatch.setattr(runner_mod, "build_requirements_agent",
+                        lambda session, **kw: FakeRequirementsAgent(session))
 
     out = await runner_mod.run_discovery_session(
         session_id="t1", out_dir=tmp_path)
@@ -93,8 +119,21 @@ async def test_runner_scripted_interview(tmp_path, monkeypatch):
     assert bp["recommended_connectors"], "blueprint deve recomendar conectores"
     rc = bp["recommended_connectors"][0]
     assert rc["origin"] == "clawhub" and rc["slug_or_url"] == "evolution-api"
+    # onboarding capturado no estado e persistido no blueprint
+    assert bp["onboarding"]["responsible_name"] == "Maria"
+    assert "8765" in bp["onboarding"]["whatsapp_number"]
     md = (tmp_path / "blueprint.md").read_text(encoding="utf-8")
-    assert "## Conectores recomendados" in md
+    # relatório leigo: título amigável, próximos passos, zero slug técnico
+    assert "Seu Time de Agentes" in md
+    assert "Próximos passos" in md
+    assert "clawhub:evolution-api" not in md
+    # fase de requisitos rodou e gravou os artefatos
+    assert out.requirements_emitted is True
+    assert (tmp_path / "requirements.json").exists()
+    pend = (tmp_path / "informacoes_pendentes.md").read_text(encoding="utf-8")
+    assert "Atendente WhatsApp" in pend
+    msgs = (tmp_path / "mensagens_grupo.md").read_text(encoding="utf-8")
+    assert "5 perguntas" in msgs
     assert (tmp_path / "discovery_state.json").exists()
     assert out.emitted is True
 

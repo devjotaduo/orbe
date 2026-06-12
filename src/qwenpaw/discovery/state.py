@@ -41,6 +41,13 @@ class Turn(BaseModel):
     text: str
 
 
+class OnboardingInfo(BaseModel):
+    """Contato de WhatsApp para o onboarding (canal oficial + grupo)."""
+    whatsapp_number: str
+    responsible_name: str
+    is_owner: bool = True
+
+
 class DiscoveryState(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
 
@@ -49,6 +56,7 @@ class DiscoveryState(BaseModel):
     open_areas: list[OpenArea] = Field(default_factory=list)
     integrations: list[Integration] = Field(default_factory=list)
     transcript: list[Turn] = Field(default_factory=list)
+    onboarding: Optional[OnboardingInfo] = None
 
     @field_validator("open_areas")
     @classmethod
@@ -131,3 +139,25 @@ class TeamBlueprint(BaseModel):
     roadmap: list[RoadmapItem] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
     recommended_connectors: list[ConnectorRef] = Field(default_factory=list)
+    onboarding: Optional[OnboardingInfo] = None
+
+
+# --- Requisitos por agente (fase pós-blueprint) -----------------------------
+
+class InfoRequest(BaseModel):
+    """Uma informação concreta que falta para um agente operar."""
+    item: str            # ex.: "catálogo de produtos com preços"
+    why: str             # por que o agente precisa (linguagem simples)
+    group_message: str   # mensagem pronta, leiga, para pedir no grupo
+
+
+class AgentRequirements(BaseModel):
+    """Informações pendentes de um agente do time proposto."""
+    agent_name: str
+    requests: list[InfoRequest] = Field(default_factory=list)
+
+
+class RequirementsReport(BaseModel):
+    """Relatório consolidado de informações pendentes por agente."""
+    items: list[AgentRequirements] = Field(default_factory=list)
+    summary_for_owner: str = ""   # parágrafo leigo de abertura do grupo

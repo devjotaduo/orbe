@@ -211,20 +211,32 @@ async def test_connector_lookup_filters_by_state_segment(tmp_path):
     assert "brlaw" in _text(chunk)
 
 
-def test_toolkit_has_four_tools(tmp_path):
+def test_toolkit_has_five_tools(tmp_path):
     s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
     tk = s.build_toolkit()
     # Toolkit do agentscope 2.0.0 não expõe `.tools` público: as tools do
     # construtor entram no ToolGroup público 'basic' (tool_groups[0]).
-    # Deve registrar segment_lookup, reflect, emit_blueprint,
-    # connector_lookup.
-    assert len(tk.tool_groups[0].tools) == 4
+    # Deve registrar segment_lookup, reflect, register_onboarding,
+    # emit_blueprint, connector_lookup.
+    assert len(tk.tool_groups[0].tools) == 5
 
 
-# --- seção de conectores no blueprint.md + prompt ----------------------------
+def test_requirements_toolkit_has_one_tool(tmp_path):
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    tk = s.build_requirements_toolkit()
+    assert len(tk.tool_groups[0].tools) == 1
 
-def test_blueprint_markdown_renders_connectors_section():
+
+# --- conectores no blueprint (MD leigo + JSON técnico) + prompt --------------
+
+def test_blueprint_markdown_uses_friendly_connector_names():
+    """O MD é para o empresário: nomes amigáveis, sem slugs técnicos.
+
+    A informação técnica (origin:slug, status, notas de risco) continua
+    íntegra no blueprint.json — aqui só validamos a tradução leiga.
+    """
     from qwenpaw.discovery.state import (
+        AgentSpec,
         CompanyProfile,
         ConnectorRef,
         TeamBlueprint,
@@ -233,6 +245,14 @@ def test_blueprint_markdown_renders_connectors_section():
 
     bp = TeamBlueprint(
         company_profile=CompanyProfile(segment="ecommerce"),
+        proposed_team=[
+            AgentSpec(
+                name="Atendente WhatsApp",
+                role="SAC",
+                objective="responder clientes",
+                tools_integrations=["clawhub:evolution-api"],
+            )
+        ],
         recommended_connectors=[
             ConnectorRef(
                 integration_kind="whatsapp",
@@ -245,9 +265,9 @@ def test_blueprint_markdown_renders_connectors_section():
         ],
     )
     md = _blueprint_to_markdown(bp)
-    assert "## Conectores recomendados" in md
-    assert "clawhub:evolution-api" in md
-    assert "risco de ban" in md
+    # nome amigável visível; referência técnica origin:slug NÃO aparece
+    assert "Evolution API v2" in md
+    assert "clawhub:evolution-api" not in md
 
 
 def test_blueprint_markdown_omits_empty_connectors_section():
