@@ -96,7 +96,9 @@ def test_connector_info_rejects_build_status_with_nonempty_slug():
     """status='build' exige slug_or_url vazio (validação no model)."""
     with pytest.raises(ValidationError) as exc:
         ConnectorInfo.model_validate(
-            _valid_entry(origin="build", status="build", slug_or_url="meu-slug")
+            _valid_entry(
+                origin="build", status="build", slug_or_url="meu-slug"
+            )
         )
     assert "build" in str(exc.value)
 
@@ -120,7 +122,9 @@ def test_connector_info_accepts_consistent_build_entry():
 def test_connector_info_rejects_noncanonical_kind():
     """integration_kind fora do vocabulário canônico é rejeitado no model."""
     with pytest.raises(ValidationError) as exc:
-        ConnectorInfo.model_validate(_valid_entry(integration_kind="blockchain"))
+        ConnectorInfo.model_validate(
+            _valid_entry(integration_kind="blockchain")
+        )
     assert "blockchain" in str(exc.value)
 
 
