@@ -6,6 +6,8 @@ export interface GetTokenUsageParams {
   end_date: string;
   model?: string;
   provider?: string;
+  /** Filter records by user_id (multi-user installs; requires users.view to list users). */
+  user?: string;
 }
 
 function buildQuery(params: GetTokenUsageParams): string {
@@ -15,6 +17,7 @@ function buildQuery(params: GetTokenUsageParams): string {
   });
   if (params.model) search.set("model", params.model);
   if (params.provider) search.set("provider", params.provider);
+  if (params.user) search.set("user", params.user);
   return `?${search.toString()}`;
 }
 

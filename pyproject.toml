@@ -117,6 +117,13 @@ local = [
 adbpg = [
     "psycopg2-binary==2.9.10",
 ]
+# Optional enterprise layer ported from nexora-ai-platform (Apache-2.0).
+# Sync SQLAlchemy + psycopg2 on purpose: the ported repositories are sync.
+enterprise = [
+    "sqlalchemy>=2.0.0,<3",
+    "psycopg2-binary>=2.9.10,<3",
+    "alembic>=1.13.0,<2",
+]
 whisper = [
     "openai-whisper>=20231117",
 ]

@@ -1226,7 +1226,9 @@
     "date": "Date",
     "refresh": "Atualizar",
     "loadFailed": "Falha ao load token usage",
-    "noData": "No token usage data in the selected period"
+    "noData": "No token usage data in the selected period",
+    "filterByUser": "Filter by user",
+    "allUsers": "All users"
   },
   "agentStats": {
     "title": "Estatisticas dos Agentes",

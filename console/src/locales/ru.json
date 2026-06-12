@@ -978,7 +978,9 @@
     "allSelected": "Все",
     "itemsSelected": "Выбрано: {{count}}",
     "selectModels": "Выберите модели",
-    "selectTokenTypes": "Выберите типы токенов"
+    "selectTokenTypes": "Выберите типы токенов",
+    "filterByUser": "Фильтр по пользователю",
+    "allUsers": "Все пользователи"
   },
   "agentStats": {
     "title": "Статистика агента",

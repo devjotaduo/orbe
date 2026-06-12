@@ -31,10 +31,12 @@ const messageAdapter = {
   },
 };
 
+const appMessage = { message: messageAdapter };
+
 /**
  * Drop-in replacement for antd App.useApp() message interface.
  * Routes all calls through sonner toast.
  */
 export function useAppMessage() {
-  return { message: messageAdapter };
+  return appMessage;
 }

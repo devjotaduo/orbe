@@ -898,5 +898,9 @@
     "timeout": "Backend gagal dimulai dalam {{seconds}} detik.",
     "timeoutHint": "Backend gagal dimulai. Coba lagi, atau periksa log aplikasi untuk detail.",
     "retry": "Coba lagi"
+  },
+  "tokenUsage": {
+    "filterByUser": "Filter menurut pengguna",
+    "allUsers": "Semua pengguna"
   }
 }

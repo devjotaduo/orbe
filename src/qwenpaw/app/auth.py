@@ -7,7 +7,11 @@ variable ``QWENPAW_AUTH_ENABLED`` is set to a truthy value (``true``,
 registration flow rather than environment variables, so that agents
 running inside the process cannot read plaintext passwords.
 
-Single-user design: only one account can be registered.  If the user
+Multi-user design (ported from nexora-ai-platform, Apache-2.0): the
+first registered account becomes an administrator.  Additional users
+can be managed through the authenticated user-management API when the
+``qwenpaw_ext.nexora`` enterprise extension is installed.  Legacy
+single-user ``auth.json`` files are migrated in place.  If the admin
 forgets their password, delete ``auth.json`` from ``SECRET_DIR`` and
 restart the service to re-register.
 
@@ -15,8 +19,10 @@ Uses only Python stdlib (hashlib, hmac, secrets) to avoid adding new
 dependencies.  The password is stored as a salted SHA-256 hash in
 ``auth.json`` under ``SECRET_DIR``.
 """
+
 from __future__ import annotations
 
+import copy
 import hashlib
 import hmac
 import json
@@ -29,6 +35,7 @@ from typing import Optional
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from . import enterprise
 from ..constant import SECRET_DIR, EnvVarLoader
 from ..security.secret_store import (
     AUTH_SECRET_FIELDS,
@@ -69,6 +76,19 @@ _PUBLIC_PREFIXES: tuple[str, ...] = (
     "/logo.png",
     "/qwenpaw-symbol.svg",
     "/api/frontend_plugin/",
+)
+
+# HTTP methods that mutate state (audited by the middleware)
+_MUTATING_METHODS: frozenset[str] = frozenset(
+    {"POST", "PUT", "PATCH", "DELETE"},
+)
+
+# Paths whose mutating requests are NOT audited by the middleware:
+# /api/auth/* events are recorded by the auth router itself (auth.*)
+# and the audit endpoints must not audit themselves.
+_AUDIT_SKIP_PREFIXES: tuple[str, ...] = (
+    "/api/auth/",
+    "/api/nexora/audit",
 )
 
 
@@ -156,6 +176,7 @@ def create_token(username: str, expiry_seconds: Optional[int] = None) -> str:
             "exp": int(time.time()) + expiry_seconds,
             "iat": int(time.time()),
             "jti": token_id,  # JWT ID for individual revocation
+            "roles": _roles_for_user(username),
         },
     )
     payload_b64 = base64.urlsafe_b64encode(payload.encode()).decode()
@@ -167,10 +188,13 @@ def create_token(username: str, expiry_seconds: Optional[int] = None) -> str:
     return f"{payload_b64}.{sig}"
 
 
-def verify_token(token: str) -> Optional[str]:
-    """Verify *token*, return username if valid, ``None`` otherwise.
+def verify_token_payload(  # pylint: disable=too-many-return-statements
+    token: str,
+) -> Optional[dict]:
+    """Verify *token*, return its payload dict if valid, ``None`` otherwise.
 
-    Also checks if the token has been revoked (appears in the revocation list).
+    Checks signature, expiry, the revocation list, and that the subject
+    is still a registered, active user.
     """
     import base64
 
@@ -196,10 +220,26 @@ def verify_token(token: str) -> Optional[str]:
         if jti and _is_token_revoked(jti):
             return None
 
-        return payload.get("sub")
+        username = payload.get("sub")
+        if not username:
+            return None
+        data = _load_normalized_auth_data()
+        _, user = _find_user(data, username)
+        if not user or user.get("status") != "active":
+            return None
+        return payload
     except (json.JSONDecodeError, KeyError, ValueError, TypeError) as exc:
         logger.debug("Token verification failed: %s", exc)
         return None
+
+
+def verify_token(token: str) -> Optional[str]:
+    """Verify *token*, return username if valid, ``None`` otherwise.
+
+    Also checks if the token has been revoked (appears in the revocation list).
+    """
+    payload = verify_token_payload(token)
+    return payload.get("sub") if payload else None
 
 
 # ---------------------------------------------------------------------------
@@ -207,7 +247,7 @@ def verify_token(token: str) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 
-def _load_auth_data() -> dict:
+def _load_auth_data(allow_rewrite: bool = True) -> dict:
     """Load ``auth.json`` from ``SECRET_DIR``.
 
     Returns the parsed dict, or a sentinel with ``_auth_load_error``
@@ -215,7 +255,9 @@ def _load_auth_data() -> dict:
     that callers can fail closed instead of silently bypassing auth.
 
     Encrypted fields (``jwt_secret``) are transparently decrypted.
-    Legacy plaintext values trigger an automatic re-encryption.
+    Legacy plaintext values trigger an automatic re-encryption unless
+    *allow_rewrite* is ``False`` (used by ``_save_auth_data`` to avoid
+    re-entering itself while merging file-backed fields).
     """
     if AUTH_FILE.is_file():
         try:
@@ -229,7 +271,7 @@ def _load_auth_data() -> dict:
                 for field in AUTH_SECRET_FIELDS
             )
             data = decrypt_dict_fields(data, AUTH_SECRET_FIELDS)
-            if needs_rewrite:
+            if needs_rewrite and allow_rewrite:
                 try:
                     _save_auth_data(data)
                 except Exception as enc_err:
@@ -245,7 +287,7 @@ def _load_auth_data() -> dict:
     return {}
 
 
-def _save_auth_data(data: dict) -> None:
+def _save_auth_file(data: dict) -> None:
     """Save ``auth.json`` to ``SECRET_DIR`` with restrictive permissions.
 
     Sensitive fields (``jwt_secret``) are encrypted before writing.
@@ -255,6 +297,254 @@ def _save_auth_data(data: dict) -> None:
     with open(AUTH_FILE, "w", encoding="utf-8") as f:
         json.dump(encrypted_data, f, indent=2, ensure_ascii=False)
     _chmod_best_effort(AUTH_FILE, 0o600)
+
+
+_FILE_BACKED_KEYS: frozenset[str] = frozenset(AUTH_SECRET_FIELDS) | {
+    "revoked_tokens",
+    "revoked_tokens_meta",
+}
+
+
+def _has_identity_payload(data: dict) -> bool:
+    return "users" in data or "roles" in data
+
+
+def _has_file_secret_payload(data: dict) -> bool:
+    return any(key in data for key in _FILE_BACKED_KEYS)
+
+
+def _save_auth_data(data: dict) -> None:
+    """Persist auth data.
+
+    When PostgreSQL is enabled, user/role identity data is stored in
+    the DB.  JWT secrets and token revocation metadata remain
+    file-backed for this phase so existing token handling stays
+    compatible.
+    """
+    _invalidate_auth_data_cache()
+    repo = enterprise.auth_repository()
+    if repo is not None:
+        if _has_identity_payload(data):
+            repo.save_auth_data(data)
+        if not _has_file_secret_payload(data):
+            return
+
+        file_data = _load_auth_data(allow_rewrite=False)
+        if file_data.get("_auth_load_error"):
+            file_data = {}
+        for key in _FILE_BACKED_KEYS:
+            if key in data:
+                file_data[key] = data[key]
+        _save_auth_file(file_data)
+        return
+
+    _save_auth_file(data)
+
+
+# ---------------------------------------------------------------------------
+# Multi-user helpers (ported from nexora-ai-platform, Apache-2.0)
+# ---------------------------------------------------------------------------
+
+
+def _now() -> int:
+    return int(time.time())
+
+
+def _public_user(user: dict) -> dict:
+    return {
+        "id": user.get("id", ""),
+        "username": user.get("username", ""),
+        "roles": list(user.get("roles") or []),
+        "status": user.get("status", "active"),
+        "created_at": user.get("created_at", 0),
+        "updated_at": user.get("updated_at", 0),
+    }
+
+
+def _default_roles() -> dict[str, dict]:
+    """Built-in roles from the enterprise extension (``{}`` without it)."""
+    return enterprise.default_roles()
+
+
+def _normalize_auth_data(data: dict) -> dict:
+    """Migrate legacy single-user auth data to the multi-user schema."""
+    if data.get("_auth_load_error"):
+        return data
+
+    if not isinstance(data.get("users"), list):
+        legacy_user = data.get("user")
+        if isinstance(legacy_user, dict) and legacy_user.get("username"):
+            ts = _now()
+            data["users"] = [
+                {
+                    "id": legacy_user.get("id") or secrets.token_hex(8),
+                    "username": legacy_user.get("username", ""),
+                    "password_hash": legacy_user.get("password_hash", ""),
+                    "password_salt": legacy_user.get("password_salt", ""),
+                    "roles": legacy_user.get("roles") or ["admin"],
+                    "status": legacy_user.get("status") or "active",
+                    "created_at": legacy_user.get("created_at") or ts,
+                    "updated_at": legacy_user.get("updated_at") or ts,
+                },
+            ]
+            _save_auth_data(data)
+        else:
+            data["users"] = []
+
+    # Role normalisation only applies when the enterprise extension is
+    # installed (otherwise there are no built-in role definitions).
+    defaults = _default_roles()
+    if not defaults:
+        return data
+
+    if not isinstance(data.get("roles"), dict):
+        data["roles"] = defaults
+        _save_auth_data(data)
+        return data
+
+    changed = False
+    roles = data["roles"]
+    for role_id, role in defaults.items():
+        if role_id not in roles:
+            roles[role_id] = role
+            changed = True
+            continue
+        existing_permissions = list(
+            roles[role_id].get("permissions") or [],
+        )
+        merged_permissions = list(
+            dict.fromkeys(
+                [*existing_permissions, *role.get("permissions", [])],
+            ),
+        )
+        if merged_permissions != existing_permissions:
+            roles[role_id]["permissions"] = merged_permissions
+            changed = True
+        if not roles[role_id].get("builtin"):
+            roles[role_id]["builtin"] = True
+            changed = True
+    if changed:
+        data["roles"] = roles
+        _save_auth_data(data)
+    return data
+
+
+def _normalize_db_auth_data(data: dict) -> dict:
+    """Ensure DB-backed auth data carries the built-in role definitions."""
+    if data.get("_auth_load_error"):
+        return data
+
+    changed = False
+    if not isinstance(data.get("users"), list):
+        data["users"] = []
+        changed = True
+
+    defaults = _default_roles()
+    roles = data.get("roles")
+    if not isinstance(roles, dict):
+        data["roles"] = defaults
+        changed = True
+    elif defaults:
+        for role_id, role in defaults.items():
+            if role_id not in roles:
+                roles[role_id] = role
+                changed = True
+                continue
+            existing_permissions = list(
+                roles[role_id].get("permissions") or [],
+            )
+            merged_permissions = list(
+                dict.fromkeys(
+                    [*existing_permissions, *role.get("permissions", [])],
+                ),
+            )
+            if merged_permissions != existing_permissions:
+                roles[role_id]["permissions"] = merged_permissions
+                changed = True
+            if not roles[role_id].get("builtin"):
+                roles[role_id]["builtin"] = True
+                changed = True
+        data["roles"] = roles
+
+    if changed:
+        repo = enterprise.auth_repository()
+        if repo is not None:
+            repo.save_auth_data(data)
+    return data
+
+
+# Cache for normalized auth data: the middleware permission check reads
+# auth data on every authenticated request, which would otherwise cost a
+# file read (or Postgres round-trips) per request.  File-backed data is
+# keyed on the auth.json mtime (exact invalidation); DB-backed data uses
+# a short TTL.  ``_save_auth_data`` invalidates the cache on every write.
+_AUTH_DB_CACHE_TTL_SECONDS = 2.0
+_auth_data_cache: tuple = (None, 0.0, None)  # (source_key, expires_at, data)
+
+
+def _invalidate_auth_data_cache() -> None:
+    global _auth_data_cache  # noqa: PLW0603
+    _auth_data_cache = (None, 0.0, None)
+
+
+def _load_normalized_auth_data() -> dict:
+    """Load auth data in the multi-user schema (DB or auth.json).
+
+    Returns a deep copy so callers can mutate the result freely without
+    corrupting the cache.
+    """
+    global _auth_data_cache  # noqa: PLW0603
+    repo = enterprise.auth_repository()
+    if repo is not None:
+        cached_key, expires_at, cached = _auth_data_cache
+        if cached_key == "db" and time.time() < expires_at:
+            return copy.deepcopy(cached)
+        data = _normalize_db_auth_data(repo.load_auth_data())
+        if not data.get("_auth_load_error"):
+            _auth_data_cache = (
+                "db",
+                time.time() + _AUTH_DB_CACHE_TTL_SECONDS,
+                copy.deepcopy(data),
+            )
+        return data
+
+    try:
+        mtime_ns = AUTH_FILE.stat().st_mtime_ns
+    except OSError:
+        mtime_ns = 0
+    source_key = (str(AUTH_FILE), mtime_ns)
+    cached_key, _, cached = _auth_data_cache
+    if cached_key == source_key:
+        return copy.deepcopy(cached)
+    # _normalize_auth_data may persist a migration, changing the mtime;
+    # the stale key then simply misses once on the next call.
+    data = _normalize_auth_data(_load_auth_data())
+    if not data.get("_auth_load_error"):
+        _auth_data_cache = (source_key, 0.0, copy.deepcopy(data))
+    return data
+
+
+def _find_user(data: dict, username: str) -> tuple[int, dict | None]:
+    for idx, user in enumerate(data.get("users", [])):
+        if user.get("username") == username:
+            return idx, user
+    return -1, None
+
+
+def _roles_for_user(username: str) -> list[str]:
+    """Roles for *username*; legacy/unknown users default to admin."""
+    data = _load_normalized_auth_data()
+    _, user = _find_user(data, username)
+    if user is None:
+        return ["admin"]
+    return list(user.get("roles") or [])
+
+
+def get_user(username: str) -> dict | None:
+    """Return the public view of *username*, or ``None`` if unknown."""
+    data = _load_normalized_auth_data()
+    _, user = _find_user(data, username)
+    return _public_user(user) if user else None
 
 
 # ---------------------------------------------------------------------------
@@ -344,12 +634,12 @@ def is_auth_enabled() -> bool:
 
 def has_registered_users() -> bool:
     """Return ``True`` if a user has been registered."""
-    data = _load_auth_data()
-    return bool(data.get("user"))
+    data = _load_normalized_auth_data()
+    return bool(data.get("users"))
 
 
 # ---------------------------------------------------------------------------
-# Registration (single-user)
+# Registration (first user becomes administrator)
 # ---------------------------------------------------------------------------
 
 
@@ -358,7 +648,7 @@ def register_user(
     password: str,
     expiry_seconds: Optional[int] = None,
 ) -> Optional[str]:
-    """Register the single user account.
+    """Register the first user account.
 
     Args:
         username: The username to register.
@@ -367,18 +657,26 @@ def register_user(
 
     Returns a token on success, ``None`` if a user already exists.
     """
-    data = _load_auth_data()
+    data = _load_normalized_auth_data()
 
-    # Only one user allowed
-    if data.get("user"):
+    # The first registered user becomes platform administrator.
+    if data.get("users"):
         return None
 
     pw_hash, salt = _hash_password(password)
-    data["user"] = {
-        "username": username,
-        "password_hash": pw_hash,
-        "password_salt": salt,
-    }
+    ts = _now()
+    data["users"] = [
+        {
+            "id": secrets.token_hex(8),
+            "username": username,
+            "password_hash": pw_hash,
+            "password_salt": salt,
+            "roles": ["admin"],
+            "status": "active",
+            "created_at": ts,
+            "updated_at": ts,
+        },
+    ]
 
     # Ensure jwt_secret exists
     if not data.get("jwt_secret"):
@@ -426,21 +724,30 @@ def update_credentials(
     new_username: Optional[str] = None,
     new_password: Optional[str] = None,
     expiry_seconds: Optional[int] = None,
+    username: Optional[str] = None,
 ) -> Optional[str]:
-    """Update the registered user's username and/or password.
+    """Update a registered user's username and/or password.
 
     Requires the current password for verification.  Returns a new
     token on success (because the username may have changed), or
-    ``None`` if verification fails.
+    ``None`` if verification fails or the new username is already
+    taken by another user.
 
     Args:
         current_password: The current password for verification.
         new_username: The new username (optional).
         new_password: The new password (optional).
         expiry_seconds: Custom token expiry time in seconds.
+        username: Which account to update; defaults to the first
+            registered user (single-user compatibility).
     """
-    data = _load_auth_data()
-    user = data.get("user")
+    data = _load_normalized_auth_data()
+    user_idx = 0
+    user = None
+    if username:
+        user_idx, user = _find_user(data, username)
+    elif data.get("users"):
+        user = data["users"][0]
     if not user:
         return None
 
@@ -450,7 +757,15 @@ def update_credentials(
         return None
 
     if new_username and new_username.strip():
-        user["username"] = new_username.strip()
+        candidate = new_username.strip()
+        other_idx, other = _find_user(data, candidate)
+        if other is not None and other_idx != user_idx:
+            logger.warning(
+                "Username '%s' is already taken; rename rejected",
+                candidate,
+            )
+            return None
+        user["username"] = candidate
 
     if new_password:
         pw_hash, salt = _hash_password(new_password)
@@ -459,7 +774,8 @@ def update_credentials(
         # Rotate JWT secret to invalidate all existing sessions
         data["jwt_secret"] = secrets.token_hex(32)
 
-    data["user"] = user
+    user["updated_at"] = _now()
+    data["users"][user_idx] = user
     _save_auth_data(data)
     logger.info("Credentials updated for user '%s'", user["username"])
     return create_token(user["username"], expiry_seconds)
@@ -482,11 +798,11 @@ def authenticate(
         password: The password to verify.
         expiry_seconds: Custom token expiry time in seconds.
     """
-    data = _load_auth_data()
-    user = data.get("user")
+    data = _load_normalized_auth_data()
+    _, user = _find_user(data, username)
     if not user:
         return None
-    if user.get("username") != username:
+    if user.get("status") != "active":
         return None
     stored_hash = user.get("password_hash", "")
     stored_salt = user.get("password_salt", "")
@@ -619,8 +935,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 media_type="application/json",
             )
 
-        user = verify_token(token)
-        if user is None:
+        payload = verify_token_payload(token)
+        if payload is None:
             return Response(
                 content=json.dumps(
                     {"detail": "Invalid or expired token"},
@@ -629,8 +945,39 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 media_type="application/json",
             )
 
+        user = payload.get("sub", "")
+        # request.state.roles mirrors the token's "roles" claim, so it can
+        # lag behind storage until the token is reissued.  Permission
+        # enforcement below always checks live data through the bridge.
+        roles = payload.get("roles")
+        if roles is None:  # tokens issued before the roles claim
+            roles = _roles_for_user(user)
         request.state.user = user
-        return await call_next(request)
+        request.state.roles = list(roles)
+
+        permission = enterprise.required_permission(
+            request.url.path,
+            request.method,
+        )
+        if permission and not enterprise.user_has_permission(
+            user,
+            permission,
+        ):
+            self._record_denied_audit(request, user, permission)
+            return Response(
+                content=json.dumps(
+                    {
+                        "detail": "Permission denied",
+                        "permission": permission,
+                    },
+                ),
+                status_code=403,
+                media_type="application/json",
+            )
+
+        response = await call_next(request)
+        self._record_request_audit(request, response, user, permission)
+        return response
 
     @staticmethod
     def _should_skip_auth(request: Request) -> bool:
@@ -652,6 +999,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if not path.startswith("/api/"):
             return True
 
+        # A logged-in request must always pass through RBAC and the audit
+        # trail, even when it comes from an allow_no_auth_hosts address
+        # (ported from nexora-ai-platform).
+        if AuthMiddleware._extract_token(request):
+            return False
+
         # Check if client host is in allow_no_auth_hosts whitelist
         client_host = _resolve_client_ip(request)
         config = _get_config_cached()
@@ -671,3 +1024,66 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if token:
             return token
         return None
+
+    @staticmethod
+    def _record_request_audit(
+        request: Request,
+        response: Response,
+        username: str,
+        permission: Optional[str],
+    ) -> None:
+        """Audit mutating API requests (best-effort, never raises)."""
+        path = request.url.path
+        if request.method not in _MUTATING_METHODS:
+            return
+        if any(path.startswith(prefix) for prefix in _AUDIT_SKIP_PREFIXES):
+            return
+
+        try:
+            query_str = str(request.url.query) if request.url.query else ""
+            enterprise.record_audit_event(
+                actor=username,
+                action="api.mutate",
+                resource_type="api",
+                resource_id=path,
+                status=(
+                    "success" if response.status_code < 400 else "failure"
+                ),
+                detail={
+                    "method": request.method,
+                    "status_code": response.status_code,
+                    "permission": permission or "",
+                    **({"query": query_str} if query_str else {}),
+                },
+                request=request,
+            )
+        except Exception:
+            logger.debug("Failed to record audit event", exc_info=True)
+
+    @staticmethod
+    def _record_denied_audit(
+        request: Request,
+        username: str,
+        permission: Optional[str],
+        detail: Optional[dict] = None,
+    ) -> None:
+        """Audit a permission-denied request (best-effort, never raises)."""
+        try:
+            enterprise.record_audit_event(
+                actor=username,
+                action="api.denied",
+                resource_type="api",
+                resource_id=request.url.path,
+                status="denied",
+                detail={
+                    "method": request.method,
+                    "permission": permission or "",
+                    **(detail or {}),
+                },
+                request=request,
+            )
+        except Exception:
+            logger.debug(
+                "Failed to record denied audit event",
+                exc_info=True,
+            )

@@ -29,6 +29,8 @@ cookbook/_build
 # production
 /build
 dist/
+!plugins/bundle/nexora-admin/ui/dist/
+!plugins/bundle/nexora-admin/ui/dist/index.js
 .wheelshim/
 # Console frontend build (generated in Docker/CI, do not commit)
 console/.cursor/

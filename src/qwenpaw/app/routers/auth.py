@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """Authentication API endpoints."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from .. import enterprise
 from ...constant import EnvVarLoader
 from ..auth import (
     authenticate,
+    get_user,
     has_registered_users,
     is_auth_enabled,
     register_user,
@@ -31,6 +34,7 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     token: str
     username: str
+    roles: list[str] = []
 
 
 class RegisterRequest(BaseModel):
@@ -46,8 +50,94 @@ class AuthStatusResponse(BaseModel):
     has_users: bool
 
 
+class UserInfo(BaseModel):
+    id: str
+    username: str
+    roles: list[str]
+    status: str
+    created_at: int = 0
+    updated_at: int = 0
+
+
+class RoleInfo(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    permissions: list[str]
+    builtin: bool = False
+
+
+class CurrentUserResponse(BaseModel):
+    username: str
+    roles: list[str]
+    permissions: list[str]
+
+
+class CreateUserRequest(BaseModel):
+    username: str
+    password: str
+    roles: list[str] = []
+
+
+class UpdateUserRequest(BaseModel):
+    roles: list[str] | None = None
+    status: str | None = None
+    password: str | None = None
+
+
+class CreateRoleRequest(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    permissions: list[str] = []
+
+
+class UpdateRoleRequest(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    permissions: list[str] | None = None
+
+
+def _rbac():
+    """RBAC module from the bridge; 501 when the extension is missing."""
+    rbac = enterprise.get_rbac()
+    if rbac is None:
+        raise HTTPException(
+            status_code=501,
+            detail="Enterprise extension is not installed",
+        )
+    return rbac
+
+
+def _current_username(request: Request) -> str:
+    if not is_auth_enabled():
+        return "__local_admin__"
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header[7:] if auth_header.startswith("Bearer ") else ""
+    username = verify_token(token) if token else None
+    if username is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return username
+
+
+def _require_user_admin(request: Request) -> str:
+    username = _current_username(request)
+    if username == "__local_admin__":
+        return username
+    _rbac().require_permission(username, "users.manage")
+    return username
+
+
+def _require_user_view(request: Request) -> str:
+    username = _current_username(request)
+    if username == "__local_admin__":
+        return username
+    _rbac().require_permission(username, "users.view")
+    return username
+
+
 @router.post("/login")
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, request: Request):
     """Authenticate with username and password.
 
     Optional `expires_in` field:
@@ -60,13 +150,34 @@ async def login(req: LoginRequest):
 
     token = authenticate(req.username, req.password, req.expires_in)
     if token is None:
+        enterprise.record_audit_event(
+            actor=req.username,
+            action="auth.login",
+            resource_type="auth",
+            status="failure",
+            detail={"reason": "invalid_credentials"},
+            request=request,
+        )
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return LoginResponse(token=token, username=req.username)
+    user = get_user(req.username)
+    enterprise.record_audit_event(
+        actor=req.username,
+        action="auth.login",
+        resource_type="auth",
+        status="success",
+        detail={"roles": (user or {}).get("roles", [])},
+        request=request,
+    )
+    return LoginResponse(
+        token=token,
+        username=req.username,
+        roles=(user or {}).get("roles", []),
+    )
 
 
 @router.post("/register")
-async def register(req: RegisterRequest):
+async def register(req: RegisterRequest, request: Request):
     """Register the single user account (only allowed once).
 
     Optional `expires_in` field:
@@ -95,12 +206,32 @@ async def register(req: RegisterRequest):
 
     token = register_user(req.username.strip(), req.password, req.expires_in)
     if token is None:
+        enterprise.record_audit_event(
+            actor=req.username.strip(),
+            action="auth.register",
+            resource_type="auth",
+            status="failure",
+            detail={"reason": "registration_failed"},
+            request=request,
+        )
         raise HTTPException(
             status_code=409,
             detail="Registration failed",
         )
 
-    return LoginResponse(token=token, username=req.username.strip())
+    enterprise.record_audit_event(
+        actor=req.username.strip(),
+        action="auth.register",
+        resource_type="auth",
+        status="success",
+        detail={"roles": ["admin"]},
+        request=request,
+    )
+    return LoginResponse(
+        token=token,
+        username=req.username.strip(),
+        roles=["admin"],
+    )
 
 
 @router.get("/status")
@@ -130,7 +261,156 @@ async def verify(request: Request):
             detail="Invalid or expired token",
         )
 
-    return {"valid": True, "username": username}
+    user = get_user(username) or {}
+    return {
+        "valid": True,
+        "username": username,
+        "roles": user.get("roles", []),
+    }
+
+
+@router.get("/me", response_model=CurrentUserResponse)
+async def me(request: Request):
+    """Return current user roles and effective permissions."""
+    rbac = _rbac()
+    username = _current_username(request)
+    if username == "__local_admin__":
+        return CurrentUserResponse(
+            username="local-admin",
+            roles=["admin"],
+            permissions=rbac.list_permissions(),
+        )
+    user = get_user(username)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    role_map = {role["id"]: role for role in rbac.list_roles()}
+    effective_permissions: set[str] = set()
+    for role_id in user["roles"]:
+        role = role_map.get(role_id)
+        if role:
+            effective_permissions.update(role["permissions"])
+    # Mirror user_has_permission semantics: broader permissions imply
+    # narrower ones (e.g. users.manage implies users.view).
+    effective_permissions = rbac.expand_permissions(effective_permissions)
+    return CurrentUserResponse(
+        username=username,
+        roles=user["roles"],
+        permissions=sorted(effective_permissions),
+    )
+
+
+@router.get("/users", response_model=list[UserInfo])
+async def users(request: Request):
+    """List platform users. Requires user-view permission."""
+    rbac = _rbac()
+    _require_user_view(request)
+    return rbac.list_users()
+
+
+@router.post("/users", response_model=UserInfo)
+async def add_user(req: CreateUserRequest, request: Request):
+    """Create a platform user. Requires user-management permission."""
+    rbac = _rbac()
+    _require_user_admin(request)
+    user = rbac.create_user(req.username, req.password, req.roles)
+    if user is None:
+        raise HTTPException(status_code=400, detail="Failed to create user")
+    return user
+
+
+@router.put("/users/{username}", response_model=UserInfo)
+async def modify_user(
+    username: str,
+    req: UpdateUserRequest,
+    request: Request,
+):
+    """Update roles, status, or password for a platform user."""
+    rbac = _rbac()
+    _require_user_admin(request)
+    user = rbac.update_user(
+        username=username,
+        roles=req.roles,
+        status=req.status,
+        password=req.password,
+    )
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.delete("/users/{username}")
+async def remove_user(username: str, request: Request):
+    """Delete a platform user."""
+    rbac = _rbac()
+    current = _require_user_admin(request)
+    if username == current:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    if not rbac.delete_user(username):
+        raise HTTPException(status_code=400, detail="Failed to delete user")
+    return {"deleted": True}
+
+
+@router.get("/roles", response_model=list[RoleInfo])
+async def roles(request: Request):
+    """List roles and their permissions."""
+    rbac = _rbac()
+    _require_user_view(request)
+    return rbac.list_roles()
+
+
+@router.post("/roles", response_model=RoleInfo)
+async def add_role(req: CreateRoleRequest, request: Request):
+    """Create a custom role."""
+    rbac = _rbac()
+    _require_user_admin(request)
+    role = rbac.create_role(
+        role_id=req.id,
+        name=req.name,
+        description=req.description,
+        permissions=req.permissions,
+    )
+    if role is None:
+        raise HTTPException(status_code=400, detail="Failed to create role")
+    return role
+
+
+@router.put("/roles/{role_id}", response_model=RoleInfo)
+async def modify_role(
+    role_id: str,
+    req: UpdateRoleRequest,
+    request: Request,
+):
+    """Update a role's display name, description, or permissions."""
+    rbac = _rbac()
+    _require_user_admin(request)
+    role = rbac.update_role(
+        role_id=role_id,
+        name=req.name,
+        description=req.description,
+        permissions=req.permissions,
+    )
+    if role is None:
+        raise HTTPException(status_code=404, detail="Role not found")
+    return role
+
+
+@router.delete("/roles/{role_id}")
+async def remove_role(role_id: str, request: Request):
+    """Delete a custom role that is not assigned to any user."""
+    rbac = _rbac()
+    _require_user_admin(request)
+    if not rbac.delete_role(role_id):
+        raise HTTPException(status_code=400, detail="Failed to delete role")
+    return {"deleted": True}
+
+
+@router.get("/permissions", response_model=list[str])
+async def permissions(request: Request):
+    """List platform permission points."""
+    rbac = _rbac()
+    _require_user_view(request)
+    return rbac.list_permissions()
 
 
 class UpdateProfileRequest(BaseModel):
@@ -160,7 +440,8 @@ async def update_profile(req: UpdateProfileRequest, request: Request):
     # Verify caller is authenticated
     auth_header = request.headers.get("Authorization", "")
     caller_token = auth_header[7:] if auth_header.startswith("Bearer ") else ""
-    if not caller_token or verify_token(caller_token) is None:
+    caller_username = verify_token(caller_token) if caller_token else None
+    if caller_username is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     if not req.new_username and not req.new_password:
@@ -186,15 +467,42 @@ async def update_profile(req: UpdateProfileRequest, request: Request):
         new_username=req.new_username,
         new_password=req.new_password,
         expiry_seconds=req.expires_in,
+        username=caller_username,
     )
     if token is None:
+        enterprise.record_audit_event(
+            actor=caller_username,
+            action="auth.profile.update",
+            resource_type="auth",
+            status="failure",
+            detail={"reason": "current_password_incorrect"},
+            request=request,
+        )
         raise HTTPException(
             status_code=401,
             detail="Current password is incorrect",
         )
 
     username = req.new_username.strip() if req.new_username else ""
-    return LoginResponse(token=token, username=username)
+    updated_username = username or caller_username
+    user = get_user(updated_username) or {}
+    enterprise.record_audit_event(
+        actor=caller_username,
+        action="auth.profile.update",
+        resource_type="auth",
+        resource_id=updated_username,
+        status="success",
+        detail={
+            "username_changed": bool(req.new_username),
+            "password_changed": bool(req.new_password),
+        },
+        request=request,
+    )
+    return LoginResponse(
+        token=token,
+        username=username,
+        roles=user.get("roles", []),
+    )
 
 
 class RevokeTokenRequest(BaseModel):
@@ -224,7 +532,8 @@ async def revoke_single_token(req: RevokeTokenRequest, request: Request):
     # Get current token for authentication
     auth_header = request.headers.get("Authorization", "")
     caller_token = auth_header[7:] if auth_header.startswith("Bearer ") else ""
-    if not caller_token or verify_token(caller_token) is None:
+    caller_username = verify_token(caller_token) if caller_token else None
+    if not caller_token or caller_username is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     # Determine which token to revoke
@@ -238,6 +547,14 @@ async def revoke_single_token(req: RevokeTokenRequest, request: Request):
             detail="Failed to revoke token",
         )
 
+    enterprise.record_audit_event(
+        actor=caller_username,
+        action="auth.logout",
+        resource_type="auth",
+        status="success",
+        detail={"revoked_current_token": is_current_token},
+        request=request,
+    )
     message = (
         "Current token has been revoked. Please login again."
         if is_current_token
@@ -271,7 +588,8 @@ async def revoke_all_sessions(request: Request):
     # Verify caller is authenticated
     auth_header = request.headers.get("Authorization", "")
     caller_token = auth_header[7:] if auth_header.startswith("Bearer ") else ""
-    if not caller_token or verify_token(caller_token) is None:
+    caller_username = verify_token(caller_token) if caller_token else None
+    if not caller_token or caller_username is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     success = revoke_all_tokens()
@@ -281,6 +599,13 @@ async def revoke_all_sessions(request: Request):
             detail="Failed to revoke tokens",
         )
 
+    enterprise.record_audit_event(
+        actor=caller_username,
+        action="auth.revoke_all_tokens",
+        resource_type="auth",
+        status="success",
+        request=request,
+    )
     return {
         "message": "All tokens have been revoked. Please login again.",
         "revoked": True,

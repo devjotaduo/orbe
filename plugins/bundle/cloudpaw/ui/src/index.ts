@@ -1181,19 +1181,8 @@ function buildPlugin() {
   }
 
   function normalizeA2AAgent(agent: any) {
-    if (!agent) return agent;
-    return {
-      ...agent,
-      name: translateA2AText(agent.name),
-      description: translateA2AText(agent.description),
-      skills: Array.isArray(agent.skills)
-        ? agent.skills.map((skill: any) => ({
-            ...skill,
-            name: translateA2AText(skill?.name),
-            description: translateA2AText(skill?.description),
-          }))
-        : agent.skills,
-    };
+    // Keep server identifiers intact; translate only at render time.
+    return agent;
   }
 
   function getSelectedAgentId(): string | null {
