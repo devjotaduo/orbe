@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # --- Estado da entrevista -------------------------------------------------
 
+
 class CompanyProfile(BaseModel):
     segment: Optional[str] = None
     cnae: Optional[str] = None
@@ -22,6 +23,7 @@ class CompanyProfile(BaseModel):
 
 class OpenArea(BaseModel):
     """Uma ramificação ainda por aprofundar na entrevista."""
+
     id: str
     topic: str
     confidence: float = Field(ge=0.0, le=1.0, default=0.0)
@@ -30,14 +32,14 @@ class OpenArea(BaseModel):
 
 
 class Integration(BaseModel):
-    kind: str            # crm | erp | planilha | whatsapp | outro
+    kind: str  # crm | erp | planilha | whatsapp | outro
     name: str
     data_location: str = ""
     confidence: float = Field(ge=0.0, le=1.0, default=0.5)
 
 
 class Turn(BaseModel):
-    role: str            # "user" | "assistant"
+    role: str  # "user" | "assistant"
     text: str
 
 
@@ -55,7 +57,8 @@ class DiscoveryState(BaseModel):
         if not self.open_areas:
             return None
         return sorted(
-            self.open_areas, key=lambda a: (a.confidence, -a.priority)
+            self.open_areas,
+            key=lambda a: (a.confidence, -a.priority),
         )[0]
 
     def ready_to_emit(self, threshold: float = 0.7) -> bool:
@@ -66,6 +69,7 @@ class DiscoveryState(BaseModel):
 
 class ReflectUpdate(BaseModel):
     """Saída estruturada do passo de raciocínio `reflect`."""
+
     learned: str
     close_area_ids: list[str] = Field(default_factory=list)
     new_areas: list[OpenArea] = Field(default_factory=list)
@@ -75,6 +79,7 @@ class ReflectUpdate(BaseModel):
 
 
 # --- Blueprint do time ----------------------------------------------------
+
 
 class ProcessArea(BaseModel):
     name: str

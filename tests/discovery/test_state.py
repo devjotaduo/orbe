@@ -12,7 +12,10 @@ from qwenpaw.discovery.state import (
 
 def test_open_area_confidence_bounds():
     OpenArea(
-        id="vendas", topic="processo de vendas", confidence=0.5, priority=3
+        id="vendas",
+        topic="processo de vendas",
+        confidence=0.5,
+        priority=3,
     )
     with pytest.raises(ValidationError):
         OpenArea(id="x", topic="t", confidence=1.5, priority=1)
@@ -20,8 +23,8 @@ def test_open_area_confidence_bounds():
 
 def test_discovery_state_defaults_and_helpers():
     st = DiscoveryState(session_id="s1")
-    assert st.open_areas == []
-    assert st.integrations == []
+    assert not st.open_areas
+    assert not st.integrations
     # next_focus picks lowest-confidence, highest-priority open area
     st.open_areas = [
         OpenArea(id="a", topic="A", confidence=0.9, priority=1),
@@ -41,7 +44,7 @@ def test_blueprint_roundtrip_json():
             "pains": ["atendimento lento"],
         },
         process_map=[
-            {"name": "atendimento", "description": "SAC via WhatsApp"}
+            {"name": "atendimento", "description": "SAC via WhatsApp"},
         ],
         detected_integrations=[
             {
@@ -49,7 +52,7 @@ def test_blueprint_roundtrip_json():
                 "name": "Evolution",
                 "data_location": "instância própria",
                 "confidence": 0.8,
-            }
+            },
         ],
         proposed_team=[
             {
@@ -59,14 +62,14 @@ def test_blueprint_roundtrip_json():
                 "tasks": ["responder dúvidas"],
                 "tools_integrations": ["mcp:evolution-whatsapp"],
                 "talks_to": [],
-            }
+            },
         ],
         roadmap=[
             {
                 "order": 1,
                 "title": "Atendimento WhatsApp",
                 "rationale": "dor principal",
-            }
+            },
         ],
         open_questions=["confirmar volume de mensagens/dia"],
     )
@@ -83,6 +86,6 @@ def test_reflect_update_parses():
         '"confidence":0.1,"priority":4}],'
         '"integrations":[{"kind":"planilha","name":"Google Sheets",'
         '"data_location":"drive","confidence":0.6}],'
-        '"company_updates":{"segment":"e-commerce"}}'
+        '"company_updates":{"segment":"e-commerce"}}',
     )
     assert upd.new_areas[0].id == "logistica"
