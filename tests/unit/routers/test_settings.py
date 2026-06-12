@@ -36,11 +36,11 @@ def api_client():
 
 
 async def test_get_language_default(api_client):
-    """Should return 'en' when no settings file exists."""
+    """Should return 'pt-BR' when no settings file exists."""
     async with api_client:
         resp = await api_client.get("/api/settings/language")
     assert resp.status_code == 200
-    assert resp.json() == {"language": "en"}
+    assert resp.json() == {"language": "pt-BR"}
 
 
 async def test_get_language_persisted(api_client, _use_tmp_settings):

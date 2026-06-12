@@ -13,6 +13,7 @@ import enUS from "antd/locale/en_US";
 import jaJP from "antd/locale/ja_JP";
 import ruRU from "antd/locale/ru_RU";
 import idID from "antd/locale/id_ID";
+import ptBR from "antd/locale/pt_BR";
 import type { Locale } from "antd/es/locale";
 import { theme as antdTheme } from "antd";
 import dayjs from "dayjs";
@@ -21,6 +22,7 @@ import "dayjs/locale/zh-cn";
 import "dayjs/locale/ja";
 import "dayjs/locale/ru";
 import "dayjs/locale/id";
+import "dayjs/locale/pt-br";
 dayjs.extend(relativeTime);
 import MainLayout from "./layouts/MainLayout";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
@@ -44,6 +46,7 @@ const antdLocaleMap: Record<string, Locale> = {
   ja: jaJP,
   ru: ruRU,
   id: idID,
+  pt: ptBR,
 };
 
 const dayjsLocaleMap: Record<string, string> = {
@@ -52,6 +55,7 @@ const dayjsLocaleMap: Record<string, string> = {
   ja: "ja",
   ru: "ru",
   id: "id",
+  pt: "pt-br",
 };
 
 const GlobalStyle = createGlobalStyle`
@@ -128,43 +132,49 @@ function AppInner() {
   const { isDark } = useTheme();
   const { loading: pluginsLoading } = usePlugins();
   const selectedTheme = isDark ? bailianDarkTheme : bailianTheme;
-  const lang = i18n.resolvedLanguage || i18n.language || "en";
+  const lang = i18n.language || i18n.resolvedLanguage || "en";
+  const baseLang = lang.split("-")[0];
   const [antdLocale, setAntdLocale] = useState<Locale>(
-    antdLocaleMap[lang] ?? enUS,
+    antdLocaleMap[baseLang] ?? enUS,
   );
 
   useEffect(() => {
-    if (!localStorage.getItem("language")) {
-      languageApi
-        .getLanguage()
-        .then(({ language }) => {
-          if (language && language !== i18n.language) {
-            i18n.changeLanguage(language);
-            localStorage.setItem("language", language);
-          }
-        })
-        .catch((err) =>
-          console.error("Failed to fetch language preference:", err),
-        );
-    }
+    languageApi
+      .getLanguage()
+      .then(({ language }) => {
+        if (!language) return;
+
+        if (
+          language !== i18n.language &&
+          language !== i18n.resolvedLanguage
+        ) {
+          i18n.changeLanguage(language);
+        }
+        localStorage.setItem("language", language);
+      })
+      .catch((err) =>
+        console.error("Failed to fetch language preference:", err),
+      );
     useUploadLimitStore.getState().fetch();
-  }, []);
+  }, [i18n]);
 
   useEffect(() => {
     const handleLanguageChanged = (lng: string) => {
       const shortLng = lng.split("-")[0];
+      document.documentElement.lang = lng;
       setAntdLocale(antdLocaleMap[shortLng] ?? enUS);
       dayjs.locale(dayjsLocaleMap[shortLng] ?? "en");
     };
 
     // Set initial dayjs locale
-    dayjs.locale(dayjsLocaleMap[lang.split("-")[0]] ?? "en");
+    document.documentElement.lang = lang;
+    dayjs.locale(dayjsLocaleMap[baseLang] ?? "en");
 
     i18n.on("languageChanged", handleLanguageChanged);
     return () => {
       i18n.off("languageChanged", handleLanguageChanged);
     };
-  }, [i18n]);
+  }, [baseLang, i18n, lang]);
 
   // Wait for plugins to load before rendering routes that might be patched
   if (pluginsLoading) {

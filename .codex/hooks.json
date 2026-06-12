@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/codex_context_guard.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/codex_secret_path_guard.py"
+          },
+          {
+            "type": "command",
+            "command": "python scripts/agentscope_guardian_hook.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/codex_prettier_hook.py"
+          }
+        ]
+      }
+    ]
+  }
+}

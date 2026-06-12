@@ -19,6 +19,9 @@ export default defineConfig(({ mode }) => {
   // Empty = same-origin; frontend and backend served together, no hardcoded host.
   // Use a dedicated Vite-prefixed key so unrelated shell BASE_URL values don't leak into the build.
   const apiBaseUrl = env.VITE_API_BASE_URL ?? "";
+  const devBackendUrl = env.VITE_DEV_BACKEND_URL ?? "http://127.0.0.1:8088";
+  const devHmrHost = env.VITE_DEV_HMR_HOST ?? "localhost";
+  const devUsePolling = env.VITE_DEV_WATCH_POLLING === "1";
 
   return {
     define: {
@@ -46,10 +49,21 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: 5173,
+      strictPort: true,
+      hmr: {
+        protocol: "ws",
+        host: devHmrHost,
+        port: 5173,
+        clientPort: 5173,
+      },
+      watch: {
+        usePolling: devUsePolling,
+      },
       proxy: {
         "/api": {
-          target: "http://localhost:8088",
+          target: devBackendUrl,
           changeOrigin: false,
+          ws: true,
         },
       },
     },

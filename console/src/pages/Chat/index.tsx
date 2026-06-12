@@ -1435,6 +1435,7 @@ export default function ChatPage() {
       slot: string,
       spec: { id: string; icon?: any; render?: any; onClick?: any },
     ) => ({
+      id: spec.id,
       icon: spec.icon,
       render: spec.render
         ? (ctx: { data: unknown }) => (
@@ -1568,6 +1569,7 @@ export default function ChatPage() {
             <>
               {whisperEnabled ? (
                 <WhisperSpeechButton
+                  key="whisper-speech"
                   ref={whisperSpeechRef}
                   onTranscription={handleWhisperTranscription}
                 />

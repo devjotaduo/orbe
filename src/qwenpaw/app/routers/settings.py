@@ -20,6 +20,7 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 _SETTINGS_FILE = WORKING_DIR / "settings.json"
 
 _VALID_LANGUAGES = {"en", "zh", "ja", "ru", "pt-BR", "id"}
+_DEFAULT_LANGUAGE = "pt-BR"
 
 
 def _load() -> dict:
@@ -41,7 +42,7 @@ def _save(data: dict) -> None:
 
 @router.get("/language", summary="Get UI language")
 async def get_language() -> dict:
-    return {"language": _load().get("language", "en")}
+    return {"language": _load().get("language", _DEFAULT_LANGUAGE)}
 
 
 @router.put("/language", summary="Update UI language")

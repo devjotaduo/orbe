@@ -6,6 +6,7 @@
 # AI agent / copilot local config
 .aone_copilot/
 .agents/
+ECC/
 
 # dependencies
 /.pnp
@@ -128,7 +129,6 @@ src/.hypothesis/
 .cursor/
 
 # Codex IDE
-.codex/
 
 # Worktrees
 .worktrees/
