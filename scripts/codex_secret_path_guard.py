@@ -3,7 +3,6 @@
 """Block Codex edits to secret-bearing file paths."""
 
 import json
-import os
 import sys
 from pathlib import Path
 

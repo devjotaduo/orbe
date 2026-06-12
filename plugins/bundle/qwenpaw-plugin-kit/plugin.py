@@ -20,7 +20,9 @@ from fastapi import APIRouter
 
 from qwenpaw.plugins.api import PluginApi
 
-from .tools import plugin_kit_describe_elements
+from .tools import (
+    plugin_kit_describe_elements,
+)  # pylint: disable=relative-beyond-top-level
 
 logger = logging.getLogger(__name__)
 
