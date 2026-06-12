@@ -10,6 +10,12 @@ from pydantic import BaseModel
 
 _DATA = Path(__file__).parent / "data" / "cnae_seed.json"
 
+CANONICAL_INTEGRATION_KINDS: frozenset[str] = frozenset({
+    "whatsapp", "crm", "planilha", "agenda", "erp", "pagamento",
+    "fiscal", "ecommerce", "helpdesk", "email", "delivery", "voz",
+    "juridico", "lms", "pdv", "prontuario", "chat-interno", "analytics",
+})
+
 
 class SegmentInfo(BaseModel):
     key: str
