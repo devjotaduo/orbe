@@ -191,7 +191,9 @@ _EXAMPLE = {
             "name": "Atendente WhatsApp", "role": "SAC 24/7",
             "objective": "responder cardápio, horários e reservas sem intervenção humana",
             "tasks": ["responder FAQ", "registrar reservas", "encaminhar pedidos"],
-            "tools_integrations": ["clawhub:evolution-api", "cardápio digital"],
+            "tools_integrations": [
+                "clawhub:evolution-api", "cardápio digital",
+            ],
             "talks_to": ["Coordenador de Pedidos"],
         },
         {
@@ -222,7 +224,8 @@ _EXAMPLE = {
             "origin": "clawhub",
             "slug_or_url": "evolution-api",
             "status": "recomendado",
-            "notes": "não-oficial (risco de ban); p/ produção considerar WhatsApp Cloud API",
+            "notes": "não-oficial (risco de ban); p/ produção considerar"
+            " WhatsApp Cloud API",
         },
     ],
 }
