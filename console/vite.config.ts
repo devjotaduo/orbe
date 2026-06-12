@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 // Vitest plugin: transforms .css imports inside node_modules to empty stubs.
@@ -19,6 +20,9 @@ export default defineConfig(({ mode }) => {
   // Empty = same-origin; frontend and backend served together, no hardcoded host.
   // Use a dedicated Vite-prefixed key so unrelated shell BASE_URL values don't leak into the build.
   const apiBaseUrl = env.VITE_API_BASE_URL ?? "";
+  const devBackendUrl = env.VITE_DEV_BACKEND_URL ?? "http://127.0.0.1:8088";
+  const devHmrHost = env.VITE_DEV_HMR_HOST ?? "localhost";
+  const devUsePolling = env.VITE_DEV_WATCH_POLLING === "1";
 
   return {
     define: {
@@ -26,7 +30,7 @@ export default defineConfig(({ mode }) => {
       TOKEN: JSON.stringify(env.TOKEN || ""),
       MOBILE: false,
     },
-    plugins: [react(), cssStubPlugin],
+    plugins: [react(), tailwindcss(), cssStubPlugin],
     css: {
       modules: {
         localsConvention: "camelCase",
@@ -46,10 +50,21 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: 5173,
+      strictPort: true,
+      hmr: {
+        protocol: "ws",
+        host: devHmrHost,
+        port: 5173,
+        clientPort: 5173,
+      },
+      watch: {
+        usePolling: devUsePolling,
+      },
       proxy: {
         "/api": {
-          target: "http://localhost:8088",
+          target: devBackendUrl,
           changeOrigin: false,
+          ws: true,
         },
       },
     },
@@ -137,7 +152,7 @@ export default defineConfig(({ mode }) => {
             ) {
               return "react-vendor";
             }
-            // Ant Design + AgentScope design system (merged to avoid circular deps)
+            // Ant Design + AgentScope design system (kept for plugin host / chat SDK)
             if (
               id.includes("node_modules/antd/") ||
               id.includes("node_modules/antd-style/") ||
@@ -145,6 +160,18 @@ export default defineConfig(({ mode }) => {
               id.includes("node_modules/@agentscope-ai/")
             ) {
               return "ui-vendor";
+            }
+            // shadcn/ui + Radix + styling utilities
+            if (
+              id.includes("node_modules/@radix-ui/") ||
+              id.includes("node_modules/class-variance-authority/") ||
+              id.includes("node_modules/tailwind-merge/") ||
+              id.includes("node_modules/clsx/") ||
+              id.includes("node_modules/sonner/") ||
+              id.includes("node_modules/lucide-react/") ||
+              id.includes("node_modules/motion/")
+            ) {
+              return "shadcn-vendor";
             }
             // i18n
             if (

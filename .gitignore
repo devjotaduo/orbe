@@ -6,6 +6,7 @@
 # AI agent / copilot local config
 .aone_copilot/
 .agents/
+ECC/
 
 # dependencies
 /.pnp
@@ -104,7 +105,15 @@ logs/
 
 # vibe coding
 AGENTS.md
-.claude
+# md_files de agentes têm AGENTS.md versionados (templates de workspace por idioma)
+!src/qwenpaw/agents/md_files/**/AGENTS.md
+# .claude: version shared config (settings.json, skills/, agents/, hooks/),
+# but ignore local/runtime artifacts.
+.claude/settings.local.json
+.claude/.agentscope-guardian-approved
+.claude/**/__pycache__/
+# claude-flow runtime artifacts (ruflo) — never version
+.claude-flow/
 openspec
 CLAUDE.md
 *.tmp
@@ -126,7 +135,6 @@ src/.hypothesis/
 .cursor/
 
 # Codex IDE
-.codex/
 
 # Worktrees
 .worktrees/

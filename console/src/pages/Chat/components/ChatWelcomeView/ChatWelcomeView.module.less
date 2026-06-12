@@ -1,0 +1,292 @@
+@import "../../../../styles/aionui-tokens.less";
+
+// ── Root ──────────────────────────────────────────────────────────────────────
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 24px 24px;
+  box-sizing: border-box;
+}
+
+// ── Title ─────────────────────────────────────────────────────────────────────
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  text-transform: none;
+  color: @text-primary;
+  text-align: center;
+  margin: 0 0 20px;
+  line-height: 1.25;
+}
+
+// ── Single pill agent row ─────────────────────────────────────────────────────
+.agentPill {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 14px;
+  border: 1.5px solid @border-base;
+  border-radius: 32px;
+  background: @bg-base;
+  margin-bottom: 28px;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.agentActive {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 8px 2px 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 20px;
+  color: @text-primary;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover {
+    background: @bg-2;
+  }
+}
+
+.agentName {
+  font-size: 14px;
+  font-weight: 600;
+  color: @text-primary;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Small circle icon inside pill (letter initials)
+.agentIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.agentIconRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.agentIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+
+  &:hover {
+    background: @bg-2;
+  }
+}
+
+.sep {
+  color: @border-base;
+  font-size: 14px;
+  padding: 0 4px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.agentPlusBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: @text-muted;
+  font-size: 18px;
+  font-weight: 400;
+  border-radius: 50%;
+
+  &:hover {
+    background: @bg-2;
+    color: @text-primary;
+  }
+}
+
+// ── "Select assistant" label ──────────────────────────────────────────────────
+.selectLabel {
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: @text-muted;
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+// ── Cards grid ────────────────────────────────────────────────────────────────
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px;
+  background: @bg-base;
+  border: 1px solid @border-base;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    box-shadow @transition-fast @ease-spring,
+    border-color @transition-fast @ease-spring,
+    transform @transition-fast @ease-spring;
+
+  &:hover {
+    border-color: darken(@border-base, 8%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: none;
+  }
+}
+
+// Square app-icon style avatar
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cardBody {
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.cardName {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: @text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cardSub {
+  font-size: 12px;
+  color: @text-muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 3px;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+// ── Dark mode ─────────────────────────────────────────────────────────────────
+:global(.dark-mode) {
+  .title {
+    color: @text-primary-dark;
+  }
+
+  .agentPill {
+    background: @bg-1-dark;
+    border-color: @border-base-dark;
+  }
+
+  .agentActive {
+    color: @text-primary-dark;
+    &:hover {
+      background: @bg-2-dark;
+    }
+  }
+  .agentName {
+    color: @text-primary-dark;
+  }
+  .agentIconBtn {
+    &:hover {
+      background: @bg-2-dark;
+    }
+  }
+  .agentPlusBtn {
+    color: @text-muted-dark;
+    &:hover {
+      background: @bg-2-dark;
+      color: @text-primary-dark;
+    }
+  }
+
+  .sep {
+    color: @border-base-dark;
+  }
+
+  .selectLabel {
+    color: @text-muted-dark;
+  }
+
+  .card {
+    background: @bg-1-dark;
+    border-color: @border-base-dark;
+    &:hover {
+      border-color: @aou-7;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .cardName {
+    color: @text-primary-dark;
+  }
+  .cardSub {
+    color: @text-muted-dark;
+  }
+}
+
+// ── Reduced motion ────────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+    transform: none !important;
+  }
+}

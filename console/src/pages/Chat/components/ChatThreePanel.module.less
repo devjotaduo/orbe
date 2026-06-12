@@ -1,0 +1,223 @@
+@import "../../../styles/aionui-tokens.less";
+
+// ── Three-panel layout ────────────────────────────────────────────────────────
+.threePanelRoot {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+// ── Each panel ────────────────────────────────────────────────────────────────
+.panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: width @transition-medium @ease-spring;
+  min-width: 0;
+
+  &.panelCollapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden;
+  }
+}
+
+.panelMain {
+  flex: 1 1 auto;
+  min-width: 360px;
+}
+
+.panelPreview {
+  background: @bg-1;
+  border-left: 1px solid @border-base;
+  flex-shrink: 0;
+}
+
+.panelWorkspace {
+  background: @bg-2;
+  border-left: 1px solid @border-base;
+  flex-shrink: 0;
+}
+
+:global(.dark-mode) {
+  .panelPreview {
+    background: @bg-1-dark;
+    border-color: @border-base-dark;
+  }
+  .panelWorkspace {
+    background: @bg-2-dark;
+    border-color: @border-base-dark;
+  }
+}
+
+// ── Panel header ──────────────────────────────────────────────────────────────
+.panelHeader {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 12px;
+  border-bottom: 1px solid @border-base;
+  flex-shrink: 0;
+  gap: 8px;
+  user-select: none;
+}
+
+.panelTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: @text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex: 1;
+}
+
+.panelCloseBtn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: @text-muted;
+  font-size: 12px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
+
+  &:hover {
+    background: @bg-active;
+    color: @text-primary;
+  }
+}
+
+:global(.dark-mode) {
+  .panelHeader {
+    border-color: @border-base-dark;
+  }
+  .panelCloseBtn:hover {
+    background: @bg-active-dark;
+    color: @text-primary-dark;
+  }
+}
+
+// ── Panel content ─────────────────────────────────────────────────────────────
+.panelContent {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+// ── Drag handle ───────────────────────────────────────────────────────────────
+.dragHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  width: @sider-drag-handle-width;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background @transition-fast;
+
+  &:hover,
+  &.dragHandleActive {
+    background: @brand;
+    opacity: 0.5;
+  }
+}
+
+// ── Toggle bar (right edge of main panel) ────────────────────────────────────
+.panelToggleBar {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 3px;
+  background: @bg-2;
+  border: 1px solid @border-base;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  z-index: 5;
+}
+
+.toggleBtn {
+  width: 20px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: @text-muted;
+  font-size: 11px;
+  padding: 0;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+
+  &:hover {
+    background: @bg-active;
+    color: @text-primary;
+  }
+
+  &.toggleBtnActive {
+    color: @brand;
+  }
+}
+
+:global(.dark-mode) {
+  .panelToggleBar {
+    background: @bg-2-dark;
+    border-color: @border-base-dark;
+  }
+  .toggleBtn:hover {
+    background: @bg-active-dark;
+    color: @text-primary-dark;
+  }
+}
+
+// ── Placeholder content ───────────────────────────────────────────────────────
+.placeholderEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: @text-muted;
+  font-size: 13px;
+  padding: 24px;
+  text-align: center;
+}
+
+.placeholderIcon {
+  font-size: 28px;
+  opacity: 0.4;
+}
+
+// ── Reduced motion ────────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    transition: none;
+  }
+  .dragHandle,
+  .panelCloseBtn,
+  .toggleBtn {
+    transition: none;
+  }
+}

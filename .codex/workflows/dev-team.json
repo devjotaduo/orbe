@@ -1,0 +1,50 @@
+{
+  "name": "dev-team",
+  "description": "QwenPaw development team workflow: guardian approval, implementation, review, and focused tests for a concrete change.",
+  "variables": {
+    "task": "",
+    "files": [],
+    "maxRounds": 2
+  },
+  "steps": [
+    {
+      "name": "guardian",
+      "type": "task",
+      "agent": "agentscope-guardian",
+      "config": {
+        "agent": "agentscope-guardian",
+        "prompt": "Review the requested QwenPaw/AgentScope change before implementation. Verify installed AgentScope version when relevant, read the local docs required by the guardian skill, approve only the exact files that may be edited, and report the verdict. Task: {{task}}. File hints: {{files}}."
+      }
+    },
+    {
+      "name": "implement",
+      "type": "task",
+      "agent": "qwenpaw_coder",
+      "config": {
+        "agent": "qwenpaw_coder",
+        "dependsOn": ["guardian"],
+        "prompt": "Implement the approved change with the smallest correct diff. Respect guardian-approved files and existing QwenPaw patterns. Task: {{task}}. File hints: {{files}}."
+      }
+    },
+    {
+      "name": "review",
+      "type": "task",
+      "agent": "qwenpaw_reviewer",
+      "config": {
+        "agent": "qwenpaw_reviewer",
+        "dependsOn": ["implement"],
+        "prompt": "Review the implementation diff for correctness, AgentScope/API compatibility, security, conventions, scope, and missing tests. Return APPROVE or REQUEST_CHANGES with concrete findings. Task: {{task}}."
+      }
+    },
+    {
+      "name": "test",
+      "type": "task",
+      "agent": "qwenpaw_tester",
+      "config": {
+        "agent": "qwenpaw_tester",
+        "dependsOn": ["review"],
+        "prompt": "Add or update focused tests when needed, run the affected test command, and report exact results. Task: {{task}}. File hints: {{files}}."
+      }
+    }
+  ]
+}

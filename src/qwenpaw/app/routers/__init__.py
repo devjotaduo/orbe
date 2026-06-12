@@ -27,6 +27,7 @@ from .settings import router as settings_router
 from .plugins import router as plugins_router
 from .frontend_plugin import router as frontend_plugin_router
 from .backup import router as backup_router
+
 # NOTE(agentscope-2.0 migration): `agentscope.plan` (Plan / PlanNotebook /
 # DefaultPlanToHint) was removed in 2.0 in favour of the task tools under
 # `agentscope.tool._task`. The `plan` router and the `qwenpaw.plan` package are
