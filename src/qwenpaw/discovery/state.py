@@ -109,6 +109,20 @@ class RoadmapItem(BaseModel):
     rationale: str = ""
 
 
+class ConnectorRef(BaseModel):
+    """Conector recomendado no blueprint (whitelist curada).
+
+    Campos string lenientes de propósito: o JSON vem do LLM; a validação
+    estrita de vocabulário vive em ConnectorInfo (taxonomy.py).
+    """
+    integration_kind: str
+    name: str
+    origin: str
+    slug_or_url: str = ""
+    status: str
+    notes: str = ""
+
+
 class TeamBlueprint(BaseModel):
     company_profile: CompanyProfile
     process_map: list[ProcessArea] = Field(default_factory=list)
@@ -116,3 +130,4 @@ class TeamBlueprint(BaseModel):
     proposed_team: list[AgentSpec] = Field(default_factory=list)
     roadmap: list[RoadmapItem] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
+    recommended_connectors: list[ConnectorRef] = Field(default_factory=list)

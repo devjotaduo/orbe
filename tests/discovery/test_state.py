@@ -122,3 +122,34 @@ def test_reflect_update_confidence_updates():
     raw_json = upd.model_dump_json()
     upd2 = ReflectUpdate.model_validate_json(raw_json)
     assert upd2.confidence_updates["area1"] == pytest.approx(0.85)
+
+
+def test_blueprint_validates_without_recommended_connectors():
+    """Retrocompat: blueprints antigos (sem o campo) continuam válidos."""
+    from qwenpaw.discovery.state import CompanyProfile, TeamBlueprint
+
+    bp = TeamBlueprint(company_profile=CompanyProfile(segment="ecommerce"))
+    assert bp.recommended_connectors == []
+
+
+def test_blueprint_validates_with_recommended_connectors():
+    from qwenpaw.discovery.state import (
+        CompanyProfile,
+        ConnectorRef,
+        TeamBlueprint,
+    )
+
+    bp = TeamBlueprint(
+        company_profile=CompanyProfile(segment="ecommerce"),
+        recommended_connectors=[
+            ConnectorRef(
+                integration_kind="whatsapp",
+                name="Evolution API v2",
+                origin="clawhub",
+                slug_or_url="evolution-api",
+                status="recomendado",
+                notes="não-oficial; risco de ban",
+            )
+        ],
+    )
+    assert bp.recommended_connectors[0].origin == "clawhub"
