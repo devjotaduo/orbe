@@ -1167,7 +1167,7 @@ class AgentProfileConfig(BaseModel):
         description="Active model for this agent (provider_id + model)",
     )
     language: str = Field(
-        default="zh",
+        default="pt",
         description="Language setting for this agent",
     )
     approval_level: str = Field(
@@ -1236,7 +1236,7 @@ class AgentsConfig(BaseModel):
     llm_routing: AgentsLLMRoutingConfig = Field(
         default_factory=AgentsLLMRoutingConfig,
     )
-    language: str = Field(default="zh")
+    language: str = Field(default="pt")
     installed_md_files_language: Optional[str] = None
     system_prompt_files: List[str] = Field(
         default_factory=lambda: ["AGENTS.md", "SOUL.md", "PROFILE.md"],
@@ -2299,7 +2299,7 @@ def migrate_legacy_config_to_multi_agent() -> bool:
         language=(
             default_agent_config.language
             if hasattr(default_agent_config, "language")
-            else "zh"
+            else "pt"
         ),
         system_prompt_files=default_agent_config.system_prompt_files,
     )

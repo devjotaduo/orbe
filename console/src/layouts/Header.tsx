@@ -1,4 +1,4 @@
-import { Layout, Space, Badge, Spin, Tooltip, Dropdown, Button as AntButton } from "antd";
+import { Layout, Space, Badge, Spin, Dropdown, Button as AntButton } from "antd";
 import type { MenuProps } from "antd";
 import {
   MenuFoldOutlined,
@@ -26,7 +26,6 @@ import {
   isStableVersion,
   compareVersions,
 } from "./constants";
-import { useTheme } from "../contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { Slot } from "../plugins/registry/Slot";
 import ReactMarkdown from "react-markdown";
@@ -40,7 +39,6 @@ import {
   ReadOutlined,
   PlayCircleOutlined,
   QuestionCircleOutlined,
-  DownOutlined,
 } from "@ant-design/icons";
 
 const { Header: AntHeader } = Layout;
@@ -77,7 +75,6 @@ interface HeaderProps {
 
 export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
   const { t, i18n } = useTranslation();
-  const { isDark } = useTheme();
   const [version, setVersion] = useState<string>("");
   const [latestVersion, setLatestVersion] = useState<string>("");
   const [updateModalOpen, setUpdateModalOpen] = useState(false);

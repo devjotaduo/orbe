@@ -1,0 +1,162 @@
+{
+  "workflows": {
+    "workflow-1781240761419-mdkfy2": {
+      "workflowId": "workflow-1781240761419-mdkfy2",
+      "name": "dev-team",
+      "description": "QwenPaw development team workflow: guardian approval, implementation, review, and focused tests for a concrete change.",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "name": "guardian",
+          "type": "task",
+          "config": {
+            "agent": "agentscope-guardian",
+            "prompt": "Review the requested QwenPaw/AgentScope change before implementation. Verify installed AgentScope version when relevant, read the local docs required by the guardian skill, approve only the exact files that may be edited, and report the verdict. Task: {{task}}. File hints: {{files}}."
+          },
+          "status": "pending"
+        },
+        {
+          "stepId": "step-2",
+          "name": "implement",
+          "type": "task",
+          "config": {
+            "agent": "qwenpaw_coder",
+            "dependsOn": [
+              "guardian"
+            ],
+            "prompt": "Implement the approved change with the smallest correct diff. Respect guardian-approved files and existing QwenPaw patterns. Task: {{task}}. File hints: {{files}}."
+          },
+          "status": "pending"
+        },
+        {
+          "stepId": "step-3",
+          "name": "review",
+          "type": "task",
+          "config": {
+            "agent": "qwenpaw_reviewer",
+            "dependsOn": [
+              "implement"
+            ],
+            "prompt": "Review the implementation diff for correctness, AgentScope/API compatibility, security, conventions, scope, and missing tests. Return APPROVE or REQUEST_CHANGES with concrete findings. Task: {{task}}."
+          },
+          "status": "pending"
+        },
+        {
+          "stepId": "step-4",
+          "name": "test",
+          "type": "task",
+          "config": {
+            "agent": "qwenpaw_tester",
+            "dependsOn": [
+              "review"
+            ],
+            "prompt": "Add or update focused tests when needed, run the affected test command, and report exact results. Task: {{task}}. File hints: {{files}}."
+          },
+          "status": "pending"
+        }
+      ],
+      "status": "ready",
+      "currentStep": 0,
+      "variables": {
+        "task": "",
+        "files": [],
+        "maxRounds": 2
+      },
+      "createdAt": "2026-06-12T05:06:01.419Z"
+    },
+    "workflow-1781240871373-htypti": {
+      "workflowId": "workflow-1781240871373-htypti",
+      "name": "Crie um plugin basico de exemplo para QwenPaw, baseado na documentacao local de plugins, mostrando os elementos que podem ser usados por plugins existentes: plugin.json, README, backend Python/tool/router quando aplicavel, frontend/UI quando aplicavel, requisitos e testes focados. Use Portugues como idioma padrao. Antes de implementar, leia a documentacao local de plugins e siga os padroes existentes em plugins/tool e plugins/bundle. Nao tocar em src/qwenpaw sem guardian approval.",
+      "description": "Crie um plugin basico de exemplo para QwenPaw, baseado na documentacao local de plugins, mostrando os elementos que podem ser usados por plugins existentes: plugin.json, README, backend Python/tool/router quando aplicavel, frontend/UI quando aplicavel, requisitos e testes focados. Use Portugues como idioma padrao. Antes de implementar, leia a documentacao local de plugins e siga os padroes existentes em plugins/tool e plugins/bundle. Nao tocar em src/qwenpaw sem guardian approval.",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "name": "Execute",
+          "type": "task",
+          "config": {
+            "task": "Crie um plugin basico de exemplo para QwenPaw, baseado na documentacao local de plugins, mostrando os elementos que podem ser usados por plugins existentes: plugin.json, README, backend Python/tool/router quando aplicavel, frontend/UI quando aplicavel, requisitos e testes focados. Use Portugues como idioma padrao. Antes de implementar, leia a documentacao local de plugins e siga os padroes existentes em plugins/tool e plugins/bundle. Nao tocar em src/qwenpaw sem guardian approval."
+          },
+          "status": "skipped"
+        }
+      ],
+      "status": "failed",
+      "currentStep": 0,
+      "variables": {
+        "template": "custom",
+        "maxAgents": 4,
+        "timeout": 1800
+      },
+      "createdAt": "2026-06-12T05:07:51.374Z",
+      "startedAt": "2026-06-12T05:07:51.374Z",
+      "error": "Runner did not materialize dev-team stages; implementation completed manually with the same documented flow.",
+      "completedAt": "2026-06-12T05:13:19.312Z"
+    }
+  },
+  "templates": {
+    "template-1781240763711-tva4d7": {
+      "workflowId": "template-1781240763711-tva4d7",
+      "name": "dev-team",
+      "description": "QwenPaw development team workflow: guardian approval, implementation, review, and focused tests for a concrete change.",
+      "steps": [
+        {
+          "stepId": "step-1",
+          "name": "guardian",
+          "type": "task",
+          "config": {
+            "agent": "agentscope-guardian",
+            "prompt": "Review the requested QwenPaw/AgentScope change before implementation. Verify installed AgentScope version when relevant, read the local docs required by the guardian skill, approve only the exact files that may be edited, and report the verdict. Task: {{task}}. File hints: {{files}}."
+          },
+          "status": "pending"
+        },
+        {
+          "stepId": "step-2",
+          "name": "implement",
+          "type": "task",
+          "config": {
+            "agent": "qwenpaw_coder",
+            "dependsOn": [
+              "guardian"
+            ],
+            "prompt": "Implement the approved change with the smallest correct diff. Respect guardian-approved files and existing QwenPaw patterns. Task: {{task}}. File hints: {{files}}."
+          },
+          "status": "pending"
+        },
+        {
+          "stepId": "step-3",
+          "name": "review",
+          "type": "task",
+          "config": {
+            "agent": "qwenpaw_reviewer",
+            "dependsOn": [
+              "implement"
+            ],
+            "prompt": "Review the implementation diff for correctness, AgentScope/API compatibility, security, conventions, scope, and missing tests. Return APPROVE or REQUEST_CHANGES with concrete findings. Task: {{task}}."
+          },
+          "status": "pending"
+        },
+        {
+          "stepId": "step-4",
+          "name": "test",
+          "type": "task",
+          "config": {
+            "agent": "qwenpaw_tester",
+            "dependsOn": [
+              "review"
+            ],
+            "prompt": "Add or update focused tests when needed, run the affected test command, and report exact results. Task: {{task}}. File hints: {{files}}."
+          },
+          "status": "pending"
+        }
+      ],
+      "status": "draft",
+      "currentStep": 0,
+      "variables": {
+        "task": "",
+        "files": [],
+        "maxRounds": 2
+      },
+      "createdAt": "2026-06-12T05:06:03.711Z"
+    }
+  },
+  "version": "3.0.0"
+}

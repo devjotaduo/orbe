@@ -5,9 +5,11 @@ import { renderWithProviders } from "@/test/common_setup";
 import LanguageSwitcher from "./index";
 
 // vi.hoisted ensures variables are initialized before vi.mock hoisting
-const { mockChangeLanguage, mockUpdateLanguage } = vi.hoisted(() => ({
+const { mockChangeLanguage, mockUpdateLanguage, mockUpdateAgentLanguage } =
+  vi.hoisted(() => ({
   mockChangeLanguage: vi.fn(),
   mockUpdateLanguage: vi.fn().mockResolvedValue(undefined),
+  mockUpdateAgentLanguage: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("react-i18next", () => ({
@@ -23,6 +25,10 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("@/api/modules/language", () => ({
   languageApi: { updateLanguage: mockUpdateLanguage },
+}));
+
+vi.mock("@/api/modules/agent", () => ({
+  agentApi: { updateAgentLanguage: mockUpdateAgentLanguage },
 }));
 
 vi.mock("@agentscope-ai/design", () => ({
@@ -55,12 +61,13 @@ describe("LanguageSwitcher", () => {
     expect(screen.getByRole("button")).toBeInTheDocument();
   });
 
-  it("shows 4 language options", () => {
+  it("shows language options", () => {
     renderWithProviders(<LanguageSwitcher />);
     expect(screen.getByText("English")).toBeInTheDocument();
     expect(screen.getByText("简体中文")).toBeInTheDocument();
     expect(screen.getByText("日本語")).toBeInTheDocument();
     expect(screen.getByText("Русский")).toBeInTheDocument();
+    expect(screen.getByText("Português (Brasil)")).toBeInTheDocument();
   });
 
   it("calls i18n.changeLanguage when a language option is clicked", async () => {
@@ -82,5 +89,13 @@ describe("LanguageSwitcher", () => {
     renderWithProviders(<LanguageSwitcher />);
     await user.click(screen.getByText("English"));
     expect(mockUpdateLanguage).toHaveBeenCalledWith("en");
+  });
+
+  it("syncs Portuguese UI selection to the workspace language code", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<LanguageSwitcher />);
+    await user.click(screen.getByText("Português (Brasil)"));
+    expect(mockUpdateLanguage).toHaveBeenCalledWith("pt-BR");
+    expect(mockUpdateAgentLanguage).toHaveBeenCalledWith("pt");
   });
 });

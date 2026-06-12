@@ -66,10 +66,10 @@ function DefaultRedirect() {
   const { codingMode, initialized } = useCodingMode();
   if (!initialized) {
     return (
-      <Spin
-        tip={t("common.loading")}
-        style={{ display: "block", margin: "20vh auto" }}
-      />
+      <div style={{ margin: "20vh auto", textAlign: "center" }}>
+        <Spin />
+        <div style={{ marginTop: 12 }}>{t("common.loading")}</div>
+      </div>
     );
   }
   return <Navigate to={codingMode ? "/coding" : "/chat"} replace />;

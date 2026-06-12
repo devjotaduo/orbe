@@ -23,3 +23,11 @@ def test_qwen_image_has_ptbr_description():
 def test_wan27_has_ptbr_description():
     p = json.loads((TOOL_PLUGINS / "wan27/plugin.json").read_text(encoding="utf-8"))
     assert "pt-BR" in p["description_i18n"], "wan27/plugin.json sem pt-BR"
+
+def test_qwenpaw_plugin_kit_has_ptbr_description():
+    p = json.loads(
+        (PLUGINS / "qwenpaw-plugin-kit/plugin.json").read_text(
+            encoding="utf-8",
+        ),
+    )
+    assert "pt-BR" in p["description_i18n"], "qwenpaw-plugin-kit/plugin.json sem pt-BR"

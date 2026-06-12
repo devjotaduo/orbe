@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
-import { renderWithProviders } from "@/test/common_setup";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
