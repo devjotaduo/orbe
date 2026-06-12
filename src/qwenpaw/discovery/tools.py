@@ -8,7 +8,7 @@ from pathlib import Path
 from agentscope.message import TextBlock, ToolResultState
 from agentscope.tool import FunctionTool, ToolChunk, Toolkit
 
-from .segments.taxonomy import lookup_segment
+from .segments.taxonomy import lookup_connectors, lookup_segment
 from .state import (
     DiscoveryState,
     Integration,
@@ -130,6 +130,55 @@ class DiscoverySession:
         return _ok(
             f"Segmento identificado: {info.key} ({info.label}). Use estes "
             f"trilhos como ponto de partida e APROFUNDE com perguntas:\n"
+            + json.dumps(payload, ensure_ascii=False, indent=2)
+        )
+
+    async def connector_lookup(self, integration_kind: str) -> ToolChunk:
+        """Consulta a whitelist curada de conectores de um tipo de integração.
+
+        Chame na hora de MONTAR O BLUEPRINT, uma vez para cada integração
+        detectada ou proposta (ex.: 'whatsapp', 'crm', 'planilha'). Retorna
+        conectores concretos com origem, slug, status e notas de risco.
+        Prefira status 'recomendado'; inclua 'validar' citando a nota de
+        risco; trate 'build' como item de roadmap (conector próprio).
+
+        Args:
+            integration_kind: Tipo canônico da integração (whatsapp, crm,
+                planilha, agenda, erp, pagamento, fiscal, ecommerce,
+                helpdesk, email, delivery, voz, juridico, lms, pdv,
+                prontuario, chat-interno, analytics).
+
+        Returns:
+            `ToolChunk`: conectores curados do tipo, ou orientação de build.
+        """
+        try:
+            conns = lookup_connectors(
+                integration_kind,
+                segment=self.state.company.segment,
+            )
+        except ValueError as exc:
+            return _err(f"{exc} Reenvie com um kind válido.")
+        if not conns:
+            return _ok(
+                f"Nenhum conector curado para '{integration_kind}'. "
+                "Registre no blueprint um ConnectorRef com origin='build' e "
+                "status='build', e adicione uma open_question sobre essa "
+                "integração."
+            )
+        payload = [
+            {
+                "integration_kind": c.integration_kind,
+                "name": c.name,
+                "origin": c.origin,
+                "slug_or_url": c.slug_or_url,
+                "status": c.status,
+                "notes": c.notes,
+            }
+            for c in conns
+        ]
+        return _ok(
+            "Conectores curados (use em recommended_connectors; referência "
+            "curta em tools_integrations = '<origin>:<slug>'):\n"
             + json.dumps(payload, ensure_ascii=False, indent=2)
         )
 
@@ -260,5 +309,6 @@ class DiscoverySession:
                 FunctionTool(self.segment_lookup, is_read_only=False),
                 FunctionTool(self.reflect, is_read_only=False),
                 FunctionTool(self.emit_blueprint, is_read_only=False),
+                FunctionTool(self.connector_lookup, is_read_only=True),
             ]
         )
