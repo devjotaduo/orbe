@@ -1,5 +1,5 @@
-import { Suspense, useMemo, useState, useRef, useEffect, useCallback } from "react";
-import { Layout, Spin } from "antd";
+import { Suspense, useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import { Routes, Route, useLocation, matchPath } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Sidebar from "../Sidebar";
@@ -7,11 +7,8 @@ import Header from "../Header";
 import ConsolePollService from "../../components/ConsolePollService";
 import { ChunkErrorBoundary } from "../../components/ChunkErrorBoundary";
 import { useSyncCodingMode } from "../../stores/useSyncCodingMode";
-import styles from "../index.module.less";
 import { useRoutes } from "../../plugins/registry/hooks";
 import { Slot } from "../../plugins/registry/Slot";
-
-const { Content } = Layout;
 
 /**
  * Find the registered route whose path pattern matches the current URL.
@@ -35,72 +32,6 @@ export default function MainLayout() {
   const location = useLocation();
   const currentPath = location.pathname;
   const routes = useRoutes();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [siderWidth, setSiderWidth] = useState<number>(() => {
-    try {
-      return parseInt(localStorage.getItem('qwenpaw-sider-width') || '260', 10) || 260;
-    } catch {
-      return 260;
-    }
-  });
-
-  // Keep a ref so the mouseup closure always reads the latest width.
-  const siderWidthRef = useRef(siderWidth);
-  useEffect(() => { siderWidthRef.current = siderWidth; }, [siderWidth]);
-
-  // When sidebar collapses, record width=0; when it expands, restore saved/default.
-  useEffect(() => {
-    if (sidebarCollapsed) {
-      setSiderWidth(0);
-    } else {
-      setSiderWidth(() => {
-        try {
-          return parseInt(localStorage.getItem('qwenpaw-sider-width') || '260', 10) || 260;
-        } catch {
-          return 260;
-        }
-      });
-    }
-  }, [sidebarCollapsed]);
-
-  const isDragging = useRef(false);
-  const dragStartX = useRef(0);
-  const dragStartWidth = useRef(260);
-
-  const handleDragStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = true;
-    dragStartX.current = e.clientX;
-    dragStartWidth.current = siderWidthRef.current || 260;
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'col-resize';
-
-    const onMove = (me: MouseEvent) => {
-      if (!isDragging.current) return;
-      const delta = me.clientX - dragStartX.current;
-      const next = dragStartWidth.current + delta;
-      if (next < 130) {
-        setSidebarCollapsed(true);
-        setSiderWidth(0);
-      } else {
-        setSidebarCollapsed(false);
-        setSiderWidth(Math.min(Math.max(next, 160), 400));
-      }
-    };
-    const onUp = () => {
-      isDragging.current = false;
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-      const finalWidth = siderWidthRef.current;
-      if (finalWidth > 0) {
-        try { localStorage.setItem('qwenpaw-sider-width', String(finalWidth)); } catch {}
-      }
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  }, []);
 
   // Backend is the source of truth for Coding Mode state — refill the
   // in-memory store every time the selected agent changes.
@@ -112,29 +43,22 @@ export default function MainLayout() {
   );
 
   return (
-    <Layout className={styles.mainLayout}>
-      <Header
-        sidebarCollapsed={sidebarCollapsed}
-        onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
-      />
-      <Layout>
-        <Sidebar
-          selectedKey={selectedKey}
-          collapsed={sidebarCollapsed}
-          onSetCollapsed={setSidebarCollapsed}
-          siderWidth={siderWidth}
-          onDragStart={handleDragStart}
-        />
-        <Content className="page-container">
+    <div className="flex flex-col h-screen">
+      <Header />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar selectedKey={selectedKey} />
+        <main className="flex-1 flex flex-col overflow-auto page-container">
           <ConsolePollService />
           <Slot name="content.statusBar" kind="fill" />
-          <div className="page-content">
+          <div className="flex-1 page-content">
             <ChunkErrorBoundary resetKey={currentPath}>
               <Suspense
                 fallback={
-                  <div style={{ margin: "20vh auto", textAlign: "center" }}>
-                    <Spin />
-                    <div style={{ marginTop: 12 }}>{t("common.loading")}</div>
+                  <div className="flex items-center justify-center mt-[20vh]">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground text-sm">
+                      {t("common.loading")}
+                    </span>
                   </div>
                 }
               >
@@ -146,9 +70,9 @@ export default function MainLayout() {
               </Suspense>
             </ChunkErrorBoundary>
           </div>
-        </Content>
-      </Layout>
+        </main>
+      </div>
       <Slot name="overlay.global" kind="fill" />
-    </Layout>
+    </div>
   );
 }

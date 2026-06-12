@@ -14,7 +14,7 @@
  */
 import { Suspense } from "react";
 import { Navigate } from "react-router-dom";
-import { Spin } from "antd";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { lazyImportWithRetry } from "../../utils/lazyWithRetry";
 import { useCodingMode } from "../../stores/codingModeStore";
@@ -24,7 +24,6 @@ import type { Route } from "../../plugins/registry/types";
 // Eager pages
 import Chat from "../../pages/Chat";
 import CodingPage from "../../pages/Coding";
-import HomePage from "../../pages/Home";
 
 // Lazy pages
 const ChannelsPage = lazyImportWithRetry("../../pages/Control/Channels");
@@ -66,9 +65,11 @@ function DefaultRedirect() {
   const { codingMode, initialized } = useCodingMode();
   if (!initialized) {
     return (
-      <div style={{ margin: "20vh auto", textAlign: "center" }}>
-        <Spin />
-        <div style={{ marginTop: 12 }}>{t("common.loading")}</div>
+      <div className="flex items-center justify-center mt-[20vh]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground text-sm">
+          {t("common.loading")}
+        </span>
       </div>
     );
   }
@@ -82,7 +83,6 @@ function ACPRedirect() {
 
 export const BUILTIN_ROUTES: Route[] = [
   { id: "core.root", path: "/", component: DefaultRedirect },
-  { id: "core.home", path: "/home", component: HomePage },
   { id: "core.chat", path: "/chat/*", component: Chat },
   { id: "core.coding", path: "/coding", component: CodingPage },
   { id: "core.channels", path: "/channels", component: ChannelsPage },

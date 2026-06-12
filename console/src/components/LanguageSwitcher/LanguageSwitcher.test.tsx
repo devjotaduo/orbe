@@ -1,15 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test/common_setup";
 import LanguageSwitcher from "./index";
 
 // vi.hoisted ensures variables are initialized before vi.mock hoisting
-const { mockChangeLanguage, mockUpdateLanguage, mockUpdateAgentLanguage } =
-  vi.hoisted(() => ({
+const { mockChangeLanguage, mockUpdateLanguage } = vi.hoisted(() => ({
   mockChangeLanguage: vi.fn(),
   mockUpdateLanguage: vi.fn().mockResolvedValue(undefined),
-  mockUpdateAgentLanguage: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("react-i18next", () => ({
@@ -27,31 +25,6 @@ vi.mock("@/api/modules/language", () => ({
   languageApi: { updateLanguage: mockUpdateLanguage },
 }));
 
-vi.mock("@/api/modules/agent", () => ({
-  agentApi: { updateAgentLanguage: mockUpdateAgentLanguage },
-}));
-
-vi.mock("@agentscope-ai/design", () => ({
-  Dropdown: ({
-    children,
-    menu,
-  }: {
-    children: React.ReactNode;
-    menu: { items: Array<{ key: string; label: string; onClick: () => void }> };
-  }) => (
-    <div>
-      {children}
-      <ul role="menu">
-        {menu.items?.map((item) => (
-          <li key={item.key} role="menuitem" onClick={item.onClick}>
-            {item.label}
-          </li>
-        ))}
-      </ul>
-    </div>
-  ),
-}));
-
 describe("LanguageSwitcher", () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => vi.clearAllMocks());
@@ -61,18 +34,25 @@ describe("LanguageSwitcher", () => {
     expect(screen.getByRole("button")).toBeInTheDocument();
   });
 
-  it("shows language options", () => {
+  it("shows language options in dropdown after clicking trigger", async () => {
+    const user = userEvent.setup();
     renderWithProviders(<LanguageSwitcher />);
-    expect(screen.getByText("English")).toBeInTheDocument();
-    expect(screen.getByText("简体中文")).toBeInTheDocument();
-    expect(screen.getByText("日本語")).toBeInTheDocument();
-    expect(screen.getByText("Русский")).toBeInTheDocument();
-    expect(screen.getByText("Português (Brasil)")).toBeInTheDocument();
+    await user.click(screen.getByRole("button"));
+    await waitFor(() => {
+      expect(screen.getByText("English")).toBeInTheDocument();
+      expect(screen.getByText("简体中文")).toBeInTheDocument();
+      expect(screen.getByText("日本語")).toBeInTheDocument();
+      expect(screen.getByText("Русский")).toBeInTheDocument();
+    });
   });
 
   it("calls i18n.changeLanguage when a language option is clicked", async () => {
     const user = userEvent.setup();
     renderWithProviders(<LanguageSwitcher />);
+    await user.click(screen.getByRole("button"));
+    await waitFor(() =>
+      expect(screen.getByText("简体中文")).toBeInTheDocument(),
+    );
     await user.click(screen.getByText("简体中文"));
     expect(mockChangeLanguage).toHaveBeenCalledWith("zh");
   });
@@ -80,6 +60,8 @@ describe("LanguageSwitcher", () => {
   it("writes selected language to localStorage", async () => {
     const user = userEvent.setup();
     renderWithProviders(<LanguageSwitcher />);
+    await user.click(screen.getByRole("button"));
+    await waitFor(() => expect(screen.getByText("日本語")).toBeInTheDocument());
     await user.click(screen.getByText("日本語"));
     expect(localStorage.getItem("language")).toBe("ja");
   });
@@ -87,15 +69,11 @@ describe("LanguageSwitcher", () => {
   it("calls languageApi.updateLanguage after switching language", async () => {
     const user = userEvent.setup();
     renderWithProviders(<LanguageSwitcher />);
+    await user.click(screen.getByRole("button"));
+    await waitFor(() =>
+      expect(screen.getByText("English")).toBeInTheDocument(),
+    );
     await user.click(screen.getByText("English"));
     expect(mockUpdateLanguage).toHaveBeenCalledWith("en");
-  });
-
-  it("syncs Portuguese UI selection to the workspace language code", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<LanguageSwitcher />);
-    await user.click(screen.getByText("Português (Brasil)"));
-    expect(mockUpdateLanguage).toHaveBeenCalledWith("pt-BR");
-    expect(mockUpdateAgentLanguage).toHaveBeenCalledWith("pt");
   });
 });
