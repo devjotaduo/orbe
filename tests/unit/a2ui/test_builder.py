@@ -36,44 +36,108 @@ def test_returns_create_then_components_then_datamodel():
     assert msgs[0].root == msgs[1].components[0].id  # root is first component
 
 
-def test_one_card_per_team_member_with_bound_name_input():
-    msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
-    comps = msgs[1].components
-    cards = [c for c in comps if c.type == "Card"]
-    assert len(cards) == 1
-    name_inputs = [
-        c
-        for c in comps
-        if c.type == "TextInput"
-        and c.properties.get("bind") == "proposed_team/0/name"
-    ]
-    assert len(name_inputs) == 1
-    assert name_inputs[0].id in cards[0].children
+def _by_id(msgs):
+    return {c.id: c for c in msgs[1].components}
 
 
-def test_team_member_fields_are_bound_inputs():
+def _walk(comps, cid):
+    """Yield a component subtree following children AND itemTemplate refs."""
+    c = comps[cid]
+    yield c
+    for ch in c.children:
+        yield from _walk(comps, ch)
+    tpl = c.properties.get("itemTemplate")
+    if tpl:
+        yield from _walk(comps, tpl)
+
+
+def test_team_is_a_repeater_with_template():
     msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
-    name_inputs = [
+    comps = _by_id(msgs)
+    reps = [
         c
         for c in msgs[1].components
-        if c.type == "TextInput"
-        and c.properties.get("bind") == "proposed_team/0/name"
+        if c.type == "Repeater" and c.properties.get("bind") == "proposed_team"
     ]
-    assert len(name_inputs) == 1
-    role_inputs = [
+    assert len(reps) == 1
+    assert reps[0].properties["itemTemplate"] in comps
+    # The team repeater is wired into the root, the template is not.
+    root = msgs[1].components[0]
+    assert reps[0].id in root.children
+    assert reps[0].properties["itemTemplate"] not in root.children
+
+
+def test_template_binds_are_relative():
+    msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
+    comps = _by_id(msgs)
+    rep = next(
         c
         for c in msgs[1].components
-        if c.type == "TextInput"
-        and c.properties.get("bind") == "proposed_team/0/role"
+        if c.type == "Repeater" and c.properties.get("bind") == "proposed_team"
+    )
+    binds = [
+        c.properties["bind"]
+        for c in _walk(comps, rep.properties["itemTemplate"])
+        if "bind" in c.properties
     ]
-    assert len(role_inputs) == 1
-    objective = [
+    assert binds
+    assert all(not b.startswith("proposed_team/") for b in binds)
+
+
+def test_card_template_fields_and_string_lists():
+    msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
+    comps = _by_id(msgs)
+    rep = next(
         c
         for c in msgs[1].components
-        if c.type == "TextArea"
-        and c.properties.get("bind") == "proposed_team/0/objective"
-    ]
-    assert len(objective) == 1
+        if c.type == "Repeater" and c.properties.get("bind") == "proposed_team"
+    )
+    tpl = list(_walk(comps, rep.properties["itemTemplate"]))
+    binds = {
+        (c.type, c.properties.get("bind"))
+        for c in tpl
+        if "bind" in c.properties
+    }
+    assert ("TextInput", "name") in binds
+    assert ("TextInput", "role") in binds
+    assert ("TextArea", "objective") in binds
+    # tasks/tools_integrations are nested repeaters of TextInput bind=".".
+    assert ("Repeater", "tasks") in binds
+    assert ("Repeater", "tools_integrations") in binds
+    for nested in [c for c in tpl if c.type == "Repeater"]:
+        item = comps[nested.properties["itemTemplate"]]
+        inputs = [
+            c
+            for c in _walk(comps, item.id)
+            if c.type == "TextInput" and c.properties.get("bind") == "."
+        ]
+        assert inputs, f"no bind='.' input in {nested.id} template"
+
+
+def test_structural_buttons_present():
+    msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
+    actions = {}
+    for c in msgs[1].components:
+        if c.type == "Button":
+            action = c.properties.get("action", {})
+            actions.setdefault(action.get("name"), action.get("params", {}))
+    for name in (
+        "add_agent",
+        "remove_agent",
+        "move_agent",
+        "add_item",
+        "remove_item",
+        "approve_team",
+    ):
+        assert name in actions, f"missing structural button {name}"
+    # Per-card buttons rely on the renderer-injected repeater index.
+    assert actions["remove_agent"]["indexFromRepeater"] is True
+    assert actions["remove_agent"]["path"] == "proposed_team"
+    assert actions["move_agent"]["indexFromRepeater"] is True
+    assert actions["move_agent"]["path"] == "proposed_team"
+    assert actions["remove_item"]["indexFromRepeater"] is True
+    # add_item paths are template-relative, absolutized by the renderer.
+    assert actions["add_item"]["pathFromBase"] is True
 
 
 def test_approve_button_present_with_action():
@@ -103,3 +167,26 @@ def test_adjacency_children_reference_existing_ids():
     for c in comps:
         for child in c.children:
             assert child in ids, f"dangling child id {child}"
+        tpl = c.properties.get("itemTemplate")
+        if tpl is not None:
+            assert tpl in ids, f"dangling itemTemplate id {tpl}"
+
+
+def test_every_component_reachable_via_children_or_item_template():
+    # Templates are NOT children of the root: they live in the flat list and
+    # are reachable only through Repeater itemTemplate references.
+    msgs = build_blueprint_surface(BLUEPRINT, surface_id="bp")
+    comps = {c.id: c for c in msgs[1].components}
+    seen = set()
+    stack = [msgs[0].root]
+    while stack:
+        cid = stack.pop()
+        if cid in seen:
+            continue
+        seen.add(cid)
+        c = comps[cid]
+        stack.extend(c.children)
+        tpl = c.properties.get("itemTemplate")
+        if tpl:
+            stack.append(tpl)
+    assert seen == set(comps), f"orphan components: {set(comps) - seen}"
