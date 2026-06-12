@@ -111,7 +111,13 @@ def auth_repository() -> Optional[Any]:
     """
     if not is_database_enabled():
         return None
-    from qwenpaw_ext.nexora.repositories import auth_postgres
+    try:
+        from qwenpaw_ext.nexora.repositories import auth_postgres
+    except ImportError as exc:
+        raise RuntimeError(
+            "NEXORA_DB_URL is set but SQLAlchemy is not installed; "
+            "run `pip install qwenpaw[enterprise]`",
+        ) from exc
 
     return auth_postgres
 

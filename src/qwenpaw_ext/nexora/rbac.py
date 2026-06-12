@@ -363,9 +363,30 @@ def update_user(
     if user is None:
         return None
 
-    if roles is not None:
+    new_roles = _valid_role_ids(data, roles) if roles is not None else None
+
+    active_admins = [
+        item
+        for item in data.get("users", [])
+        if item.get("status") == "active"
+        and "admin" in (item.get("roles") or [])
+    ]
+    is_last_active_admin = (
+        user.get("status") == "active"
+        and "admin" in (user.get("roles") or [])
+        and len(active_admins) <= 1
+    )
+    if is_last_active_admin:
+        # The platform must always keep one active admin: reject
+        # stripping the admin role from, or disabling, the last one.
+        if new_roles is not None and "admin" not in new_roles:
+            return None
+        if status == "disabled":
+            return None
+
+    if new_roles is not None:
         # An empty list is allowed: it clears every role assignment.
-        user["roles"] = _valid_role_ids(data, roles)
+        user["roles"] = new_roles
 
     if status is not None:
         if status not in ("active", "disabled"):
