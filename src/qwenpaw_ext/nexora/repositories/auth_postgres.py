@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Ported from nexora-ai-platform (Apache-2.0), a fork of the same
 # QwenPaw upstream: https://github.com/lb08111/nexora-ai-platform
 """PostgreSQL repository for Nexora users, roles, and permissions."""
@@ -210,7 +211,7 @@ def save_auth_data(data: dict) -> None:
             conn.execute(
                 text(
                     "DELETE FROM nexora_role_permissions "
-                    "WHERE role_id = :role_id"
+                    "WHERE role_id = :role_id",
                 ),
                 {"role_id": role_id},
             )
@@ -262,7 +263,7 @@ def save_auth_data(data: dict) -> None:
             )
             conn.execute(
                 text(
-                    "DELETE FROM nexora_user_roles WHERE username = :username"
+                    "DELETE FROM nexora_user_roles WHERE username = :username",
                 ),
                 {"username": username},
             )
@@ -298,7 +299,7 @@ def delete_role(role_id: str) -> bool:
     with db.get_engine().begin() as conn:
         conn.execute(
             text(
-                "DELETE FROM nexora_role_permissions WHERE role_id = :role_id"
+                "DELETE FROM nexora_role_permissions WHERE role_id = :role_id",
             ),
             {"role_id": role_id},
         )

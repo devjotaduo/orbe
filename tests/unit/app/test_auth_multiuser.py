@@ -287,18 +287,27 @@ def test_legacy_single_user_migrated_to_admin(auth_env, client):
     }
 
     # Implicit admin: no 403 on any mapped route.
-    assert client.get(
-        "/api/chats",
-        headers=_auth_headers(token),
-    ).status_code == 200
-    assert client.post(
-        "/api/agents",
-        headers=_auth_headers(token),
-    ).status_code == 200
-    assert client.get(
-        "/api/auth/users",
-        headers=_auth_headers(token),
-    ).status_code == 200
+    assert (
+        client.get(
+            "/api/chats",
+            headers=_auth_headers(token),
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            "/api/agents",
+            headers=_auth_headers(token),
+        ).status_code
+        == 200
+    )
+    assert (
+        client.get(
+            "/api/auth/users",
+            headers=_auth_headers(token),
+        ).status_code
+        == 200
+    )
 
     # Logout (revoke current token).
     out = client.post(
@@ -308,10 +317,13 @@ def test_legacy_single_user_migrated_to_admin(auth_env, client):
     )
     assert out.status_code == 200
     assert out.json()["revoked_current_token"] is True
-    assert client.get(
-        "/api/auth/verify",
-        headers=_auth_headers(token),
-    ).status_code == 401
+    assert (
+        client.get(
+            "/api/auth/verify",
+            headers=_auth_headers(token),
+        ).status_code
+        == 401
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -334,15 +346,21 @@ def test_admin_creates_operator_rbac_enforced(auth_env, client):
     assert denied.json()["permission"] == "users.manage"
 
     # operator role grants agents.manage, so POST /api/agents passes...
-    assert client.post(
-        "/api/agents",
-        headers=_auth_headers(op_token),
-    ).status_code == 200
+    assert (
+        client.post(
+            "/api/agents",
+            headers=_auth_headers(op_token),
+        ).status_code
+        == 200
+    )
     # ...and agents.use grants the chats route.
-    assert client.get(
-        "/api/chats",
-        headers=_auth_headers(op_token),
-    ).status_code == 200
+    assert (
+        client.get(
+            "/api/chats",
+            headers=_auth_headers(op_token),
+        ).status_code
+        == 200
+    )
     # but system.admin-mapped routes stay closed (no such route mounted,
     # the middleware rejects before routing).
     denied = client.get("/api/settings", headers=_auth_headers(op_token))
@@ -374,13 +392,16 @@ def test_me_expands_implied_permissions(auth_env, client):
         headers=_auth_headers(admin_token),
     )
     assert role.status_code == 200, role.text
-    assert _create_user(
-        client,
-        admin_token,
-        "hd",
-        "pw",
-        ["helpdesk"],
-    ).status_code == 200
+    assert (
+        _create_user(
+            client,
+            admin_token,
+            "hd",
+            "pw",
+            ["helpdesk"],
+        ).status_code
+        == 200
+    )
 
     hd_token = _login(client, "hd", "pw")
     me = client.get("/api/auth/me", headers=_auth_headers(hd_token))
@@ -391,10 +412,13 @@ def test_me_expands_implied_permissions(auth_env, client):
     assert "users.manage" in body["permissions"]
     assert "users.view" in body["permissions"]
     # and the implied permission is honoured by the middleware too.
-    assert client.get(
-        "/api/auth/users",
-        headers=_auth_headers(hd_token),
-    ).status_code == 200
+    assert (
+        client.get(
+            "/api/auth/users",
+            headers=_auth_headers(hd_token),
+        ).status_code
+        == 200
+    )
 
 
 def test_user_management_endpoint_edge_cases(auth_env, client):
@@ -410,24 +434,33 @@ def test_user_management_endpoint_edge_cases(auth_env, client):
     assert self_del.status_code == 400
     assert "yourself" in self_del.json()["detail"]
     # Deleting an ordinary user works.
-    assert client.delete(
-        "/api/auth/users/op",
-        headers=headers,
-    ).status_code == 200
+    assert (
+        client.delete(
+            "/api/auth/users/op",
+            headers=headers,
+        ).status_code
+        == 200
+    )
 
 
 def test_user_endpoints_501_without_extension(monkeypatch, auth_env, client):
     admin_token = _register_admin(client)
     monkeypatch.setattr(enterprise, "get_rbac", lambda: None)
 
-    assert client.get(
-        "/api/auth/users",
-        headers=_auth_headers(admin_token),
-    ).status_code == 501
-    assert client.get(
-        "/api/auth/me",
-        headers=_auth_headers(admin_token),
-    ).status_code == 501
+    assert (
+        client.get(
+            "/api/auth/users",
+            headers=_auth_headers(admin_token),
+        ).status_code
+        == 501
+    )
+    assert (
+        client.get(
+            "/api/auth/me",
+            headers=_auth_headers(admin_token),
+        ).status_code
+        == 501
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -469,10 +502,13 @@ def test_permission_enforcement_uses_live_data(auth_env, client):
     admin_token = _register_admin(client)
     _create_user(client, admin_token, "op", "oppw", ["operator"])
     op_token = _login(client, "op", "oppw")
-    assert client.get(
-        "/api/chats",
-        headers=_auth_headers(op_token),
-    ).status_code == 200
+    assert (
+        client.get(
+            "/api/chats",
+            headers=_auth_headers(op_token),
+        ).status_code
+        == 200
+    )
 
     # Admin strips the operator's roles; the old token still carries
     # the stale "operator" claim but enforcement must use live data.
@@ -495,10 +531,13 @@ def test_permission_enforcement_uses_live_data(auth_env, client):
 
 def test_revoked_jti_rejected_by_middleware(auth_env, client):
     token = _register_admin(client)
-    assert client.get(
-        "/api/chats",
-        headers=_auth_headers(token),
-    ).status_code == 200
+    assert (
+        client.get(
+            "/api/chats",
+            headers=_auth_headers(token),
+        ).status_code
+        == 200
+    )
 
     out = client.post(
         "/api/auth/revoke-token",
@@ -524,10 +563,13 @@ def test_revoke_all_tokens_invalidates_existing(auth_env, client):
 
     for stale in (token, second):
         assert auth.verify_token(stale) is None
-        assert client.get(
-            "/api/auth/verify",
-            headers=_auth_headers(stale),
-        ).status_code == 401
+        assert (
+            client.get(
+                "/api/auth/verify",
+                headers=_auth_headers(stale),
+            ).status_code
+            == 401
+        )
 
 
 def test_revocation_list_stays_file_backed_in_db_mode(auth_env, monkeypatch):
@@ -604,7 +646,9 @@ def test_db_auth_data_cache_ttl_and_invalidation(auth_env, monkeypatch):
     assert [u["username"] for u in again["users"]] == ["boss"]
 
     # Saving invalidates the cache.
-    auth._save_auth_data({"users": repo.data["users"], "roles": repo.data["roles"]})
+    auth._save_auth_data(
+        {"users": repo.data["users"], "roles": repo.data["roles"]},
+    )
     auth._load_normalized_auth_data()
     assert repo.load_calls == 2
 
@@ -664,10 +708,13 @@ def test_audit_get_request_not_recorded(auth_env, client, audit_mock):
     token = _register_admin(client)
     audit_mock.reset_mock()
 
-    assert client.get(
-        "/api/chats",
-        headers=_auth_headers(token),
-    ).status_code == 200
+    assert (
+        client.get(
+            "/api/chats",
+            headers=_auth_headers(token),
+        ).status_code
+        == 200
+    )
     audit_mock.assert_not_called()
 
 

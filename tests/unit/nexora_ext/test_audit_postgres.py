@@ -144,7 +144,10 @@ def test_list_events_builds_all_filters(fake_engine, audit_postgres):
     [(0, 1), (-5, 1), (1000, 1000), (5000, 1000)],
 )
 def test_list_events_clamps_limit(
-    fake_engine, audit_postgres, requested, effective
+    fake_engine,
+    audit_postgres,
+    requested,
+    effective,
 ):
     audit_postgres.list_events(limit=requested)
 
@@ -153,7 +156,8 @@ def test_list_events_clamps_limit(
 
 
 def test_list_events_converts_rows_and_parses_detail(
-    fake_engine, audit_postgres
+    fake_engine,
+    audit_postgres,
 ):
     fake_engine.rows = [
         {
@@ -191,7 +195,8 @@ def test_list_events_converts_rows_and_parses_detail(
 
 
 def test_list_events_detail_invalid_json_becomes_empty_dict(
-    fake_engine, audit_postgres
+    fake_engine,
+    audit_postgres,
 ):
     row = {
         "id": "e1",

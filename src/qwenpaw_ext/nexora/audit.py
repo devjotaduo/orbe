@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Ported from nexora-ai-platform (Apache-2.0), a fork of the same
 # QwenPaw upstream: https://github.com/lb08111/nexora-ai-platform
 """Nexora audit log storage and helpers."""
@@ -157,8 +158,10 @@ def record_audit_event(
             with _exclusive_file_lock(fh):
                 fh.write(
                     json.dumps(
-                        event, ensure_ascii=False, separators=(",", ":")
-                    )
+                        event,
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
                 )
                 fh.write("\n")
                 fh.flush()

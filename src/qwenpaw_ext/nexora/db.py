@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Ported from nexora-ai-platform (Apache-2.0), a fork of the same
 # QwenPaw upstream: https://github.com/lb08111/nexora-ai-platform
 """Database helpers for Nexora persistent storage."""
@@ -367,7 +368,7 @@ def check_database_health() -> None:
             conn.execute(text("SELECT 1"))
     except Exception as exc:
         raise RuntimeError(
-            f"Nexora PostgreSQL health check failed: {exc}"
+            f"Nexora PostgreSQL health check failed: {exc}",
         ) from exc
 
 

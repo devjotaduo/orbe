@@ -3,6 +3,7 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "antd";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Sidebar from "./Sidebar";
 
@@ -88,9 +89,11 @@ function renderSidebar(selectedKey = "core.chat") {
   return render(
     <ThemeProvider>
       <App>
-        <MemoryRouter>
-          <Sidebar selectedKey={selectedKey} />
-        </MemoryRouter>
+        <TooltipProvider>
+          <MemoryRouter>
+            <Sidebar selectedKey={selectedKey} />
+          </MemoryRouter>
+        </TooltipProvider>
       </App>
     </ThemeProvider>,
   );

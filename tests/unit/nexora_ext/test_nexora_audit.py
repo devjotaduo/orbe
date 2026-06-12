@@ -100,7 +100,8 @@ def test_list_audit_events_empty_without_file(audit_file):
 
 
 def test_record_audit_event_uses_postgres_when_db_enabled(
-    audit_file, pg_stub
+    audit_file,
+    pg_stub,
 ):
     inserted = []
     pg_stub.insert_event = inserted.append
@@ -113,7 +114,8 @@ def test_record_audit_event_uses_postgres_when_db_enabled(
 
 
 def test_record_audit_event_falls_back_to_jsonl_when_pg_fails(
-    audit_file, pg_stub
+    audit_file,
+    pg_stub,
 ):
     def _boom(event):
         raise RuntimeError("pg down")
@@ -137,7 +139,8 @@ def test_record_audit_event_falls_back_to_jsonl_when_pg_fails(
 
 
 def test_list_audit_events_uses_postgres_when_db_enabled(
-    audit_file, pg_stub
+    audit_file,
+    pg_stub,
 ):
     sentinel = [{"id": "abc", "action": "auth.login"}]
     calls = []
@@ -159,7 +162,7 @@ def test_list_audit_events_uses_postgres_when_db_enabled(
             "status": None,
             "start_time": None,
             "end_time": None,
-        }
+        },
     ]
 
 

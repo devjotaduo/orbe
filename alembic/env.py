@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Ported from nexora-ai-platform (Apache-2.0), a fork of the same
 # QwenPaw upstream: https://github.com/lb08111/nexora-ai-platform
 """Alembic environment for Nexora database migrations."""
@@ -48,7 +49,8 @@ def run_migrations_online() -> None:
     )
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
         )
         with context.begin_transaction():
             context.run_migrations()

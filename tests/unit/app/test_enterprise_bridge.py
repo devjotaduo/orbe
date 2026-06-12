@@ -100,7 +100,10 @@ def test_bridge_check_database_health_raises_when_db_unreachable(monkeypatch):
         def connect(self):
             raise ConnectionError("connection refused")
 
-    monkeypatch.setattr(db, "get_engine", lambda: _FailingEngine())
+    def get_failing_engine():
+        return _FailingEngine()
+
+    monkeypatch.setattr(db, "get_engine", get_failing_engine)
 
     with pytest.raises(RuntimeError, match="health check failed"):
         enterprise.check_database_health()
