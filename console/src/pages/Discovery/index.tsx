@@ -241,6 +241,15 @@ export default function DiscoveryPage() {
           setDataModel((d) =>
             d
               ? mutateArray(d, path, (a) => {
+                  // Missing/out-of-range index (e.g. a malformed surface)
+                  // must be a no-op — splice(-1, 1) would eat the last item.
+                  if (
+                    !Number.isInteger(index) ||
+                    index < 0 ||
+                    index >= a.length
+                  ) {
+                    return a;
+                  }
                   a.splice(index, 1);
                   return a;
                 })
@@ -252,7 +261,19 @@ export default function DiscoveryPage() {
           setDataModel((d) =>
             d
               ? mutateArray(d, path, (a) => {
-                  if (index < 0 || j < 0 || j >= a.length) return a;
+                  // Both ends must be in range: a stale index === a.length
+                  // with dir -1 passes a naive `j < length` check but would
+                  // grow the array with an undefined hole on swap.
+                  if (
+                    !Number.isInteger(index) ||
+                    !Number.isInteger(j) ||
+                    index < 0 ||
+                    index >= a.length ||
+                    j < 0 ||
+                    j >= a.length
+                  ) {
+                    return a;
+                  }
                   [a[index], a[j]] = [a[j], a[index]];
                   return a;
                 })

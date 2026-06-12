@@ -141,7 +141,19 @@ const STRUCTURAL_TURN: AguiEvent[] = [
           id: "root",
           type: "Column",
           properties: {},
-          children: ["rep", "trep", "add", "rm", "mv", "mv0", "addi", "rmi"],
+          children: [
+            "rep",
+            "trep",
+            "add",
+            "rm",
+            "rm-noidx",
+            "mv",
+            "mv0",
+            "mv-stale",
+            "addi",
+            "rmi",
+            "rmi-noidx",
+          ],
         },
         {
           id: "rep",
@@ -186,6 +198,20 @@ const STRUCTURAL_TURN: AguiEvent[] = [
           children: [],
         },
         {
+          // Defensive case: a remove_agent action whose params carry no index
+          // (e.g. a malformed surface) must not delete anything.
+          id: "rm-noidx",
+          type: "Button",
+          properties: {
+            text: "Remover sem indice",
+            action: {
+              name: "remove_agent",
+              params: { path: "proposed_team" },
+            },
+          },
+          children: [],
+        },
+        {
           id: "mv",
           type: "Button",
           properties: {
@@ -210,6 +236,21 @@ const STRUCTURAL_TURN: AguiEvent[] = [
           children: [],
         },
         {
+          // Defensive case: a stale index pointing one past the end (item was
+          // already removed elsewhere) combined with dir -1 must be a no-op,
+          // never a swap with a hole past the array boundary.
+          id: "mv-stale",
+          type: "Button",
+          properties: {
+            text: "Subir 2 (stale)",
+            action: {
+              name: "move_agent",
+              params: { path: "proposed_team", index: 2, dir: -1 },
+            },
+          },
+          children: [],
+        },
+        {
           id: "addi",
           type: "Button",
           properties: {
@@ -229,6 +270,20 @@ const STRUCTURAL_TURN: AguiEvent[] = [
             action: {
               name: "remove_item",
               params: { path: "proposed_team/0/tasks", index: 0 },
+            },
+          },
+          children: [],
+        },
+        {
+          // Defensive case: remove_item without an index must not delete
+          // anything either.
+          id: "rmi-noidx",
+          type: "Button",
+          properties: {
+            text: "- Tarefa sem indice",
+            action: {
+              name: "remove_item",
+              params: { path: "proposed_team/0/tasks" },
             },
           },
           children: [],
@@ -517,6 +572,37 @@ describe("DiscoveryPage", () => {
       await waitFor(() =>
         expect(screen.queryByDisplayValue("t1")).toBeNull(),
       );
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("remove_agent without an index param is a no-op", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("Remover sem indice"));
+      const names = screen
+        .getAllByLabelText("Nome")
+        .map((el) => (el as HTMLInputElement).value);
+      expect(names).toEqual(["A1", "A2"]);
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("remove_item without an index param is a no-op", async () => {
+      await renderStructural();
+      fireEvent.click(screen.getByText("- Tarefa sem indice"));
+      expect(screen.getByDisplayValue("t1")).toBeTruthy();
+      expect(screen.getAllByLabelText("Tarefa")).toHaveLength(1);
+      expect(mockAction).not.toHaveBeenCalled();
+    });
+
+    it("move_agent with a stale index === array length is a no-op", async () => {
+      await renderStructural();
+      // index 2 on a 2-agent team: j = 1 passes a naive `j < length` guard,
+      // but swapping a[2] <-> a[1] would grow the array with an undefined
+      // hole. It must leave the team untouched instead.
+      fireEvent.click(screen.getByText("Subir 2 (stale)"));
+      const names = screen
+        .getAllByLabelText("Nome")
+        .map((el) => (el as HTMLInputElement).value);
+      expect(names).toEqual(["A1", "A2"]);
       expect(mockAction).not.toHaveBeenCalled();
     });
   });
