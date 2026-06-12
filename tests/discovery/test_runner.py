@@ -37,6 +37,7 @@ class FakeAgent:
                 "integrations": [{"kind": "whatsapp", "name": "WhatsApp",
                                   "data_location": "celular", "confidence": 0.9}],
                 "company_updates": {}, "confidence_updates": {}}))
+            await s.connector_lookup("whatsapp")
             bp = {
                 "company_profile": {"segment": "ecommerce", "size": "micro",
                     "business_model": "venda online de roupas",
@@ -47,10 +48,17 @@ class FakeAgent:
                 "proposed_team": [{"name": "Atendente WhatsApp", "role": "SAC",
                     "objective": "responder clientes 24/7",
                     "tasks": ["responder dúvidas", "rastrear pedido"],
-                    "tools_integrations": ["mcp:evolution-whatsapp"], "talks_to": []}],
+                    "tools_integrations": ["clawhub:evolution-api"], "talks_to": []}],
                 "roadmap": [{"order": 1, "title": "Atendimento WhatsApp",
                     "rationale": "dor principal"}],
                 "open_questions": ["volume de mensagens/dia?"],
+                "recommended_connectors": [
+                    {"integration_kind": "whatsapp",
+                     "name": "Evolution API v2",
+                     "origin": "clawhub",
+                     "slug_or_url": "evolution-api",
+                     "status": "recomendado",
+                     "notes": "não-oficial; risco de ban"}],
             }
             await s.emit_blueprint(json.dumps(bp))
             return _MsgStub("Pronto! Gerei o blueprint do seu time.")
@@ -82,6 +90,11 @@ async def test_runner_scripted_interview(tmp_path, monkeypatch):
     assert (tmp_path / "blueprint.json").exists()
     bp = json.loads((tmp_path / "blueprint.json").read_text(encoding="utf-8"))
     assert bp["proposed_team"][0]["name"] == "Atendente WhatsApp"
+    assert bp["recommended_connectors"], "blueprint deve recomendar conectores"
+    rc = bp["recommended_connectors"][0]
+    assert rc["origin"] == "clawhub" and rc["slug_or_url"] == "evolution-api"
+    md = (tmp_path / "blueprint.md").read_text(encoding="utf-8")
+    assert "## Conectores recomendados" in md
     assert (tmp_path / "discovery_state.json").exists()
     assert out.emitted is True
 
