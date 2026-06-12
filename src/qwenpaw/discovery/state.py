@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 
 class CompanyProfile(BaseModel):
+    name: Optional[str] = None
     segment: Optional[str] = None
     cnae: Optional[str] = None
     size: Optional[str] = None

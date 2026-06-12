@@ -112,6 +112,53 @@ describe("A2uiRenderer (binding-aware)", () => {
   });
 });
 
+const TAG_MSGS: A2uiMessage[] = [
+  { messageType: "createSurface", surfaceId: "bp", root: "root" },
+  {
+    messageType: "updateComponents",
+    surfaceId: "bp",
+    components: [
+      { id: "root", type: "Column", properties: {}, children: ["n", "t"] },
+      {
+        id: "n",
+        type: "TextInput",
+        properties: { bind: "proposed_team/0/name", label: "Nome" },
+        children: [],
+      },
+      {
+        id: "t",
+        type: "Tag",
+        properties: { text: { $bind: "proposed_team/0/tag" } },
+        children: [],
+      },
+    ],
+  },
+  {
+    messageType: "updateDataModel",
+    surfaceId: "bp",
+    data: { proposed_team: [{ name: "Atendente", tag: "WhatsApp" }] },
+  },
+];
+
+describe("A2uiRenderer (read-only components)", () => {
+  function buildTagSurface() {
+    let s = emptySurface("bp");
+    for (const m of TAG_MSGS) s = applyA2uiMessage(s, m);
+    return s;
+  }
+
+  it("Tag resolves bound text but stays non-editable", () => {
+    render(<A2uiRenderer surface={buildTagSurface()} />);
+    const tag = screen.getByText("WhatsApp");
+    // The tag must never become a form control, even with a bound value.
+    expect(["INPUT", "TEXTAREA"]).not.toContain(tag.tagName);
+    expect(tag.closest("input,textarea")).toBeNull();
+    // Only the explicit TextInput is editable in this surface.
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(screen.getByRole("textbox")).toBe(screen.getByLabelText("Nome"));
+  });
+});
+
 describe("surfaceReducer", () => {
   it("createSurface sets the root", () => {
     const s = applyA2uiMessage(emptySurface("bp"), MSGS[0]);

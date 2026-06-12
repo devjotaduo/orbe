@@ -15,14 +15,16 @@ _QUESTIONS = [
     "Qual é a dor mais urgente que um agente resolveria primeiro?",
 ]
 
+# Shape must validate against discovery.state.TeamBlueprint — approve_team
+# round-trips this dict through finalize_blueprint.
 _BLUEPRINT = {
     "company_profile": {"segment": "ecommerce", "name": "Sua loja"},
     "process_map": [
-        {"area": "Atendimento", "processes": ["responder WhatsApp"]}
+        {"name": "Atendimento", "description": "responder WhatsApp"},
     ],
     "detected_integrations": [
-        {"type": "messaging", "name": "WhatsApp"},
-        {"type": "spreadsheet", "name": "Planilha"},
+        {"kind": "messaging", "name": "WhatsApp"},
+        {"kind": "spreadsheet", "name": "Planilha"},
     ],
     "proposed_team": [
         {
@@ -35,11 +37,11 @@ _BLUEPRINT = {
                 "mcp:google-sheets",
             ],
             "talks_to": [],
-        }
+        },
     ],
     "roadmap": [
-        {"step": "atendimento WhatsApp"},
-        {"step": "registro em planilha"},
+        {"order": 1, "title": "atendimento WhatsApp"},
+        {"order": 2, "title": "registro em planilha"},
     ],
     "open_questions": ["Qual o volume médio de mensagens por dia?"],
 }
@@ -66,7 +68,9 @@ class ScriptedDiscoverySession:
 
         # No more questions → emit the blueprint.
         return TurnResult(
-            state=dict(self._state), blueprint=_BLUEPRINT, done=True
+            state=dict(self._state),
+            blueprint=_BLUEPRINT,
+            done=True,
         )
 
     def _absorb(self, answer: str) -> None:
@@ -80,9 +84,9 @@ class ScriptedDiscoverySession:
         elif self._asked == 2:  # answer to the systems question
             if "whats" in low:
                 self._state["integrations"].append(
-                    {"type": "messaging", "name": "WhatsApp"}
+                    {"type": "messaging", "name": "WhatsApp"},
                 )
             if "planilh" in low or "sheet" in low:
                 self._state["integrations"].append(
-                    {"type": "spreadsheet", "name": "Planilha"}
+                    {"type": "spreadsheet", "name": "Planilha"},
                 )

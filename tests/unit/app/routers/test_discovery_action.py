@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -27,7 +28,7 @@ VALID = {
 
 def _events(text):
     return [
-        json.loads(line[len("data: ") :])
+        json.loads(line.removeprefix("data: "))
         for line in text.splitlines()
         if line.startswith("data: ")
     ]
@@ -68,6 +69,51 @@ def test_invalid_data_emits_run_error(tmp_path, monkeypatch):
     types = [e["type"] for e in _events(r.text)]
     assert "RUN_ERROR" in types
     assert not (tmp_path / "s2" / "blueprint.json").exists()
+
+
+def test_traversal_session_id_emits_run_error(tmp_path, monkeypatch):
+    out = tmp_path / "out"
+    monkeypatch.setattr(ds, "_action_out_dir", lambda sid: out / sid)
+    client = _client()
+    r = client.post(
+        "/discovery/action",
+        json={
+            "session_id": "../../evil",
+            "action": "approve_team",
+            "data": VALID,
+        },
+    )
+    types = [e["type"] for e in _events(r.text)]
+    assert "RUN_ERROR" in types
+    assert types[-1] == "RUN_FINISHED"
+    assert not list(tmp_path.rglob("blueprint.json"))
+
+
+def test_action_out_dir_honors_env_var(tmp_path, monkeypatch):
+    monkeypatch.setenv("QWENPAW_DISCOVERY_OUT", str(tmp_path / "custom"))
+    assert ds._action_out_dir("s9") == tmp_path / "custom" / "s9"
+
+
+def test_action_out_dir_defaults_to_discovery_sessions(monkeypatch):
+    monkeypatch.delenv("QWENPAW_DISCOVERY_OUT", raising=False)
+    assert ds._action_out_dir("s9") == Path("discovery_sessions") / "s9"
+
+
+def test_approve_team_writes_under_env_out_dir(tmp_path, monkeypatch):
+    """End-to-end: the env var steers where the endpoint writes."""
+    monkeypatch.setenv("QWENPAW_DISCOVERY_OUT", str(tmp_path / "envout"))
+    client = _client()
+    r = client.post(
+        "/discovery/action",
+        json={
+            "session_id": "s-env",
+            "action": "approve_team",
+            "data": VALID,
+        },
+    )
+    types = [e["type"] for e in _events(r.text)]
+    assert "RUN_ERROR" not in types
+    assert (tmp_path / "envout" / "s-env" / "blueprint.json").exists()
 
 
 def test_unknown_action_emits_run_error():

@@ -9,9 +9,9 @@ from qwenpaw.a2ui.schema import (
 BLUEPRINT = {
     "company_profile": {"segment": "ecommerce", "name": "Loja X"},
     "process_map": [
-        {"area": "Atendimento", "processes": ["responder WhatsApp"]},
+        {"name": "Atendimento", "description": "responder WhatsApp"},
     ],
-    "detected_integrations": [{"type": "messaging", "name": "WhatsApp"}],
+    "detected_integrations": [{"kind": "messaging", "name": "WhatsApp"}],
     "proposed_team": [
         {
             "name": "Atendente WhatsApp",
@@ -22,7 +22,7 @@ BLUEPRINT = {
             "talks_to": [],
         },
     ],
-    "roadmap": [{"step": "atendimento WhatsApp"}],
+    "roadmap": [{"order": 1, "title": "atendimento WhatsApp"}],
     "open_questions": ["qual volume de mensagens?"],
 }
 

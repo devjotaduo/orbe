@@ -16,13 +16,14 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import uuid
 from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from qwenpaw.agui.emitter import sse, text_message_events
 from qwenpaw.agui.events import (
@@ -97,7 +98,12 @@ async def discovery_stream(req: DiscoveryTurnRequest) -> StreamingResponse:
 class DiscoveryActionRequest(BaseModel):
     session_id: str
     action: str
-    data: dict[str, Any] = {}
+    data: dict[str, Any] = Field(default_factory=dict)
+
+
+# session_id keys a directory on disk — confine it to a single safe path
+# segment so a crafted id (e.g. "../../x") cannot escape the out dir.
+_SESSION_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 def _action_out_dir(session_id: str) -> Path:
@@ -114,6 +120,10 @@ async def discovery_action(req: DiscoveryActionRequest) -> StreamingResponse:
     async def generate():
         yield sse(RunStartedEvent(thread_id=thread_id, run_id=run_id))
         try:
+            if not _SESSION_ID_RE.fullmatch(req.session_id):
+                raise ValueError(
+                    f"session_id inválido: {req.session_id!r}",
+                )
             if req.action != "approve_team":
                 raise ValueError(f"ação desconhecida: {req.action!r}")
             bp = finalize_blueprint(

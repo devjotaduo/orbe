@@ -2,6 +2,7 @@
 import pytest
 from qwenpaw.discovery.scripted_session import ScriptedDiscoverySession
 from qwenpaw.discovery.session import DiscoverySession, TurnResult
+from qwenpaw.discovery.state import TeamBlueprint
 
 
 @pytest.mark.asyncio
@@ -43,3 +44,17 @@ async def test_runs_to_a_blueprint_and_then_done():
     assert r.blueprint["company_profile"]["segment"] == "ecommerce"
     assert len(r.blueprint["proposed_team"]) >= 1
     assert r.question is None
+
+
+@pytest.mark.asyncio
+async def test_blueprint_validates_against_team_blueprint_schema():
+    """approve_team round-trips this dict — it must validate losslessly."""
+    s = ScriptedDiscoverySession()
+    r = await s.next_turn(None)
+    for a in ["e-commerce", "WhatsApp e planilha", "responder clientes"]:
+        r = await s.next_turn(a)
+    bp = TeamBlueprint.model_validate(r.blueprint)
+    assert bp.company_profile.name == "Sua loja"  # not dropped
+    assert bp.detected_integrations[0].kind == "messaging"
+    assert bp.process_map[0].name == "Atendimento"
+    assert [item.order for item in bp.roadmap] == [1, 2]
