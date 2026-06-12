@@ -58,7 +58,7 @@ async def run_discovery_session(
     out_dir = Path(out_dir)
     state = DiscoveryState(session_id=session_id)
     state.open_areas.append(
-        _SEED_AREA.model_copy()
+        _SEED_AREA.model_copy(),
     )  # cópia: evita mutar o singleton
     session = DiscoverySession(state, out_dir=out_dir)
     agent = build_discovery_agent(session)
@@ -86,7 +86,7 @@ async def run_discovery_session(
     else:
         print(
             "\n(Entrevista encerrada sem blueprint"
-            " — estado salvo para retomar.)"
+            " — estado salvo para retomar.)",
         )
     return session
 
@@ -142,7 +142,7 @@ async def _close_interview(
 async def _run_requirements_phase(session: DiscoverySession) -> None:
     """Fase pós-blueprint: levanta informações pendentes por agente."""
     print(
-        "\n(Levantando as informações que faltam para o seu time começar...)"
+        "\n(Levantando as informações que faltam para o seu time começar...)",
     )
     try:
         agent = build_requirements_agent(session)
@@ -154,7 +154,7 @@ async def _run_requirements_phase(session: DiscoverySession) -> None:
         return
     if not session.requirements_emitted or session.requirements is None:
         print(
-            "\n(Lista de pendências não foi gerada — tente novamente depois.)"
+            "\n(Lista de pendências não foi gerada — tente novamente depois.)",
         )
         return
     report = session.requirements

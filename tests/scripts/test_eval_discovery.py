@@ -88,7 +88,12 @@ def _write_requirements(tmp_path, *, agents=3):
 
 
 def _write_blueprint(
-    tmp_path, *, agents=3, roadmap=3, processes=2, questions=2
+    tmp_path,
+    *,
+    agents=3,
+    roadmap=3,
+    processes=2,
+    questions=2,
 ):
     bp = {
         "company_profile": {"segment": "ecommerce", "pains": []},
@@ -115,7 +120,11 @@ def test_perfect_session_scores_full(eval_mod, make_session, tmp_path):
     persona = eval_mod.PERSONAS[0]  # ecommerce_roupas
     session = make_session(segment="ecommerce")
     bp = _write_blueprint(
-        tmp_path, agents=3, roadmap=3, processes=2, questions=2
+        tmp_path,
+        agents=3,
+        roadmap=3,
+        processes=2,
+        questions=2,
     )
     _write_requirements(tmp_path, agents=3)
     result = eval_mod.score_session(persona, session, bp)
@@ -155,12 +164,16 @@ def test_wrong_segment_partial_credit(eval_mod, make_session, tmp_path):
 
 
 def test_no_blueprint_zeroes_quality_criteria(
-    eval_mod, make_session, tmp_path
+    eval_mod,
+    make_session,
+    tmp_path,
 ):
     persona = eval_mod.PERSONAS[0]
     session = make_session(segment="ecommerce", emitted=False)
     result = eval_mod.score_session(
-        persona, session, tmp_path / "missing.json"
+        persona,
+        session,
+        tmp_path / "missing.json",
     )
     by_name = {c.name: c for c in result.criteria}
     assert by_name["Blueprint gerado"].score == 0
@@ -217,7 +230,9 @@ def test_recommendations_derived_from_issues(eval_mod, make_session, tmp_path):
 
 
 def test_recommendations_fall_back_to_maintenance(
-    eval_mod, make_session, tmp_path
+    eval_mod,
+    make_session,
+    tmp_path,
 ):
     """Rodada perfeita gera recomendações de manutenção, não de conserto."""
     persona = eval_mod.PERSONAS[0]
@@ -254,7 +269,9 @@ def test_e2e_smoke_single_persona(eval_mod, tmp_path):
 
 
 def test_out_of_seed_persona_accepts_free_description(
-    eval_mod, make_session, tmp_path
+    eval_mod,
+    make_session,
+    tmp_path,
 ):
     """Persona fora da seed pontua 20 se a descrição livre menciona o ramo."""
     persona = next(p for p in eval_mod.PERSONAS if p.id == "petshop")
@@ -267,7 +284,9 @@ def test_out_of_seed_persona_accepts_free_description(
 
 
 def test_out_of_seed_persona_rejects_unrelated_description(
-    eval_mod, make_session, tmp_path
+    eval_mod,
+    make_session,
+    tmp_path,
 ):
     persona = next(p for p in eval_mod.PERSONAS if p.id == "petshop")
     session = make_session(segment="restaurante")
@@ -279,7 +298,9 @@ def test_out_of_seed_persona_rejects_unrelated_description(
 
 
 def test_out_of_seed_persona_zero_when_missing(
-    eval_mod, make_session, tmp_path
+    eval_mod,
+    make_session,
+    tmp_path,
 ):
     persona = next(p for p in eval_mod.PERSONAS if p.id == "oficina_mecanica")
     session = make_session(segment=None)
@@ -290,7 +311,9 @@ def test_out_of_seed_persona_zero_when_missing(
 
 
 def test_qualitative_issue_maps_to_recommendation(
-    eval_mod, make_session, tmp_path
+    eval_mod,
+    make_session,
+    tmp_path,
 ):
     """Nota baixa do juiz vira issue e recomendação conversacional."""
     persona = eval_mod.PERSONAS[0]

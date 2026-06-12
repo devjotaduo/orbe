@@ -50,7 +50,7 @@ def main() -> int:
         or any(part in normalized for part in SECRET_PARTS)
     ):
         sys.stderr.write(
-            f"[secret-path-guard] BLOCKED edit to sensitive path: {raw_path}\n"
+            f"[secret-path-guard] BLOCKED edit to sensitive path: {raw_path}\n",
         )
         return 2
     return 0

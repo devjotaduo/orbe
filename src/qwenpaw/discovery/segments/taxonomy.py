@@ -31,7 +31,7 @@ CANONICAL_INTEGRATION_KINDS: frozenset[str] = frozenset(
         "prontuario",
         "chat-interno",
         "analytics",
-    }
+    },
 )
 
 

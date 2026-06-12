@@ -34,12 +34,12 @@ class FakeAgent:
                                 "topic": "como atende hoje",
                                 "confidence": 0.1,
                                 "priority": 5,
-                            }
+                            },
                         ],
                         "integrations": [],
                         "company_updates": {"segment": "ecommerce"},
                         "confidence_updates": {},
-                    }
+                    },
                 ),
             )
             return _MsgStub("Como você atende seus clientes hoje?")
@@ -57,11 +57,11 @@ class FakeAgent:
                                 "name": "WhatsApp",
                                 "data_location": "celular",
                                 "confidence": 0.9,
-                            }
+                            },
                         ],
                         "company_updates": {},
                         "confidence_updates": {},
-                    }
+                    },
                 ),
             )
             await s.connector_lookup("whatsapp")
@@ -74,7 +74,7 @@ class FakeAgent:
                     "pains": ["atendimento manual lento"],
                 },
                 "process_map": [
-                    {"name": "atendimento", "description": "SAC WhatsApp"}
+                    {"name": "atendimento", "description": "SAC WhatsApp"},
                 ],
                 "detected_integrations": [
                     {
@@ -82,7 +82,7 @@ class FakeAgent:
                         "name": "WhatsApp",
                         "data_location": "celular",
                         "confidence": 0.9,
-                    }
+                    },
                 ],
                 "proposed_team": [
                     {
@@ -92,14 +92,14 @@ class FakeAgent:
                         "tasks": ["responder dúvidas", "rastrear pedido"],
                         "tools_integrations": ["clawhub:evolution-api"],
                         "talks_to": [],
-                    }
+                    },
                 ],
                 "roadmap": [
                     {
                         "order": 1,
                         "title": "Atendimento WhatsApp",
                         "rationale": "dor principal",
-                    }
+                    },
                 ],
                 "open_questions": ["volume de mensagens/dia?"],
                 "recommended_connectors": [
@@ -155,11 +155,11 @@ class FakeRequirementsAgent:
                                         "Pode nos mandar as 5 perguntas"
                                         " que seus clientes mais fazem?"
                                     ),
-                                }
+                                },
                             ],
-                        }
+                        },
                     ],
-                }
+                },
             ),
         )
         return _MsgStub("Pendências levantadas.")
@@ -173,10 +173,12 @@ async def test_runner_scripted_interview(tmp_path, monkeypatch):
         [
             "tenho uma loja virtual de roupas",
             "atendo manual no zap",
-        ]
+        ],
     )
     monkeypatch.setattr(
-        runner_mod, "_read_user_input", lambda prompt: next(inputs)
+        runner_mod,
+        "_read_user_input",
+        lambda prompt: next(inputs),
     )
     monkeypatch.setattr(
         runner_mod,
@@ -266,7 +268,8 @@ async def test_runner_fim_path(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_runner_eoferror_persists_and_returns_not_emitted(
-    tmp_path, monkeypatch
+    tmp_path,
+    monkeypatch,
 ):
     """EOFError em _read_user_input (stdin fechado em CI/pipe) deve persistir o
     estado já coletado e retornar com emitted=False, sem levantar exceção."""

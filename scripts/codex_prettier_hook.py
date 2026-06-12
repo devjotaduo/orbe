@@ -64,7 +64,7 @@ def main() -> int:
 
     if completed.returncode != 0:
         sys.stderr.write(
-            f"[prettier-hook] prettier failed: {completed.stderr.strip()}\n"
+            f"[prettier-hook] prettier failed: {completed.stderr.strip()}\n",
         )
     return 0
 

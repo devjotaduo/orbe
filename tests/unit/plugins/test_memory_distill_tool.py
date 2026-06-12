@@ -31,11 +31,12 @@ MODULE_PATH = (
 )
 
 _SPEC = importlib.util.spec_from_file_location(
-    "memory_distill_tool", MODULE_PATH
+    "memory_distill_tool",
+    MODULE_PATH,
 )
-assert _SPEC is not None and _SPEC.loader is not None, (
-    f"Could not find memory_distill_tool at {MODULE_PATH}"
-)
+assert (
+    _SPEC is not None and _SPEC.loader is not None
+), f"Could not find memory_distill_tool at {MODULE_PATH}"
 memory_distill_tool = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(memory_distill_tool)
 
@@ -107,9 +108,9 @@ async def test_consolidate_memory_does_not_delete_workspace_png(tmp_path):
         days=30,
         dry_run=False,
     )
-    assert png.exists(), (
-        "consolidate_memory must not delete workspace .png files"
-    )
+    assert (
+        png.exists()
+    ), "consolidate_memory must not delete workspace .png files"
 
 
 @pytest.mark.asyncio
@@ -132,13 +133,13 @@ async def test_distill_memory_dry_run_does_not_write(tmp_path):
     text = _text(result)
 
     # Preview must mention the new title
-    assert "Brand New Thing" in text, (
-        "dry_run preview must list new discoveries"
-    )
+    assert (
+        "Brand New Thing" in text
+    ), "dry_run preview must list new discoveries"
     # File must be unchanged
-    assert mem.read_text(encoding="utf-8") == before, (
-        "dry_run=True must not write to MEMORY.md"
-    )
+    assert (
+        mem.read_text(encoding="utf-8") == before
+    ), "dry_run=True must not write to MEMORY.md"
 
 
 # ---------------------------------------------------------------------------
@@ -159,9 +160,9 @@ async def test_distill_memory_sets_error_state_on_invalid_working_dir(
         days=7,
         dry_run=True,
     )
-    assert result.state == ToolResultState.ERROR, (
-        f"Expected ERROR state for invalid workspace, got {result.state!r}"
-    )
+    assert (
+        result.state == ToolResultState.ERROR
+    ), f"Expected ERROR state for invalid workspace, got {result.state!r}"
     # Sanity: the error message still describes the problem
     assert "agent workspace" in _text(result)
 
@@ -197,15 +198,15 @@ async def test_consolidate_memory_uses_daily_memory_dir_from_config(
 
     text = _text(result)
     # The pipeline ran successfully (no error state)
-    assert result.state == ToolResultState.SUCCESS, (
-        f"Expected SUCCESS, got {result.state!r}: {text}"
-    )
+    assert (
+        result.state == ToolResultState.SUCCESS
+    ), f"Expected SUCCESS, got {result.state!r}: {text}"
     # Distill step must have found the note in notes/ and reported the topic
     found = (
         "Config Resolution Topic" in text
         or "1 new" in text
         or "new discovery" in text.lower()
     )
-    assert found, (
-        f"Expected distill step to find topic in notes/; got:\n{text}"
-    )
+    assert (
+        found
+    ), f"Expected distill step to find topic in notes/; got:\n{text}"

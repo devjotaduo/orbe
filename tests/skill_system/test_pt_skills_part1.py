@@ -31,10 +31,10 @@ def test_pt_skill_files_exist():
 def test_pt_skills_have_correct_name_in_frontmatter():
     for name in PART1:
         content = (SKILLS_DIR / f"{name}-pt" / "SKILL.md").read_text(
-            encoding="utf-8"
+            encoding="utf-8",
         )
         en_content = (SKILLS_DIR / f"{name}-en" / "SKILL.md").read_text(
-            encoding="utf-8"
+            encoding="utf-8",
         )
         en_name = re.search(r"^name:\s*(.+)$", en_content, re.MULTILINE)
         pt_name = re.search(r"^name:\s*(.+)$", content, re.MULTILINE)

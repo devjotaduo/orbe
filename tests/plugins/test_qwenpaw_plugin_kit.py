@@ -9,7 +9,7 @@ PLUGIN_DIR = Path("plugins/bundle/qwenpaw-plugin-kit")
 
 def test_plugin_kit_manifest_declares_backend_frontend_and_ptbr():
     manifest = json.loads(
-        (PLUGIN_DIR / "plugin.json").read_text(encoding="utf-8")
+        (PLUGIN_DIR / "plugin.json").read_text(encoding="utf-8"),
     )
 
     assert manifest["id"] == "qwenpaw-plugin-kit"
