@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=relative-beyond-top-level
 """QwenPaw Plugin Kit entry point.
 
 This plugin is intentionally small and demonstrates the supported plugin
@@ -20,9 +21,7 @@ from fastapi import APIRouter
 
 from qwenpaw.plugins.api import PluginApi
 
-from .tools import (
-    plugin_kit_describe_elements,
-)  # pylint: disable=relative-beyond-top-level
+from .tools import plugin_kit_describe_elements
 
 logger = logging.getLogger(__name__)
 
