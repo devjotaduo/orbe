@@ -64,6 +64,17 @@ def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
     lines.append("\n## Roadmap")
     for r in sorted(bp.roadmap, key=lambda x: x.order):
         lines.append(f"{r.order}. **{r.title}** — {r.rationale}")
+    if bp.recommended_connectors:
+        lines.append("\n## Conectores recomendados")
+        for c in bp.recommended_connectors:
+            ref = f"{c.origin}:{c.slug_or_url}" if c.slug_or_url else c.origin
+            entry = (
+                f"- **{c.name}** ({c.integration_kind}) — `{ref}`"
+                f" — status: {c.status}"
+            )
+            if c.notes:
+                entry += f" — {c.notes}"
+            lines.append(entry)
     if bp.open_questions:
         lines.append("\n## Perguntas em aberto")
         for q in bp.open_questions:

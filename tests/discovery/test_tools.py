@@ -219,3 +219,46 @@ def test_toolkit_has_four_tools(tmp_path):
     # Deve registrar segment_lookup, reflect, emit_blueprint,
     # connector_lookup.
     assert len(tk.tool_groups[0].tools) == 4
+
+
+# --- seção de conectores no blueprint.md + prompt ----------------------------
+
+def test_blueprint_markdown_renders_connectors_section():
+    from qwenpaw.discovery.state import (
+        CompanyProfile,
+        ConnectorRef,
+        TeamBlueprint,
+    )
+    from qwenpaw.discovery.tools import _blueprint_to_markdown
+
+    bp = TeamBlueprint(
+        company_profile=CompanyProfile(segment="ecommerce"),
+        recommended_connectors=[
+            ConnectorRef(
+                integration_kind="whatsapp",
+                name="Evolution API v2",
+                origin="clawhub",
+                slug_or_url="evolution-api",
+                status="recomendado",
+                notes="não-oficial; risco de ban",
+            )
+        ],
+    )
+    md = _blueprint_to_markdown(bp)
+    assert "## Conectores recomendados" in md
+    assert "clawhub:evolution-api" in md
+    assert "risco de ban" in md
+
+
+def test_blueprint_markdown_omits_empty_connectors_section():
+    from qwenpaw.discovery.state import CompanyProfile, TeamBlueprint
+    from qwenpaw.discovery.tools import _blueprint_to_markdown
+
+    bp = TeamBlueprint(company_profile=CompanyProfile(segment="ecommerce"))
+    assert "Conectores recomendados" not in _blueprint_to_markdown(bp)
+
+
+def test_system_prompt_mentions_connector_lookup():
+    from qwenpaw.discovery.prompts import build_discovery_system_prompt
+
+    assert "connector_lookup" in build_discovery_system_prompt()
