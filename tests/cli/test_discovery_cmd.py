@@ -2,11 +2,8 @@
 """Testes do grupo Click `qwenpaw discovery`."""
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import click
 import pytest
 from click.testing import CliRunner
 

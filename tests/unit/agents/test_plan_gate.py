@@ -39,7 +39,11 @@ def _notebook(**attrs) -> SimpleNamespace:
 # --------------------------------------------------------------------------- #
 def test_plan_package_imports() -> None:
     """The restored package must import cleanly under agentscope 2.0."""
-    from qwenpaw.plan import broadcast, hints, schemas  # noqa: F401
+    from qwenpaw.plan import (
+        broadcast,
+        hints,
+        schemas,
+    )  # noqa: F401  # pylint: disable=unused-import
 
     # No agentscope.plan in 2.0 -> the hint generator degrades to None rather
     # than exploding at import time.

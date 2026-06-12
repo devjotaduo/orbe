@@ -122,8 +122,6 @@ def test_reflect_update_confidence_updates():
     )
     assert upd.confidence_updates["area1"] == pytest.approx(0.85)
     # validate via JSON round-trip as well
-    from pydantic import TypeAdapter
-
     raw_json = upd.model_dump_json()
     upd2 = ReflectUpdate.model_validate_json(raw_json)
     assert upd2.confidence_updates["area1"] == pytest.approx(0.85)

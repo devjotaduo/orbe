@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
-from pathlib import Path
 
 import pytest
 
-from qwenpaw.discovery.state import DiscoveryState
 from qwenpaw.discovery.tools import DiscoverySession
 from qwenpaw.discovery import runner as runner_mod
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=line-too-long,too-many-branches,too-many-statements
 # pylint: disable=protected-access,f-string-without-interpolation
-# pylint: disable=disallowed-name,no-value-for-argument
+# pylint: disable=disallowed-name
 """
 Avaliador end-to-end do Discovery Agent.
 

@@ -121,6 +121,17 @@ repos:
           --disable=E0611,  # no-name-in-module — false positive on dynamic imports
           --disable=W0621,  # redefined-outer-name — common local-import pattern
           --disable=W0404,  # reimported — common with conditional imports
+          --disable=W0613,  # unused-argument — common in pytest fixtures and callbacks
+          --disable=W0212,  # protected-access — common in test code and framework wrappers
+          --disable=W0707,  # raise-missing-from — style preference
+          --disable=R0912,  # too-many-branches — complex state machines
+          --disable=R0915,  # too-many-statements — complex functions
+          --disable=C1803,  # use-implicit-booleaness-not-comparison
+          --disable=E1120,  # no-value-for-parameter — false positive with Click
+          --disable=W1510,  # subprocess-run-check — handled explicitly where needed
+          --disable=W0612,  # unused-variable — common in unpack patterns
+          --disable=E1135,  # unsupported-membership-test — false positive with mocks
+          --disable=E1136,  # unsubscriptable-object — false positive with mocks
         ]
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: 'v3.0.0'

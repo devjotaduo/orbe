@@ -3,17 +3,15 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from agentscope.message import TextBlock, ToolResultState
 from agentscope.tool import FunctionTool, ToolChunk, Toolkit
 
-import re
-
 from .segments.taxonomy import lookup_connectors, lookup_segment
 from .state import (
     DiscoveryState,
-    Integration,
     OnboardingInfo,
     OpenArea,
     ReflectUpdate,
