@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from pathlib import Path
 
 SKILLS_DIR = Path("src/qwenpaw/agents/skills")

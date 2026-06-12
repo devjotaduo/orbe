@@ -41,6 +41,8 @@ repos:
           | .*/skills/.*
           | ^e2e/
           | ^\.claude/
+          | ^plugins/bundle/
+          | ^plugins/tool/
           )
         args: [
           --ignore-missing-imports,

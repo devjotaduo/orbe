@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
 Hook Claude Code: verifica se novos arquivos de skill/agente/plugin

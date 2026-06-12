@@ -64,7 +64,6 @@ _KNOWN_TEMPLATE_TITLES: Set[str] = {
 }
 
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -77,10 +76,10 @@ def _resolve_daily_dir_name() -> str:
     ``AgentMdManager``) when no agent context/config is available.
     """
     try:
-        from qwenpaw.app.agent_context import (  # pylint: disable=import-outside-toplevel
+        from qwenpaw.app.agent_context import (
             get_current_agent_id,
         )
-        from qwenpaw.config.config import (  # pylint: disable=import-outside-toplevel
+        from qwenpaw.config.config import (
             load_agent_config,
         )
 
@@ -99,7 +98,8 @@ def _resolve_working_dir(working_dir: Optional[str] = None) -> Path:
     """Return a validated Path for the agent workspace.
 
     Validation: the directory must contain either ``MEMORY.md`` or the
-    configured daily-notes subdirectory (resolved via ``_resolve_daily_dir_name``).
+    configured daily-notes subdirectory (resolved via
+    ``_resolve_daily_dir_name``).
     This avoids operating on arbitrary filesystem paths.
 
     Raises:
@@ -159,7 +159,7 @@ def _daily_note_titles(note_text: str) -> List[str]:
 
 
 def _snippet_for_title(note_text: str, title: str) -> str:
-    """Return the first non-empty line of content under *title* (up to 120 chars)."""
+    """Return first non-empty line under *title* (up to 120 chars)."""
     in_section = False
     for line in note_text.splitlines():
         if re.match(r"^##\s+" + re.escape(title) + r"\s*$", line):
@@ -195,7 +195,7 @@ async def distill_memory(
         dry_run: If True, return a preview without writing anything.
 
     Returns:
-        ToolResponse with a text report of new discoveries (or a dry-run preview).
+        ToolResponse with new discoveries report (or a dry-run preview).
     """
     try:
         wd = _resolve_working_dir(working_dir)
@@ -240,8 +240,8 @@ async def distill_memory(
     lines = [
         "",
         "## 🔄 Auto Discovery",
-        f"_Distilled {date.today().isoformat()} — {len(new_discoveries)} new item(s) "
-        f"from the last {days} day(s)_",
+        f"_Distilled {date.today().isoformat()} — "
+        f"{len(new_discoveries)} new item(s) from the last {days} day(s)_",
         "",
     ]
     for title, snippet, note_date in new_discoveries:
@@ -254,14 +254,15 @@ async def distill_memory(
     section_text = "\n".join(lines)
 
     if dry_run:
+        n = len(new_discoveries)
         preview = (
-            f"[distill_memory] DRY RUN — {len(new_discoveries)} new discovery(ies) "
+            f"[distill_memory] DRY RUN — {n} new discovery(ies) "
             f"would be appended to MEMORY.md:\n{section_text}"
         )
         return ToolResponse(content=[TextBlock(type="text", text=preview)])
 
-    # Atomic append: write to .tmp then os.replace (avoids half-written MEMORY.md
-    # on crash — spec §7).
+    # Atomic append: write to .tmp then os.replace (avoids half-written
+    # MEMORY.md on crash — spec §7).
     existing = _read_file(memory_file) if memory_file.exists() else ""
     new_content = existing + section_text
     tmp_path = memory_file.with_suffix(".tmp")
@@ -316,7 +317,9 @@ async def consolidate_memory(
     distill_result = await distill_memory(
         working_dir=str(wd), days=days, dry_run=dry_run
     )
-    distill_text = distill_result.content[0].text if distill_result.content else ""
+    distill_text = (
+        distill_result.content[0].text if distill_result.content else ""
+    )
     first_line = (distill_text.splitlines() or ["(no output)"])[0]
     report_lines.append(f"  [1/4 distill] {first_line}")
 
@@ -420,9 +423,7 @@ async def inspect_memory(
     # Daily notes stats
     if daily_dir.exists():
         note_files = sorted(daily_dir.glob("*.md"), reverse=True)
-        lines.append(
-            f"  {daily_dir_name}/: {len(note_files)} daily note(s)"
-        )
+        lines.append(f"  {daily_dir_name}/: {len(note_files)} daily note(s)")
         if note_files:
             lines.append(f"  Most recent: {note_files[0].name}")
     else:

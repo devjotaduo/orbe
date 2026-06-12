@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from pathlib import Path
 
 AGENTS_DIR = Path("plugins/bundle/cloudpaw/agents")

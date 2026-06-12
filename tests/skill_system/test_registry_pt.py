@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from qwenpaw.agents.skill_system.registry import (
     BUILTIN_SKILL_LANGUAGES,
     _BUILTIN_SKILL_DIR_RE,

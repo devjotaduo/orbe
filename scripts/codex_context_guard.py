@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 """Block accidental high-token Codex reads of generated or very large files."""
 
