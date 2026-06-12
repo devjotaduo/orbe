@@ -1,5 +1,11 @@
-import { Layout, Space, Badge, Spin, Tooltip, Dropdown } from "antd";
+import { Layout, Space, Badge, Spin, Tooltip, Dropdown, Button as AntButton } from "antd";
 import type { MenuProps } from "antd";
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+} from "@ant-design/icons";
 import LanguageSwitcher from "../components/LanguageSwitcher/index";
 import ThemeToggleButton from "../components/ThemeToggleButton";
 import CodingModeToggle from "../components/CodingModeToggle";
@@ -64,7 +70,12 @@ function UpdateCodeBlock({ code }: { code: string }) {
   );
 }
 
-export default function Header() {
+interface HeaderProps {
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
+}
+
+export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const { isDark } = useTheme();
   const [version, setVersion] = useState<string>("");
@@ -160,26 +171,41 @@ export default function Header() {
   return (
     <>
       <AntHeader className={styles.header}>
-        <div className={styles.logoWrapper}>
-          {/*
-            Slot lets a plugin replace the brand logo (e.g. a per-agent
-            branding override). When no plugin registers a replacement —
-            or when the registered render returns null — the host default
-            <img> below paints.
-          */}
-          <Slot name="header.logo" kind="replace">
-            <img
-              src={isDark ? "/logo-dark.svg" : "/logo-light.svg"}
-              alt="QwenPaw"
-              className={styles.logoImg}
-            />
-          </Slot>
-          <div className={styles.logoDivider} />
+        {/* AionUi TitleBar — left: collapse + nav arrows */}
+        <div className={styles.titlebarLeft}>
+          <AntButton
+            type="text"
+            size="small"
+            icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={onToggleSidebar}
+            className={styles.titlebarBtn}
+            aria-label="Toggle sidebar"
+          />
+          <AntButton
+            type="text"
+            size="small"
+            icon={<ArrowLeftOutlined />}
+            disabled
+            className={styles.titlebarBtn}
+            aria-label="Back"
+          />
+          <AntButton
+            type="text"
+            size="small"
+            icon={<ArrowRightOutlined />}
+            disabled
+            className={styles.titlebarBtn}
+            aria-label="Forward"
+          />
+        </div>
+
+        {/* Center: version badge (subtle) */}
+        <div className={styles.titlebarCenter}>
           {version && (
             <Badge
               dot={!!hasUpdate}
               color="rgba(255, 157, 77, 1)"
-              offset={[4, 28]}
+              offset={[4, 14]}
             >
               <span
                 className={`${styles.versionBadge} ${
@@ -194,10 +220,17 @@ export default function Header() {
             </Badge>
           )}
         </div>
+
         <Slot name="header.left" kind="fill" />
-        <Space size="middle">
+        <Space size={4}>
           <Slot name="header.right" kind="fill" />
+          {/* AionUi right side: minimal — only essential toggles visible, rest in ⋯ */}
+          <CodingModeToggle />
+          <LanguageSwitcher />
+          <ThemeToggleButton />
+          <div className={styles.headerDivider} />
           <Dropdown
+            trigger={["click"]}
             menu={{
               items: [
                 {
@@ -226,27 +259,25 @@ export default function Header() {
                   label: t("header.faq"),
                   onClick: () => handleNavClick(getFaqUrl(i18n.language)),
                 },
+                { type: "divider" },
+                {
+                  key: "github",
+                  icon: <GithubOutlined />,
+                  label: t("header.github"),
+                  onClick: () => handleNavClick(GITHUB_URL),
+                },
               ] as MenuProps["items"],
             }}
           >
-            <Button type="text">
-              {t("header.resources")} <DownOutlined />
-            </Button>
-          </Dropdown>
-          <Tooltip title={t("header.github")}>
-            <Button
+            <AntButton
               type="text"
-              icon={<GithubOutlined />}
-              onClick={() => handleNavClick(GITHUB_URL)}
+              size="small"
+              className={styles.titlebarBtn}
+              aria-label="More options"
             >
-              {t("header.github")}
-            </Button>
-          </Tooltip>
-          <div className={styles.headerDivider} />
-          <CodingModeToggle />
-          <div className={styles.headerDivider} />
-          <LanguageSwitcher />
-          <ThemeToggleButton />
+              ···
+            </AntButton>
+          </Dropdown>
         </Space>
       </AntHeader>
 

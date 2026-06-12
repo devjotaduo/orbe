@@ -1,169 +1,198 @@
-// ─── Home page — AionUi style ──────────────────────────────────────────────
 @import "../../styles/aionui-tokens.less";
 
-.root {
-  position: relative;
-  min-height: 100%;
-  background: var(--bg-1);
+// ─── Home / Welcome page ─────────────────────────────────────────────────────
+// AionUi spec: centered layout, avatar 64px, title @text-primary 28px weight 600,
+// subtitle @text-secondary 14px, suggestion cards border @border-base, hover @bg-hover,
+// icon @brand (periwinkle).
+
+.page {
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  padding-top: 13vh;
   overflow-y: auto;
+  background: transparent;
 }
 
-// ─── Centered content column ──────────────────────────────────────────────────
-.centerCol {
-  width: 100%;
-  max-width: 840px;
-  padding: 13vh 24px 120px;
+// ─── Hero section ─────────────────────────────────────────────────────────────
+.hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 12px;
+  margin-bottom: 40px;
 }
 
-// ─── Greeting ─────────────────────────────────────────────────────────────────
-.greeting {
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: @aou-1;
+  border: 2px solid @border-base;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.avatarIcon {
+  font-size: 32px;
+  color: @brand;
+}
+
+.title {
   font-size: 28px;
   font-weight: 600;
-  color: var(--text-primary);
+  line-height: 1.3;
+  color: @text-primary;
   margin: 0;
   text-align: center;
-  line-height: 1.3;
 }
 
-// ─── PillBar ──────────────────────────────────────────────────────────────────
-.pillBar {
-  display: flex;
-  gap: 6px;
-  padding: 4px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-base);
-  border-radius: 9999px;
+.subtitle {
+  font-size: 14px;
+  line-height: 1.5;
+  color: @text-secondary;
+  margin: 0;
+  text-align: center;
+  max-width: 460px;
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  height: 30px;
-  padding: 0 14px;
-  border-radius: 9999px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  outline: none;
-
-  &:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 1px;
-  }
-}
-
-.pillActive {
-  background: var(--bg-active);
-  color: var(--text-primary);
-}
-
-// ─── Assistant card grid ──────────────────────────────────────────────────────
-.cardGrid {
-  width: 100%;
+// ─── Suggestion cards ─────────────────────────────────────────────────────────
+.cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 400px) {
-    grid-template-columns: 1fr;
-  }
+  width: 100%;
+  max-width: 640px;
+  padding: 0 16px 40px;
 }
 
 .card {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding: 16px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-base);
-  border-radius: 12px;
+  gap: 12px;
+  padding: 14px 16px;
+  background: @bg-base;
+  border: 1px solid @border-base;
+  border-radius: @card-radius;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
   text-align: left;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
 
   &:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-special);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    background: @bg-hover;
+    border-color: @aou-4;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid @brand;
     outline-offset: 2px;
   }
 }
 
-.cardEmoji {
+.cardIcon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: @aou-1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  font-size: 22px;
-  border-radius: 10px;
-  background: var(--aou-1);
-  flex-shrink: 0;
+  color: @brand;
+  font-size: 16px;
 }
 
-.cardName {
+.cardContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  display: block;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 500;
   line-height: 1.4;
+  color: @text-primary;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cardDesc {
-  font-size: 13px;
-  color: var(--text-secondary);
+  display: block;
+  font-size: 12px;
   line-height: 1.5;
+  color: @text-muted;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
-// ─── Floating footer row ──────────────────────────────────────────────────────
-.footer {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-base);
-  border-radius: 9999px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.footerBtn {
-  color: var(--text-secondary) !important;
-
-  &:hover {
-    color: var(--text-primary) !important;
-    background: var(--bg-hover) !important;
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 600px) {
+  .cards {
+    grid-template-columns: 1fr;
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 1px;
+  .page {
+    padding-top: 8vh;
+  }
+}
+
+// ─── Dark mode ────────────────────────────────────────────────────────────────
+:global(.dark-mode) {
+  .avatar {
+    background: @brand-light-dark;
+    border-color: @border-base-dark;
+  }
+
+  .avatarIcon {
+    color: @brand-dark;
+  }
+
+  .title {
+    color: @text-primary-dark;
+  }
+
+  .subtitle {
+    color: @text-secondary-dark;
+  }
+
+  .card {
+    background: @bg-2-dark;
+    border-color: @border-base-dark;
+
+    &:hover {
+      background: @bg-hover-dark;
+      border-color: @border-special-dark;
+    }
+  }
+
+  .cardIcon {
+    background: @brand-light-dark;
+    color: @brand-dark;
+  }
+
+  .cardTitle {
+    color: @text-primary-dark;
+  }
+
+  .cardDesc {
+    color: @text-muted-dark;
   }
 }

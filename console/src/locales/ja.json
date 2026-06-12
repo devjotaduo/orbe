@@ -37,6 +37,28 @@
     "genericSubTitle": "このページのレンダリング中に予期しないエラーが発生しました。",
     "reload": "再読み込み"
   },
+  "home": {
+    "title": "Hello",
+    "subtitle": "What would you like to do today?",
+    "cards": {
+      "chat": {
+        "title": "Start Chatting",
+        "desc": "Talk with your AI agent in real time"
+      },
+      "skills": {
+        "title": "Skills",
+        "desc": "Add and manage agent capabilities"
+      },
+      "mcp": {
+        "title": "MCP",
+        "desc": "Connect tools via Model Context Protocol"
+      },
+      "settings": {
+        "title": "Agents",
+        "desc": "Manage agents and their configuration"
+      }
+    }
+  },
   "nav": {
     "chat": "チャット",
     "control": "コントロール",
@@ -2357,25 +2379,6 @@
       "NOT_FOUND": "ファイルが見つかりません。移動または削除された可能性があります。",
       "LOAD_FAILED": "ファイルプレビューの読み込みに失敗しました。",
       "LOAD_FAILED_DETAIL": "ファイルプレビューの読み込みに失敗しました: {{detail}}"
-    }
-  },
-  "home": {
-    "greeting": "何かお手伝いできることはありますか？",
-    "pillBar": { "label": "バックエンド選択" },
-    "pills": { "all": "すべて", "chat": "チャット", "code": "コード", "agent": "エージェント" },
-    "assistants": {
-      "chat": { "name": "チャット", "desc": "AIアシスタントと会話を始める" },
-      "coding": { "name": "コーディング", "desc": "AIエディタとペアプログラミング" },
-      "agent": { "name": "エージェント", "desc": "自律エージェントセッションの管理" },
-      "inbox": { "name": "受信トレイ", "desc": "メッセージと通知を確認する" },
-      "workspace": { "name": "ワークスペース", "desc": "ファイルとプロジェクトを閲覧する" },
-      "mcp": { "name": "MCPツール", "desc": "MCPツールサーバーを接続・管理する" }
-    },
-    "footer": {
-      "label": "クイックアクション",
-      "reportIssue": "問題を報告",
-      "star": "GitHubでスター",
-      "remote": "リモート接続"
     }
   }
 }
