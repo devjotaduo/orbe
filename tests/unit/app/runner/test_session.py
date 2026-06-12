@@ -203,9 +203,7 @@ async def test_update_session_state_empty_key_path_rejected(session, tmp_path):
     # exercise deterministic).
     (tmp_path / "u_sess-4.json").write_text("{}", encoding="utf-8")
 
-    from agentscope_runtime.engine.schemas.exception import (
-        ConfigurationException,
-    )
+    from qwenpaw.exceptions import ConfigurationException
 
     with pytest.raises(ConfigurationException):
         await session.update_session_state(

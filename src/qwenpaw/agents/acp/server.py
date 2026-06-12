@@ -693,26 +693,18 @@ class QwenPawACPAgent(Agent):
         # Lazily import command descriptions to avoid circular imports.
         # These modules may not exist in all deployment configurations.
         try:
-            from ...agents.command_handler import CommandHandler
+            from ...agents.command_handler import (
+                SYSTEM_COMMAND_DESCRIPTIONS,
+            )
+            from ...agents.mission.handler import (
+                MISSION_COMMAND_DESCRIPTIONS,
+            )
 
-            for name, desc in getattr(
-                CommandHandler,
-                "SYSTEM_COMMAND_DESCRIPTIONS",
-                {},
-            ).items():
+            for name, desc in {
+                **SYSTEM_COMMAND_DESCRIPTIONS,
+                **MISSION_COMMAND_DESCRIPTIONS,
+            }.items():
                 commands.append(AvailableCommand(name=name, description=desc))
-        except Exception:  # pylint: disable=broad-except
-            pass
-
-        try:
-            from ...agents.mission.handler import MISSION_COMMANDS
-
-            for cmd in MISSION_COMMANDS:
-                name = cmd.lstrip("/")
-                if name and name not in _ACP_REDUNDANT_COMMANDS:
-                    commands.append(
-                        AvailableCommand(name=name, description=""),
-                    )
         except Exception:  # pylint: disable=broad-except
             pass
 
