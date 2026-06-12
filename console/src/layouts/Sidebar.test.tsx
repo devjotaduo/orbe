@@ -53,7 +53,9 @@ vi.mock("@/stores/codingModeStore", () => ({
 }));
 
 vi.mock("@/hooks/useAppMessage", () => ({
-  useAppMessage: () => ({ message: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }),
+  useAppMessage: () => ({
+    message: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
+  }),
 }));
 
 vi.mock("@/components/AgentSelector", () => ({

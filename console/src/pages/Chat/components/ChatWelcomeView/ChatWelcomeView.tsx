@@ -4,8 +4,14 @@ import styles from "./ChatWelcomeView.module.less";
 
 // ── Icon palette for agent chips ─────────────────────────────────────────────
 const CHIP_COLORS = [
-  "#1a1a2e", "#7c3aed", "#0891b2", "#065f46",
-  "#9a3412", "#1e40af", "#6b21a8", "#0f766e",
+  "#1a1a2e",
+  "#7c3aed",
+  "#0891b2",
+  "#065f46",
+  "#9a3412",
+  "#1e40af",
+  "#6b21a8",
+  "#0f766e",
 ];
 
 function chipColor(id: string): string {
@@ -31,15 +37,69 @@ function agentLabel(name: string, id: string): string {
 
 // ── Mocked prompt cards — colorful app-icon style ─────────────────────────────
 const MOCK_CARDS = [
-  { icon: "⚡", color: "#ff6b35", bg: "#fff1ec", name: "Cowork",            sub: "Autonomous task execution for complex workflows" },
-  { icon: "🧜",  color: "#e91e8c", bg: "#fff0f7", name: "Beautiful Mermaid", sub: "Create flowcharts, sequence diagrams and more" },
-  { icon: "📊", color: "#1565c0", bg: "#e8f0fe", name: "PPT Creator",       sub: "Create, edit, and analyze pro presentations" },
-  { icon: "🎬", color: "#37474f", bg: "#f1f3f4", name: "3D Morph PPT",      sub: "Turn a GLB 3D model into a cinematic slide" },
-  { icon: "🎯", color: "#c62828", bg: "#fce4e4", name: "Pitch Deck Creator", sub: "Build investor pitch decks, pr..." },
-  { icon: "🎮", color: "#1b5e20", bg: "#e8f5e9", name: "3D Game",           sub: "Generate a complete 3D platform game" },
-  { icon: "📖", color: "#78909c", bg: "#f5f5f5", name: "Story Roleplay",    sub: "Immersive story roleplay experience" },
-  { icon: "📋", color: "#546e7a", bg: "#eceff1", name: "Star Office Helper", sub: "Install, connect, and troubleshoot office apps" },
-  { icon: "📈", color: "#00838f", bg: "#e0f7fa", name: "Dashboard Creator", sub: "Turn CSV or tabular data into dashboards" },
+  {
+    icon: "⚡",
+    color: "#ff6b35",
+    bg: "#fff1ec",
+    name: "Cowork",
+    sub: "Autonomous task execution for complex workflows",
+  },
+  {
+    icon: "🧜",
+    color: "#e91e8c",
+    bg: "#fff0f7",
+    name: "Beautiful Mermaid",
+    sub: "Create flowcharts, sequence diagrams and more",
+  },
+  {
+    icon: "📊",
+    color: "#1565c0",
+    bg: "#e8f0fe",
+    name: "PPT Creator",
+    sub: "Create, edit, and analyze pro presentations",
+  },
+  {
+    icon: "🎬",
+    color: "#37474f",
+    bg: "#f1f3f4",
+    name: "3D Morph PPT",
+    sub: "Turn a GLB 3D model into a cinematic slide",
+  },
+  {
+    icon: "🎯",
+    color: "#c62828",
+    bg: "#fce4e4",
+    name: "Pitch Deck Creator",
+    sub: "Build investor pitch decks, pr...",
+  },
+  {
+    icon: "🎮",
+    color: "#1b5e20",
+    bg: "#e8f5e9",
+    name: "3D Game",
+    sub: "Generate a complete 3D platform game",
+  },
+  {
+    icon: "📖",
+    color: "#78909c",
+    bg: "#f5f5f5",
+    name: "Story Roleplay",
+    sub: "Immersive story roleplay experience",
+  },
+  {
+    icon: "📋",
+    color: "#546e7a",
+    bg: "#eceff1",
+    name: "Star Office Helper",
+    sub: "Install, connect, and troubleshoot office apps",
+  },
+  {
+    icon: "📈",
+    color: "#00838f",
+    bg: "#e0f7fa",
+    name: "Dashboard Creator",
+    sub: "Turn CSV or tabular data into dashboards",
+  },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -47,17 +107,18 @@ const MOCK_CARDS = [
 export function ChatWelcomeView({ greeting, onSubmit }: WelcomeRenderProps) {
   const { agents, selectedAgent, setSelectedAgent } = useAgentStore();
 
-  const enabled    = (agents ?? []).filter((a) => a.enabled);
-  const active     = enabled.find((a) => a.id === selectedAgent);
-  const others     = enabled.filter((a) => a.id !== selectedAgent);
+  const enabled = (agents ?? []).filter((a) => a.enabled);
+  const active = enabled.find((a) => a.id === selectedAgent);
+  const others = enabled.filter((a) => a.id !== selectedAgent);
   const chipOthers = others.slice(0, 10);
-  const moreCount  = Math.max(0, enabled.length - 1 - chipOthers.length);
+  const moreCount = Math.max(0, enabled.length - 1 - chipOthers.length);
 
   return (
     <div className={styles.root}>
-
       {/* ── Title ── */}
-      <h1 className={styles.title}>{greeting || "Hi, what's your plan for today?"}</h1>
+      <h1 className={styles.title}>
+        {greeting || "Hi, what's your plan for today?"}
+      </h1>
 
       {/* ── Single pill agent row ── */}
       {enabled.length > 0 && (
@@ -75,7 +136,9 @@ export function ChatWelcomeView({ greeting, onSubmit }: WelcomeRenderProps) {
                 >
                   {initials(active.name, active.id)}
                 </span>
-                <span className={styles.agentName}>{agentLabel(active.name, active.id)}</span>
+                <span className={styles.agentName}>
+                  {agentLabel(active.name, active.id)}
+                </span>
               </button>
               {chipOthers.length > 0 && <span className={styles.sep}>|</span>}
             </>
@@ -96,7 +159,9 @@ export function ChatWelcomeView({ greeting, onSubmit }: WelcomeRenderProps) {
                   {initials(a.name, a.id)}
                 </span>
               </button>
-              {i < chipOthers.length - 1 && <span className={styles.sep}>|</span>}
+              {i < chipOthers.length - 1 && (
+                <span className={styles.sep}>|</span>
+              )}
             </span>
           ))}
 
@@ -134,7 +199,6 @@ export function ChatWelcomeView({ greeting, onSubmit }: WelcomeRenderProps) {
           </button>
         ))}
       </div>
-
     </div>
   );
 }

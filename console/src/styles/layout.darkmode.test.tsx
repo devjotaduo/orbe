@@ -14,10 +14,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import path from "path";
 
-const LAYOUT_CSS_PATH = path.resolve(
-  __dirname,
-  "layout.css",
-);
+const LAYOUT_CSS_PATH = path.resolve(__dirname, "layout.css");
 
 const layoutCss = readFileSync(LAYOUT_CSS_PATH, "utf-8");
 
@@ -45,10 +42,7 @@ function hasDarkOverrideWithToken(
       selectorPart.includes(classSelector)
     ) {
       // The body must contain the property set to var(...)
-      const propPattern = new RegExp(
-        `${property}\\s*:\\s*var\\(`,
-        "i",
-      );
+      const propPattern = new RegExp(`${property}\\s*:\\s*var\\(`, "i");
       if (propPattern.test(bodyPart)) return true;
     }
   }
@@ -58,14 +52,17 @@ function hasDarkOverrideWithToken(
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("layout.css dark-mode token application", () => {
-
   it("dark-mode scope contains a background rule for .qwenpaw-bubble-list-wrapper", () => {
     // There must be an 'html.dark-mode .qwenpaw-bubble-list-wrapper' rule
-    expect(layoutCss).toMatch(/html\.dark-mode[\s\S]*?\.qwenpaw-bubble-list-wrapper/);
+    expect(layoutCss).toMatch(
+      /html\.dark-mode[\s\S]*?\.qwenpaw-bubble-list-wrapper/,
+    );
   });
 
   it("dark-mode scope contains a background rule for .qwenpaw-chat-anywhere-input", () => {
-    expect(layoutCss).toMatch(/html\.dark-mode[\s\S]*?\.qwenpaw-chat-anywhere-input/);
+    expect(layoutCss).toMatch(
+      /html\.dark-mode[\s\S]*?\.qwenpaw-chat-anywhere-input/,
+    );
   });
 
   it(".qwenpaw-bubble-list-wrapper dark-mode background uses a CSS variable (not hardcoded #fff)", () => {

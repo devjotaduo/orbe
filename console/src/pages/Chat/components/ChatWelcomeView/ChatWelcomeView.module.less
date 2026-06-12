@@ -53,7 +53,9 @@
   font-weight: 600;
   white-space: nowrap;
 
-  &:hover { background: @bg-2; }
+  &:hover {
+    background: @bg-2;
+  }
 }
 
 .agentName {
@@ -99,7 +101,9 @@
   cursor: pointer;
   border-radius: 50%;
 
-  &:hover { background: @bg-2; }
+  &:hover {
+    background: @bg-2;
+  }
 }
 
 .sep {
@@ -124,7 +128,10 @@
   font-weight: 400;
   border-radius: 50%;
 
-  &:hover { background: @bg-2; color: @text-primary; }
+  &:hover {
+    background: @bg-2;
+    color: @text-primary;
+  }
 }
 
 // ── "Select assistant" label ──────────────────────────────────────────────────
@@ -167,7 +174,9 @@
     transform: translateY(-1px);
   }
 
-  &:active { transform: none; }
+  &:active {
+    transform: none;
+  }
 }
 
 // Square app-icon style avatar
@@ -218,33 +227,66 @@
 
 // ── Dark mode ─────────────────────────────────────────────────────────────────
 :global(.dark-mode) {
-  .title { color: @text-primary-dark; }
+  .title {
+    color: @text-primary-dark;
+  }
 
   .agentPill {
     background: @bg-1-dark;
     border-color: @border-base-dark;
   }
 
-  .agentActive { color: @text-primary-dark; &:hover { background: @bg-2-dark; } }
-  .agentName   { color: @text-primary-dark; }
-  .agentIconBtn { &:hover { background: @bg-2-dark; } }
-  .agentPlusBtn { color: @text-muted-dark; &:hover { background: @bg-2-dark; color: @text-primary-dark; } }
+  .agentActive {
+    color: @text-primary-dark;
+    &:hover {
+      background: @bg-2-dark;
+    }
+  }
+  .agentName {
+    color: @text-primary-dark;
+  }
+  .agentIconBtn {
+    &:hover {
+      background: @bg-2-dark;
+    }
+  }
+  .agentPlusBtn {
+    color: @text-muted-dark;
+    &:hover {
+      background: @bg-2-dark;
+      color: @text-primary-dark;
+    }
+  }
 
-  .sep { color: @border-base-dark; }
+  .sep {
+    color: @border-base-dark;
+  }
 
-  .selectLabel { color: @text-muted-dark; }
+  .selectLabel {
+    color: @text-muted-dark;
+  }
 
   .card {
     background: @bg-1-dark;
     border-color: @border-base-dark;
-    &:hover { border-color: @aou-7; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+    &:hover {
+      border-color: @aou-7;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
   }
 
-  .cardName { color: @text-primary-dark; }
-  .cardSub  { color: @text-muted-dark; }
+  .cardName {
+    color: @text-primary-dark;
+  }
+  .cardSub {
+    color: @text-muted-dark;
+  }
 }
 
 // ── Reduced motion ────────────────────────────────────────────────────────────
 @media (prefers-reduced-motion: reduce) {
-  .card { transition: none; transform: none !important; }
+  .card {
+    transition: none;
+    transform: none !important;
+  }
 }

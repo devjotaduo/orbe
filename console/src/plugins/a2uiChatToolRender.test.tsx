@@ -62,9 +62,7 @@ const SURFACE_MSGS = [
   {
     messageType: "updateComponents",
     surfaceId: "s",
-    components: [
-      { id: "root", type: "Column", properties: {}, children: [] },
-    ],
+    components: [{ id: "root", type: "Column", properties: {}, children: [] }],
   },
   { messageType: "updateDataModel", surfaceId: "s", data: { name: "Ada" } },
 ];
@@ -97,7 +95,11 @@ function chatDataNamed(name: string): AnyRec {
                   { id: "root", type: "Column", properties: {}, children: [] },
                 ],
               },
-              { messageType: "updateDataModel", surfaceId: "s", data: { name } },
+              {
+                messageType: "updateDataModel",
+                surfaceId: "s",
+                data: { name },
+              },
             ],
           },
         },
