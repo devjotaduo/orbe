@@ -166,3 +166,56 @@ async def test_reflect_confidence_clamped(tmp_path):
     await s.reflect("usa planilha", updates)
     area = next(a for a in s.state.open_areas if a.id == "estoque")
     assert area.confidence == 1.0
+
+
+# --- connector_lookup (spec known-connectors) --------------------------------
+
+@pytest.mark.asyncio
+async def test_connector_lookup_known_kind(tmp_path):
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    chunk = await s.connector_lookup("whatsapp")
+    text = _text(chunk)
+    assert "evolution-api" in text
+    assert "recomendado" in text
+
+
+@pytest.mark.asyncio
+async def test_connector_lookup_unknown_kind_errors_with_valid_list(tmp_path):
+    from agentscope.message import ToolResultState
+
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    chunk = await s.connector_lookup("blockchain")
+    assert chunk.state == ToolResultState.ERROR
+    assert "whatsapp" in _text(chunk)  # lista os kinds válidos
+
+
+@pytest.mark.asyncio
+async def test_connector_lookup_kind_without_connectors_guides_build(tmp_path):
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    chunk = await s.connector_lookup("pdv")
+    text = _text(chunk).lower()
+    assert "build" in text
+    assert "open_question" in text
+
+
+@pytest.mark.asyncio
+async def test_connector_lookup_filters_by_state_segment(tmp_path):
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    s.state.company.segment = "ecommerce"
+    chunk = await s.connector_lookup("juridico")
+    # brlaw-mcp é restrito a servicos_b2b: para ecommerce não aparece
+    assert "brlaw" not in _text(chunk)
+
+    s.state.company.segment = "servicos_b2b"
+    chunk = await s.connector_lookup("juridico")
+    assert "brlaw" in _text(chunk)
+
+
+def test_toolkit_has_four_tools(tmp_path):
+    s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
+    tk = s.build_toolkit()
+    # Toolkit do agentscope 2.0.0 não expõe `.tools` público: as tools do
+    # construtor entram no ToolGroup público 'basic' (tool_groups[0]).
+    # Deve registrar segment_lookup, reflect, emit_blueprint,
+    # connector_lookup.
+    assert len(tk.tool_groups[0].tools) == 4
