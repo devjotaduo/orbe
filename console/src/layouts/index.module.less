@@ -222,32 +222,6 @@
     }
   }
 
-  // SiderSearch — input de busca, visível apenas quando expandido
-  .siderSearch {
-    padding: 4px 10px 6px;
-    flex-shrink: 0;
-
-    :global {
-      .qwenpaw-input-affix-wrapper {
-        height: @sider-search-height;
-        background: @sider-search-bg !important;
-        border: none !important;
-        border-radius: @sidebar-radius !important;
-        box-shadow: none !important;
-        font-size: 13px;
-
-        &:hover, &:focus-within {
-          background: @bg-3 !important;
-        }
-      }
-
-      .qwenpaw-input {
-        background: transparent !important;
-        font-size: 13px;
-      }
-    }
-  }
-
   // Menu takes remaining space
   .sideMenu {
     flex: 1;
@@ -468,18 +442,6 @@
 .siderDark {
   background: @bg-1-dark !important;
   border-right-color: @border-base-dark !important;
-
-  .siderSearch {
-    :global {
-      .qwenpaw-input-affix-wrapper {
-        background: @sider-search-bg-dark !important;
-
-        &:hover, &:focus-within {
-          background: @bg-3-dark !important;
-        }
-      }
-    }
-  }
 
   .agentScopedSection {
     background: transparent;
