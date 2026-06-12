@@ -1194,6 +1194,8 @@
     "viewMore": "Ver mais ({{count}})"
   },
   "tokenUsage": {
+    "filterByUser": "Filtrar por usuário",
+    "allUsers": "Todos os usuários",
     "title": "Uso de Tokens",
     "description": "View LLM token consumption over time, by date and model.",
     "totalTokens": "Total Tokens",

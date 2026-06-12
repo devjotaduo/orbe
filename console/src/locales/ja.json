@@ -960,6 +960,8 @@
     "hideValue": "値を非表示"
   },
   "tokenUsage": {
+    "filterByUser": "ユーザーで絞り込み",
+    "allUsers": "すべてのユーザー",
     "title": "Token 使用量",
     "totalTokens": "合計 Token",
     "totalCalls": "総呼び出し回数",

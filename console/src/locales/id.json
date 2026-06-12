@@ -870,6 +870,10 @@
       "failedPrefix": "Gagal: {{msg}}"
     }
   },
+  "tokenUsage": {
+    "filterByUser": "Filter menurut pengguna",
+    "allUsers": "Semua pengguna"
+  },
   "startup": {
     "starting": "Memulai backend...",
     "checking": "Menghubungkan ke backend...",

@@ -1,0 +1,17 @@
+{
+  "id": "nexora-admin",
+  "name": "Nexora Admin",
+  "version": "1.0.0",
+  "type": "general",
+  "description": "Páginas administrativas da camada enterprise: auditoria de eventos (logins, operações, bloqueios de permissão). Visível apenas para usuários com a permissão audit.view.",
+  "description_i18n": {
+    "zh-CN": "企业层管理页面：审计日志（登录、平台操作、权限拦截）。仅对拥有 audit.view 权限的用户可见。",
+    "en-US": "Enterprise admin pages: audit log of events (logins, platform operations, permission denials). Visible only to users with the audit.view permission."
+  },
+  "author": "QwenPaw Team",
+  "entry": {
+    "frontend": "ui/dist/index.js"
+  },
+  "dependencies": [],
+  "min_version": "1.1.6"
+}
