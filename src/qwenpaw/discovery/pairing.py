@@ -17,7 +17,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from .deploy import _is_client_facing, _load_deployed, load_blueprint
+from .deploy import (
+    DeployError,
+    _is_client_facing,
+    _load_deployed,
+    load_blueprint,
+)
+from .state import TeamBlueprint
 
 # E.164: '+' seguido de 5 a 15 digitos (primeiro nao-zero).
 _E164_RE = re.compile(r"^\+[1-9]\d{4,14}$")
@@ -29,6 +35,19 @@ _PAIR_TIMEOUT_SECONDS = 120.0
 
 class PairError(Exception):
     """Erro claro para o usuario (sessao/agente/numero invalidos)."""
+
+
+def _load_blueprint_or_pair(session_dir: Path) -> TeamBlueprint:
+    """Carrega o blueprint convertendo DeployError -> PairError.
+
+    Assim toda falha que o modulo de pareamento expoe ao usuario e
+    PairError (a CLI so captura PairError/PairingError), evitando que um
+    DeployError (blueprint ausente/invalido) vaze como traceback cru.
+    """
+    try:
+        return load_blueprint(session_dir)
+    except DeployError as exc:
+        raise PairError(str(exc)) from exc
 
 
 @dataclass
@@ -103,7 +122,7 @@ def _choose_agent(
             )
         return by_id[agent_id], agent_id
 
-    blueprint = load_blueprint(session_dir)
+    blueprint = _load_blueprint_or_pair(session_dir)
     for spec in blueprint.proposed_team:
         if _is_client_facing(spec) and spec.name in deployed:
             return spec.name, deployed[spec.name]
@@ -136,7 +155,7 @@ def _resolve_phone(
             )
         return candidate
 
-    blueprint = load_blueprint(session_dir)
+    blueprint = _load_blueprint_or_pair(session_dir)
     raw = (
         blueprint.onboarding.whatsapp_number if blueprint.onboarding else None
     )
