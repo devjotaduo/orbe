@@ -219,6 +219,8 @@ async def reload_channel_service(
        change — the file on disk gets the new values but the running channel
        keeps its old ones.
     """
+    from ...config import Config, update_last_dispatch
+    from ..channels.manager import ChannelManager
     from ..channels.utils import make_process_from_runner
 
     _logger = logger  # reuse module-level logger
@@ -229,9 +231,18 @@ async def reload_channel_service(
         return
 
     new_process = make_process_from_runner(runner)
+    new_channels_config = getattr(ws._config, "channels", None)
+
+    def on_last_dispatch(channel, user_id, session_id):
+        update_last_dispatch(
+            channel=channel,
+            user_id=user_id,
+            session_id=session_id,
+            agent_id=ws.agent_id,
+        )
+
     # Snapshot list — `replace_channel` mutates `cm.channels` mid-iteration.
     snapshot = list(cm.channels)
-    new_channels_config = getattr(ws._config, "channels", None)
     for ch in snapshot:
         old_id = id(getattr(ch, "_process", None))
         ch._process = new_process
@@ -287,6 +298,32 @@ async def reload_channel_service(
                 "running channel may have stale config",
                 ch.channel,
             )
+
+    if new_channels_config is not None:
+        desired_manager = ChannelManager.from_config(
+            process=new_process,
+            config=Config(channels=new_channels_config),
+            on_last_dispatch=on_last_dispatch,
+            workspace_dir=ws.workspace_dir,
+        )
+        existing_channels = {ch.channel for ch in cm.channels}
+        for new_ch in desired_manager.channels:
+            if new_ch.channel in existing_channels:
+                continue
+            if hasattr(new_ch, "set_workspace"):
+                new_ch.set_workspace(ws, cm._command_registry)
+            try:
+                await cm.replace_channel(new_ch)
+                existing_channels.add(new_ch.channel)
+                _logger.info(
+                    "channel_manager reload: %s added from new config",
+                    new_ch.channel,
+                )
+            except Exception:
+                _logger.exception(
+                    "channel_manager reload: failed to add channel %s",
+                    new_ch.channel,
+                )
 
     cm.set_workspace(ws)
     _logger.info(

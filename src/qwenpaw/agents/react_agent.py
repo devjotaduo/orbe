@@ -617,17 +617,22 @@ class QwenPawAgent(CodingModeMixin, Agent):
             if err:
                 from agentscope.message import ToolResultBlock
 
+                tool_call_id = (
+                    tool_call.get("id", "")
+                    if isinstance(tool_call, dict)
+                    else getattr(tool_call, "id", "")
+                )
                 tool_res_msg = Msg(
-                    "system",
-                    [
+                    name="assistant",
+                    role="assistant",
+                    content=[
                         ToolResultBlock(
                             type="tool_result",
-                            id=tool_call["id"],
+                            id=tool_call_id,
                             name=tool_name,
-                            output=[{"type": "text", "text": err}],
+                            output=[TextBlock(type="text", text=err)],
                         ),
                     ],
-                    "system",
                 )
                 await self.print(tool_res_msg, True)
                 await self.memory.add(tool_res_msg)
