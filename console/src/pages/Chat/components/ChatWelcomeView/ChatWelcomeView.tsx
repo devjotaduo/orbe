@@ -1,10 +1,8 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import type { WelcomeRenderProps } from "../../../../plugins/registry/types";
 import { useAgentStore } from "../../../../stores/agentStore";
 import styles from "./ChatWelcomeView.module.less";
 
-// ── Avatar color palette ──────────────────────────────────────────────────────
+// ── Avatar palette ────────────────────────────────────────────────────────────
 const PALETTE: [string, string][] = [
   ["#7583b2", "#596590"],
   ["#ff7d00", "#c24b00"],
@@ -13,10 +11,10 @@ const PALETTE: [string, string][] = [
   ["#f53f3f", "#b52020"],
   ["#722ed1", "#4a1a9e"],
   ["#0fc6c2", "#0a8c89"],
-  ["#f77234", "#c44a10"],
+  ["#e68a00", "#9e5c00"],
 ];
 
-function avatarColors(seed: string): [string, string] {
+function avatarColor(seed: string): [string, string] {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + h * 31;
   return PALETTE[Math.abs(h) % PALETTE.length];
@@ -28,88 +26,49 @@ function initials(name: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-function AgentAvatar({
-  id,
-  name,
-  size,
-  className,
-}: {
-  id: string;
-  name: string;
-  size: number;
-  className?: string;
-}) {
-  const [from, to] = avatarColors(id);
+function Avatar({ seed, size }: { seed: string; size: number }) {
+  const [from, to] = avatarColor(seed);
   return (
     <div
-      className={className}
+      className={styles.avatar}
       style={{
         width: size,
         height: size,
-        borderRadius: "50%",
-        background: `linear-gradient(135deg, ${from}, ${to})`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         fontSize: size * 0.36,
-        fontWeight: 700,
-        color: "#fff",
-        flexShrink: 0,
-        userSelect: "none",
+        background: `linear-gradient(135deg, ${from}, ${to})`,
       }}
     >
-      {initials(name || id)}
+      {initials(seed)}
     </div>
   );
 }
 
+// ── Mocked prompt cards (reference style) ────────────────────────────────────
+const MOCK_CARDS = [
+  { seed: "PA", name: "Patrick · Slide Cr...", sub: "Slides from bullet po...", prompt: "Create a slide presentation from bullet points" },
+  { seed: "EM", name: "Emily · Excel Crea...", sub: "Pivot, chart & clean...", prompt: "Create an Excel spreadsheet with pivot tables and charts" },
+  { seed: "WA", name: "Warren · Financi...", sub: "DCF, cap tables, 3-stmt", prompt: "Build a financial model with DCF and cap tables" },
+  { seed: "AL", name: "Albert · Academi...", sub: "Outline or full draft", prompt: "Help me write an academic paper outline or full draft" },
+  { seed: "ST", name: "Stella · UI/UX Desi...", sub: "Design with best pra...", prompt: "Design a UI/UX with best practices" },
+  { seed: "MA", name: "Marco · Morph PPT", sub: "Cinematic presenta...", prompt: "Create a cinematic PowerPoint presentation" },
+  { seed: "WI", name: "William · Word Cr...", sub: "Reports, proposals, l...", prompt: "Write a professional report or proposal" },
+  { seed: "CA", name: "Carlos · Cowork ...", sub: "Complex tasks, end-...", prompt: "Help me with a complex end-to-end task" },
+];
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ChatWelcomeView({
-  greeting,
-  prompts = [],
-  onSubmit,
-}: WelcomeRenderProps) {
-  const navigate = useNavigate();
+export function ChatWelcomeView({ greeting, onSubmit }: WelcomeRenderProps) {
   const { agents, selectedAgent, setSelectedAgent } = useAgentStore();
-  const [inputValue, setInputValue] = useState("");
 
   const enabledAgents = (agents ?? []).filter((a) => a.enabled);
-  // Icon row: active agent first, then others (max 8 total)
   const activeAgent = enabledAgents.find((a) => a.id === selectedAgent);
   const otherAgents = enabledAgents.filter((a) => a.id !== selectedAgent);
   const chipAgents = activeAgent
-    ? [activeAgent, ...otherAgents].slice(0, 8)
-    : otherAgents.slice(0, 8);
-  const moreChips = Math.max(0, enabledAgents.length - 8);
+    ? [activeAgent, ...otherAgents].slice(0, 9)
+    : otherAgents.slice(0, 9);
+  const moreChips = Math.max(0, enabledAgents.length - 9);
 
-  // Cards: show up to 8 agents in 3-col grid
-  const cardAgents = enabledAgents.slice(0, 8);
-  const moreCards = Math.max(0, enabledAgents.length - 8);
-
-  const handleSend = useCallback(() => {
-    const text = inputValue.trim();
-    if (!text) return;
-    setInputValue("");
-    onSubmit({ query: text });
-  }, [inputValue, onSubmit]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const handleSelectAgent = (id: string) => {
-    setSelectedAgent(id);
-    navigate("/chat");
-  };
-
-  const displayTitle =
-    greeting || "Hi, what's your plan for today?";
-
-  const agentLabel = (name: string | undefined, id: string) =>
+  const agentLabel = (name: string, id: string) =>
     (name || id)
       .replace(/-/g, " ")
       .split(" ")
@@ -118,122 +77,58 @@ export function ChatWelcomeView({
 
   return (
     <div className={styles.welcomeRoot}>
-      {/* ── Title ── */}
-      <h1 className={styles.title}>{displayTitle}</h1>
+      {/* Title */}
+      <h1 className={styles.title}>{greeting || "Hi, what's your plan for today?"}</h1>
 
-      {/* ── Agent icon chips ── */}
+      {/* Agent chips row */}
       {chipAgents.length > 0 && (
-        <div className={styles.agentChipsRow}>
+        <div className={styles.chipsRow}>
           {chipAgents.map((a) => {
             const isActive = a.id === selectedAgent;
             return (
               <button
                 key={a.id}
-                className={`${styles.agentChip} ${isActive ? styles.agentChipActive : ""} ${!isActive ? styles.agentChipIconOnly : ""}`}
+                className={`${styles.chip} ${isActive ? styles.chipActive : ""}`}
                 onClick={() => setSelectedAgent(a.id)}
                 title={agentLabel(a.name, a.id)}
               >
-                <AgentAvatar
-                  id={a.id}
-                  name={a.name || a.id}
-                  size={24}
-                  className={styles.agentChipAvatar}
-                />
+                <Avatar seed={a.id} size={22} />
                 {isActive && (
-                  <span>{agentLabel(a.name, a.id)}</span>
+                  <span className={styles.chipLabel}>
+                    {agentLabel(a.name, a.id)}
+                  </span>
                 )}
               </button>
             );
           })}
           {moreChips > 0 && (
-            <button className={`${styles.agentChip} ${styles.agentChipMore}`}>
-              +
-            </button>
+            <button className={`${styles.chip} ${styles.chipPlus}`}>+</button>
           )}
         </div>
       )}
 
-      {/* ── Input box ── */}
-      <div className={styles.inputBox}>
-        <textarea
-          className={styles.inputTextarea}
-          placeholder="Send a message, upload files, or describe a task..."
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          rows={2}
-          autoFocus
-        />
-        <div className={styles.inputBar}>
-          <div className={styles.inputTags}>
-            {activeAgent && (
-              <span className={styles.inputTag}>
-                {agentLabel(activeAgent.name, activeAgent.id)}
-              </span>
-            )}
-          </div>
+      {/* "Select assistant" label */}
+      <p className={styles.selectLabel}>Select an assistant to start a task</p>
+
+      {/* Mocked prompt cards — 3-column grid */}
+      <div className={styles.cardGrid}>
+        {MOCK_CARDS.map((card, i) => (
           <button
-            className={`${styles.sendBtn} ${inputValue.trim() ? styles.sendBtnActive : ""}`}
-            onClick={handleSend}
-            disabled={!inputValue.trim()}
-            aria-label="Send"
+            key={i}
+            className={styles.card}
+            onClick={() => onSubmit({ query: card.prompt })}
           >
-            ↑
+            <Avatar seed={card.seed} size={44} />
+            <div className={styles.cardInfo}>
+              <div className={styles.cardName}>{card.name}</div>
+              <div className={styles.cardSub}>{card.sub}</div>
+            </div>
           </button>
-        </div>
+        ))}
+        <button className={`${styles.card} ${styles.cardMore}`}>
+          +10 more
+        </button>
       </div>
-
-      {/* ── Agent cards ── */}
-      {cardAgents.length > 0 && (
-        <>
-          <p className={styles.selectLabel}>Select an assistant to start a task</p>
-          <div className={styles.agentGrid}>
-            {cardAgents.map((a) => (
-              <button
-                key={a.id}
-                className={styles.agentCard}
-                onClick={() => handleSelectAgent(a.id)}
-              >
-                <AgentAvatar
-                  id={a.id}
-                  name={a.name || a.id}
-                  size={44}
-                  className={styles.agentAvatar}
-                />
-                <div className={styles.agentCardInfo}>
-                  <div className={styles.agentCardName}>
-                    {agentLabel(a.name, a.id)}
-                  </div>
-                  {a.description && (
-                    <div className={styles.agentCardDesc}>{a.description}</div>
-                  )}
-                </div>
-              </button>
-            ))}
-            {moreCards > 0 && (
-              <button className={`${styles.agentCard} ${styles.agentCardMore}`}>
-                +{moreCards} more
-              </button>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* ── Prompt fallback when no agents ── */}
-      {cardAgents.length === 0 && prompts.length > 0 && (
-        <div className={styles.promptList}>
-          {prompts.map((p, i) => (
-            <button
-              key={i}
-              className={styles.promptCard}
-              onClick={() => onSubmit({ query: p.value })}
-            >
-              <span>{p.label ?? p.value}</span>
-              <span className={styles.promptArrow}>→</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
