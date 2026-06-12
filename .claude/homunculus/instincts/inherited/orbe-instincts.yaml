@@ -1,0 +1,714 @@
+# Instincts generated from https://github.com/devjotaduo/orbe
+# Generated: 2026-06-12T10:27:33.543Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: orbe-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, fix, docs, test
+
+## Evidence
+
+- 100 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat(discovery): taxonomia híbrida de segmento com seed CNAE, docs(i18n): spec de tradução pt-BR do workspace QwenPaw
+
+---
+id: orbe-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Commit Length
+
+## Action
+
+Write moderate-length commit messages (~69 characters)
+
+## Evidence
+
+- Average commit message length: 69 chars
+- Based on 100 commits
+
+---
+id: orbe-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: orbe-import-alias
+trigger: "when importing modules"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Import Alias
+
+## Action
+
+Use path aliases (@/, ~/) instead of relative imports
+
+## Evidence
+
+- Import analysis shows alias pattern
+- Example: import { x } from '@/lib/x'
+
+---
+id: orbe-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: orbe-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: orbe-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Test Framework
+
+## Action
+
+Use vitest as the test framework
+
+## Evidence
+
+- Test framework detected: vitest
+- File pattern: *.test.tsx
+
+---
+id: orbe-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.tsx
+
+## Evidence
+
+- File pattern: *.test.tsx
+- Consistent across test files
+
+---
+id: orbe-test-mocking
+trigger: "when mocking dependencies in tests"
+confidence: 0.75
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Test Mocking
+
+## Action
+
+Use vi.mock for mocking
+
+## Evidence
+
+- Mocking pattern detected: vi.mock
+- Consistent across test files
+
+---
+id: orbe-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Test Types
+
+## Action
+
+Write unit, integration tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, integration
+- Coverage config: no
+
+---
+id: orbe-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~19x per month
+- Files: console/src/*, console/src/layouts/registry/*, console/src/pages/home/*
+
+---
+id: orbe-workflow-add-or-update-discovery-tool-or-feature
+trigger: "when doing add or update discovery tool or feature"
+confidence: 0.75
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Workflow Add Or Update Discovery Tool Or Feature
+
+## Action
+
+Follow the add-or-update-discovery-tool-or-feature workflow:
+1. Implement or update feature in src/qwenpaw/discovery/*.py (tools.py, agent.py, runner.py, prompts.py, taxonomy.py, etc.)
+2. Update or add supporting data files if needed (e.g., segments/data/cnae_seed.json)
+3. Add or update tests in tests/discovery/ (test_tools.py, test_runner.py, test_taxonomy.py, etc.)
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~5x per month
+- Files: src/qwenpaw/discovery/tools.py, src/qwenpaw/discovery/agent.py, src/qwenpaw/discovery/runner.py
+
+---
+id: orbe-workflow-add-or-update-i18n-ptbr-support
+trigger: "when doing add or update i18n ptbr support"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Workflow Add Or Update I18n Ptbr Support
+
+## Action
+
+Follow the add-or-update-i18n-ptbr-support workflow:
+1. Add or update pt-BR translation files (console/src/locales/pt-BR.json, plugin.json, PROFILE.md, SOUL.md, SKILL.md, etc.)
+2. Add or update tests to verify pt-BR content (tests/frontend/test_ptbr_locale.py, tests/plugins/test_plugin_ptbr.py, tests/plugins/test_agent_pt_profiles.py, tests/skill_system/test_pt_skills_part1.py, test_pt_skills_part2.py, test_registry_pt.py)
+3. Optionally add or update scripts/check_ptbr.py and its tests for automated verification
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: console/src/locales/pt-BR.json, plugins/bundle/*/plugin.json, plugins/bundle/*/agents/*/pt/PROFILE.md
+
+---
+id: orbe-workflow-ui-theme-refactor-and-homepage
+trigger: "when doing ui theme refactor and homepage"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Workflow Ui Theme Refactor And Homepage
+
+## Action
+
+Follow the ui-theme-refactor-and-homepage workflow:
+1. Add or update CSS/LESS tokens (console/src/styles/aionui-tokens.less, aionui-tokens.css, layout.css)
+2. Refactor layout and component styles to use tokens instead of hardcoded colors (index.module.less, layout.css, etc.)
+3. Add or update Home page files (console/src/pages/Home/index.tsx, index.module.less)
+4. Register Home route (console/src/layouts/registry/builtinRoutes.tsx)
+5. Add or update i18n keys in all locale files (console/src/locales/*.json)
+6. Add or update tests for Home page or layout (index.test.tsx, layout.darkmode.test.tsx, Sidebar.test.tsx)
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: console/src/styles/aionui-tokens.less, console/src/styles/aionui-tokens.css, console/src/styles/layout.css
+
+---
+id: orbe-workflow-sidebar-and-layout-enhancement
+trigger: "when doing sidebar and layout enhancement"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Workflow Sidebar And Layout Enhancement
+
+## Action
+
+Follow the sidebar-and-layout-enhancement workflow:
+1. Update Sidebar.tsx and MainLayout/index.tsx to add or improve features (collapse, drag-resize, search, overlays, etc.)
+2. Update index.module.less and aionui-tokens.less for styling and tokens
+3. Update or add supporting CSS variables or classes
+4. Add or update tests if needed
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: console/src/layouts/Sidebar.tsx, console/src/layouts/MainLayout/index.tsx, console/src/layouts/index.module.less
+
+---
+id: orbe-workflow-bugfix-with-targeted-test
+trigger: "when doing bugfix with targeted test"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/devjotaduo/orbe
+---
+
+# Orbe Workflow Bugfix With Targeted Test
+
+## Action
+
+Follow the bugfix-with-targeted-test workflow:
+1. Fix bug in the relevant source file(s)
+2. Add or update a test in the corresponding tests/ directory to cover the fixed scenario
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: src/qwenpaw/discovery/runner.py, src/qwenpaw/discovery/tools.py, src/qwenpaw/discovery/agent.py
+
+---
+id: orbe-instinct-file-naming-camelcase
+trigger: "When creating a new file in the codebase"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct File Naming Camelcase
+
+## Action
+
+Name the file using camelCase
+
+## Evidence
+
+- Pattern in namingConventions.files
+- Consistent file naming in src/ and console/src/
+
+---
+id: orbe-instinct-function-naming-camelcase
+trigger: "When defining a new function"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Function Naming Camelcase
+
+## Action
+
+Name the function using camelCase
+
+## Evidence
+
+- Pattern in namingConventions.functions
+- Consistent function names in JS/TS files
+
+---
+id: orbe-instinct-class-naming-pascalcase
+trigger: "When defining a new class"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Class Naming Pascalcase
+
+## Action
+
+Name the class using PascalCase
+
+## Evidence
+
+- Pattern in namingConventions.classes
+- Consistent class names in JS/TS files
+
+---
+id: orbe-instinct-constant-naming-screaming-snake-case
+trigger: "When declaring a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Constant Naming Screaming Snake Case
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE
+
+## Evidence
+
+- Pattern in namingConventions.constants
+- Consistent constants in codebase
+
+---
+id: orbe-instinct-import-alias
+trigger: "When importing modules"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Import Alias
+
+## Action
+
+Use alias import style
+
+## Evidence
+
+- Pattern in importStyle
+- Imports in console/src/ use aliases
+
+---
+id: orbe-instinct-named-exports
+trigger: "When exporting modules or functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Named Exports
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in exportStyle
+- Exports in JS/TS files are named
+
+---
+id: orbe-instinct-vitest-pattern
+trigger: "When writing tests for JS/TS code"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Vitest Pattern
+
+## Action
+
+Use vitest as the testing framework
+
+## Evidence
+
+- Pattern in testing.framework
+- tests use vi.mock and .test.tsx files
+
+---
+id: orbe-instinct-test-file-pattern
+trigger: "When creating a test file"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Test File Pattern
+
+## Action
+
+Name the file with the pattern *.test.tsx
+
+## Evidence
+
+- Pattern in testing.filePattern
+- test files in console/src/ and tests/ use this pattern
+
+---
+id: orbe-instinct-mocking-vi-mock
+trigger: "When mocking dependencies in tests"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Mocking Vi Mock
+
+## Action
+
+Use vi.mock for mocking
+
+## Evidence
+
+- Pattern in testing.mockingStyle
+- Mocking in test files uses vi.mock
+
+---
+id: orbe-instinct-add-test-with-fix
+trigger: "When fixing a bug in any module"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Add Test With Fix
+
+## Action
+
+Add or update a targeted test to cover the fixed scenario
+
+## Evidence
+
+- Workflow: bugfix-with-targeted-test
+- Commits like 'fix(agent): restore plan-gate package + repair gate path for agentscope 2.0' followed by test updates
+
+---
+id: orbe-instinct-conventional-commits
+trigger: "When writing a commit message"
+confidence: 0.95
+domain: git
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Conventional Commits
+
+## Action
+
+Use conventional commit format: <type>(<scope>): <description>
+
+## Evidence
+
+- Pattern in commits.type and prefixes
+- Examples like 'feat(discovery): ...', 'docs(i18n): ...'
+
+---
+id: orbe-instinct-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Commit Length
+
+## Action
+
+Keep the commit message concise (around 69 characters on average)
+
+## Evidence
+
+- Pattern in commits.averageLength
+- Commit examples are concise
+
+---
+id: orbe-instinct-feature-dev-sequence
+trigger: "When implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Feature Dev Sequence
+
+## Action
+
+First implement the feature, then add tests, then update documentation
+
+## Evidence
+
+- Workflow: feature-development
+- Commit sequences in workflow examples
+
+---
+id: orbe-instinct-new-discovery-tool
+trigger: "When adding or updating a Discovery tool, session, or agent feature"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct New Discovery Tool
+
+## Action
+
+Update src/qwenpaw/discovery/*.py, update/add supporting data files, then add/update tests in tests/discovery/
+
+## Evidence
+
+- Workflow: add-or-update-discovery-tool-or-feature
+- Commit and file patterns in workflow
+
+---
+id: orbe-instinct-ptbr-i18n-support
+trigger: "When adding or updating pt-BR internationalization support"
+confidence: 0.92
+domain: workflow
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Ptbr I18n Support
+
+## Action
+
+Update translation files, update/add tests for pt-BR content, optionally update scripts/check_ptbr.py and its tests
+
+## Evidence
+
+- Workflow: add-or-update-i18n-ptbr-support
+- Commit and file patterns in workflow
+
+---
+id: orbe-instinct-ui-theme-refactor
+trigger: "When refactoring UI theme or adding/updating the Home page"
+confidence: 0.93
+domain: workflow
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Ui Theme Refactor
+
+## Action
+
+Update CSS/LESS tokens, refactor styles to use tokens, update Home page files, register Home route, update i18n keys, and add/update tests
+
+## Evidence
+
+- Workflow: ui-theme-refactor-and-homepage
+- Commit and file patterns in workflow
+
+---
+id: orbe-instinct-sidebar-enhancement
+trigger: "When enhancing sidebar or layout features in the Console UI"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Sidebar Enhancement
+
+## Action
+
+Update Sidebar.tsx and MainLayout/index.tsx, update styling and tokens, update/add CSS variables or classes, and add/update tests if needed
+
+## Evidence
+
+- Workflow: sidebar-and-layout-enhancement
+- Commit and file patterns in workflow
+
+---
+id: orbe-instinct-bugfix-with-test
+trigger: "When fixing a bug"
+confidence: 0.88
+domain: workflow
+source: repo-analysis
+source_repo: devjotaduo/orbe
+---
+
+# Orbe Instinct Bugfix With Test
+
+## Action
+
+Fix the bug in the source file(s) and add or update a test to cover the fixed scenario
+
+## Evidence
+
+- Workflow: bugfix-with-targeted-test
+- Commit and file patterns in workflow
+
