@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+import pytest
+
 from qwenpaw.discovery.segments.taxonomy import (
     CANONICAL_INTEGRATION_KINDS,
     load_connectors,
+    lookup_connectors,
 )
 
 
@@ -33,3 +36,35 @@ def test_seed_covers_whatsapp_and_juridico():
     kinds = {c.integration_kind for c in load_connectors()}
     assert "whatsapp" in kinds
     assert "juridico" in kinds
+
+
+def test_lookup_orders_by_status():
+    conns = lookup_connectors("crm")
+    statuses = [c.status for c in conns]
+    assert statuses == sorted(
+        statuses, key=lambda s: {"recomendado": 0, "validar": 1, "build": 2}[s]
+    )
+    assert conns[0].status == "recomendado"
+
+
+def test_lookup_filters_by_segment():
+    # brlaw-mcp é restrito a servicos_b2b
+    juridico_b2b = lookup_connectors("juridico", segment="servicos_b2b")
+    assert any(c.id == "brlaw-mcp" for c in juridico_b2b)
+    juridico_eco = lookup_connectors("juridico", segment="ecommerce")
+    assert not any(c.id == "brlaw-mcp" for c in juridico_eco)
+
+
+def test_lookup_without_segment_includes_segmented():
+    todos = lookup_connectors("delivery", segment=None)
+    assert any(c.id == "ifood-clawhub" for c in todos)
+
+
+def test_lookup_unknown_kind_raises():
+    with pytest.raises(ValueError) as exc:
+        lookup_connectors("blockchain")
+    assert "whatsapp" in str(exc.value)  # lista os kinds válidos
+
+
+def test_lookup_canonical_kind_without_connectors_returns_empty():
+    assert lookup_connectors("pdv") == ()
