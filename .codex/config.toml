@@ -1,27 +1,40 @@
-# QwenPaw local Codex profile.
+#:schema https://developers.openai.com/codex/config-schema.json
+
+# QwenPaw project Codex profile.
 # Keep this file intentionally lean: every always-on MCP/tool surface costs
 # context. Prefer shell/CLI first, then MCP only when it materially helps.
 
-approval_policy = "never"
-sandbox_mode = "danger-full-access"
-web_search = "cached"
-# Short additive guidance. Detailed project rules live in AGENTS.md.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "live"
 persistent_instructions = "Use project AGENTS.md. Keep context lean: inspect targeted files, summarize findings, and delegate only bounded tasks to project agents."
 
 [features]
 multi_agent = true
 
+[mcp_servers.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+
+[mcp_servers.exa]
+url = "https://mcp.exa.ai/mcp"
+
+[mcp_servers.memory]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-memory"]
+
 [mcp_servers.playwright]
 command = "npx"
-args = ["--yes", "@playwright/mcp@latest"]
+args = ["-y", "@playwright/mcp@latest", "--extension"]
 startup_timeout_sec = 30
 
-[mcp_servers.ruflo]
-command = "node"
-args = [
-    'C:\Users\ruthe\.codex\scripts\ruflo-mcp-stdio-filter.js',
-    "ruflo@3.10.5",
-]
+[mcp_servers.sequential-thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
 
 [profiles.economy]
 approval_policy = "on-request"
@@ -39,8 +52,20 @@ sandbox_mode = "workspace-write"
 web_search = "live"
 
 [agents]
-max_threads = 4
+max_threads = 6
 max_depth = 1
+
+[agents.explorer]
+description = "Read-only codebase explorer for gathering evidence before changes are proposed."
+config_file = "agents/explorer.toml"
+
+[agents.reviewer]
+description = "PR reviewer focused on correctness, security, and missing tests."
+config_file = "agents/reviewer.toml"
+
+[agents.docs_researcher]
+description = "Documentation specialist that verifies APIs, framework behavior, and release notes."
+config_file = "agents/docs-researcher.toml"
 
 [agents.qwenpaw_coder]
 description = "Bounded implementation agent for src/qwenpaw changes. Must respect the AgentScope guardian gate."
