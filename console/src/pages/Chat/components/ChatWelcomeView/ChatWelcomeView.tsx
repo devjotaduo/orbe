@@ -2,83 +2,44 @@ import type { WelcomeRenderProps } from "../../../../plugins/registry/types";
 import { useAgentStore } from "../../../../stores/agentStore";
 import styles from "./ChatWelcomeView.module.less";
 
-// ── Avatar palette (chip fallback when image fails) ───────────────────────────
-const PALETTE: [string, string][] = [
-  ["#7583b2", "#596590"],
-  ["#ff7d00", "#c24b00"],
-  ["#00b42a", "#007a1c"],
-  ["#165dff", "#0040c4"],
-  ["#f53f3f", "#b52020"],
-  ["#722ed1", "#4a1a9e"],
-  ["#0fc6c2", "#0a8c89"],
-  ["#e68a00", "#9e5c00"],
+// ── Icon palette for agent chips ─────────────────────────────────────────────
+const CHIP_COLORS = [
+  "#1a1a2e", "#7c3aed", "#0891b2", "#065f46",
+  "#9a3412", "#1e40af", "#6b21a8", "#0f766e",
 ];
 
-function seedColor(seed: string): [string, string] {
+function chipColor(id: string): string {
   let h = 0;
-  for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + h * 31;
-  return PALETTE[Math.abs(h) % PALETTE.length];
+  for (let i = 0; i < id.length; i++) h = id.charCodeAt(i) + h * 31;
+  return CHIP_COLORS[Math.abs(h) % CHIP_COLORS.length];
 }
 
-// DiceBear adventurer-neutral — illustrated soft avatars close to reference style
-function dicebearUrl(seed: string, size = 80) {
-  return `https://api.dicebear.com/8.x/adventurer-neutral/svg?seed=${encodeURIComponent(seed)}&size=${size}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+function initials(name: string, id: string): string {
+  const s = name || id;
+  const words = s.replace(/-/g, " ").split(/\s+/).filter(Boolean);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-interface AvatarImgProps {
-  seed: string;
-  size: number;
-  className?: string;
-  style?: React.CSSProperties;
+function agentLabel(name: string, id: string): string {
+  return (name || id)
+    .replace(/-/g, " ")
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
-function AvatarImg({ seed, size, className, style }: AvatarImgProps) {
-  const [from, to] = seedColor(seed);
-  return (
-    <div
-      className={className}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        overflow: "hidden",
-        background: `linear-gradient(135deg, ${from}, ${to})`,
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: size * 0.36,
-        fontWeight: 700,
-        color: "#fff",
-        userSelect: "none",
-        ...style,
-      }}
-    >
-      <img
-        src={dicebearUrl(seed, size * 2)}
-        alt={seed}
-        width={size}
-        height={size}
-        style={{ width: size, height: size, display: "block" }}
-        onError={(e) => {
-          // fallback: hide img, show initials via background
-          (e.currentTarget as HTMLImageElement).style.display = "none";
-        }}
-      />
-    </div>
-  );
-}
-
-// ── Mocked prompt cards ───────────────────────────────────────────────────────
+// ── Mocked prompt cards — colorful app-icon style ─────────────────────────────
 const MOCK_CARDS = [
-  { seed: "Patrick",  name: "Patrick · Slide Cr...",  sub: "Slides from bullet po...",     prompt: "Create a slide presentation from bullet points" },
-  { seed: "Emily",    name: "Emily · Excel Crea...",   sub: "Pivot, chart & clean ...",     prompt: "Create an Excel spreadsheet with pivot tables and charts" },
-  { seed: "Warren",   name: "Warren · Financi...",     sub: "DCF, cap tables, 3-stmt",      prompt: "Build a financial model with DCF and cap tables" },
-  { seed: "Albert",   name: "Albert · Academi...",     sub: "Outline or full draft",         prompt: "Help me write an academic paper or full draft" },
-  { seed: "Stella",   name: "Stella · UI/UX Desi...", sub: "Design with best pra...",       prompt: "Design a UI/UX following best practices" },
-  { seed: "Marco",    name: "Marco · Morph PPT",       sub: "Cinematic presenta...",         prompt: "Create a cinematic PowerPoint presentation" },
-  { seed: "William",  name: "William · Word Cr...",    sub: "Reports, proposals, l...",      prompt: "Write a professional report or proposal document" },
-  { seed: "Carlos",   name: "Carlos · Cowork ...",     sub: "Complex tasks, end-...",        prompt: "Help me with a complex end-to-end workflow task" },
+  { icon: "⚡", color: "#ff6b35", bg: "#fff1ec", name: "Cowork",            sub: "Autonomous task execution for complex workflows" },
+  { icon: "🧜",  color: "#e91e8c", bg: "#fff0f7", name: "Beautiful Mermaid", sub: "Create flowcharts, sequence diagrams and more" },
+  { icon: "📊", color: "#1565c0", bg: "#e8f0fe", name: "PPT Creator",       sub: "Create, edit, and analyze pro presentations" },
+  { icon: "🎬", color: "#37474f", bg: "#f1f3f4", name: "3D Morph PPT",      sub: "Turn a GLB 3D model into a cinematic slide" },
+  { icon: "🎯", color: "#c62828", bg: "#fce4e4", name: "Pitch Deck Creator", sub: "Build investor pitch decks, pr..." },
+  { icon: "🎮", color: "#1b5e20", bg: "#e8f5e9", name: "3D Game",           sub: "Generate a complete 3D platform game" },
+  { icon: "📖", color: "#78909c", bg: "#f5f5f5", name: "Story Roleplay",    sub: "Immersive story roleplay experience" },
+  { icon: "📋", color: "#546e7a", bg: "#eceff1", name: "Star Office Helper", sub: "Install, connect, and troubleshoot office apps" },
+  { icon: "📈", color: "#00838f", bg: "#e0f7fa", name: "Dashboard Creator", sub: "Turn CSV or tabular data into dashboards" },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -86,73 +47,94 @@ const MOCK_CARDS = [
 export function ChatWelcomeView({ greeting, onSubmit }: WelcomeRenderProps) {
   const { agents, selectedAgent, setSelectedAgent } = useAgentStore();
 
-  const enabledAgents = (agents ?? []).filter((a) => a.enabled);
-  const activeAgent   = enabledAgents.find((a) => a.id === selectedAgent);
-  const otherAgents   = enabledAgents.filter((a) => a.id !== selectedAgent);
-  const chipAgents    = activeAgent
-    ? [activeAgent, ...otherAgents].slice(0, 9)
-    : otherAgents.slice(0, 9);
-  const moreChips     = Math.max(0, enabledAgents.length - 9);
-
-  const label = (name: string, id: string) =>
-    (name || id)
-      .replace(/-/g, " ")
-      .split(" ")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
+  const enabled    = (agents ?? []).filter((a) => a.enabled);
+  const active     = enabled.find((a) => a.id === selectedAgent);
+  const others     = enabled.filter((a) => a.id !== selectedAgent);
+  const chipOthers = others.slice(0, 10);
+  const moreCount  = Math.max(0, enabled.length - 1 - chipOthers.length);
 
   return (
     <div className={styles.root}>
+
       {/* ── Title ── */}
       <h1 className={styles.title}>{greeting || "Hi, what's your plan for today?"}</h1>
 
-      {/* ── Agent chips ── */}
-      {chipAgents.length > 0 && (
-        <div className={styles.chips}>
-          {chipAgents.map((a) => {
-            const isActive = a.id === selectedAgent;
-            return (
+      {/* ── Single pill agent row ── */}
+      {enabled.length > 0 && (
+        <div className={styles.agentPill}>
+          {/* Active agent — shows label */}
+          {active && (
+            <>
               <button
-                key={a.id}
-                className={`${styles.chip} ${isActive ? styles.chipActive : styles.chipIcon}`}
-                onClick={() => setSelectedAgent(a.id)}
-                title={label(a.name, a.id)}
+                className={styles.agentActive}
+                onClick={() => setSelectedAgent(active.id)}
               >
-                <AvatarImg seed={a.id} size={22} />
-                {isActive && (
-                  <span className={styles.chipText}>{label(a.name, a.id)}</span>
-                )}
+                <span
+                  className={styles.agentIcon}
+                  style={{ background: chipColor(active.id) }}
+                >
+                  {initials(active.name, active.id)}
+                </span>
+                <span className={styles.agentName}>{agentLabel(active.name, active.id)}</span>
               </button>
-            );
-          })}
-          {moreChips > 0 && (
-            <button className={`${styles.chip} ${styles.chipPlus}`}>+</button>
+              {chipOthers.length > 0 && <span className={styles.sep}>|</span>}
+            </>
+          )}
+
+          {/* Other agents — icon only with separators */}
+          {chipOthers.map((a, i) => (
+            <span key={a.id} className={styles.agentIconRow}>
+              <button
+                className={styles.agentIconBtn}
+                onClick={() => setSelectedAgent(a.id)}
+                title={agentLabel(a.name, a.id)}
+              >
+                <span
+                  className={styles.agentIcon}
+                  style={{ background: chipColor(a.id) }}
+                >
+                  {initials(a.name, a.id)}
+                </span>
+              </button>
+              {i < chipOthers.length - 1 && <span className={styles.sep}>|</span>}
+            </span>
+          ))}
+
+          {/* More + */}
+          {(moreCount > 0 || enabled.length > 0) && (
+            <>
+              <span className={styles.sep}>|</span>
+              <button className={styles.agentPlusBtn}>+</button>
+            </>
           )}
         </div>
       )}
 
-      {/* ── "Select assistant" ── */}
+      {/* ── "Select an assistant" ── */}
       <p className={styles.selectLabel}>Select an assistant to start a task</p>
 
-      {/* ── Mocked cards grid ── */}
+      {/* ── Cards grid ── */}
       <div className={styles.grid}>
         {MOCK_CARDS.map((c, i) => (
           <button
             key={i}
             className={styles.card}
-            onClick={() => onSubmit({ query: c.prompt })}
+            onClick={() => onSubmit({ query: c.name })}
           >
-            <AvatarImg seed={c.seed} size={46} className={styles.cardAvatar} />
+            <span
+              className={styles.cardIcon}
+              style={{ background: c.bg, color: c.color }}
+            >
+              {c.icon}
+            </span>
             <div className={styles.cardBody}>
               <div className={styles.cardName}>{c.name}</div>
               <div className={styles.cardSub}>{c.sub}</div>
             </div>
           </button>
         ))}
-        <button className={`${styles.card} ${styles.cardMore}`}>
-          +10 more
-        </button>
       </div>
+
     </div>
   );
 }
