@@ -153,12 +153,7 @@ def discovery_pair(
                 phone=phone,
             ),
         )
-    except PairingDependencyError:
-        raise click.ClickException(
-            "neonize-qwenpaw nao instalado. "
-            "Instale com: pip install qwenpaw[whatsapp]",
-        )
-    except (PairError, PairingError) as exc:
+    except (PairingDependencyError, PairError, PairingError) as exc:
         raise click.ClickException(str(exc)) from exc
 
     if result.connected:

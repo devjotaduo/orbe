@@ -15,14 +15,19 @@ import types
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 
 from qwenpaw.app.channels.whatsapp import pairing as wa_pairing
 from qwenpaw.app.channels.whatsapp.pairing import (
     PairingDependencyError,
+    PairingError,
     pair_by_code,
 )
+from qwenpaw.discovery.deploy import DeployError
 from qwenpaw.discovery.pairing import (
     PairError,
+    PairResult,
+    _resolve_auth_dir,
     pair_discovery_whatsapp,
     resolve_session_dir,
 )
@@ -372,7 +377,7 @@ class _FakeAClient:
         # Dispara o ConnectedEv logo apos devolver o PIN.
         handler = self._handlers.get(_FAKE_CONNECTED_EV)
         if handler is not None:
-            asyncio.get_event_loop().call_soon(
+            asyncio.get_running_loop().call_soon(
                 lambda: asyncio.ensure_future(handler(self, object())),
             )
         return "ABCD1234"
@@ -460,3 +465,214 @@ def test_pair_by_code_neonize_missing(tmp_path, monkeypatch):
                 timeout=1.0,
             ),
         )
+
+
+# --- _resolve_auth_dir: load_agent_config falha ----------------------------
+
+
+def test_resolve_auth_dir_load_config_error_raises_pair_error(monkeypatch):
+    """load_agent_config explodindo vira PairError amigavel (nao vaza)."""
+
+    def _boom(agent_id):
+        raise RuntimeError("disco cheio")
+
+    monkeypatch.setattr(
+        "qwenpaw.config.config.load_agent_config",
+        _boom,
+    )
+    with pytest.raises(PairError, match="Nao consegui carregar a config"):
+        _resolve_auth_dir("atendente")
+
+
+def test_resolve_auth_dir_load_config_error_through_orchestrator(
+    tmp_path, monkeypatch
+):
+    """O erro de config tambem vira PairError via pair_discovery_whatsapp."""
+    team = [_spec("Atendente", "atendimento ao cliente")]
+    session = _write_session(
+        tmp_path, team=team, deployed={"Atendente": "atendente"}
+    )
+
+    def _boom(agent_id):
+        raise RuntimeError("config corrompida")
+
+    monkeypatch.setattr(
+        "qwenpaw.config.config.load_agent_config",
+        _boom,
+    )
+    _patch_pair_by_code(monkeypatch)
+    with pytest.raises(PairError, match="Nao consegui carregar a config"):
+        asyncio.run(pair_discovery_whatsapp(session_dir=str(session)))
+
+
+# --- Blueprint ausente / DeployError (leak flagged by review) --------------
+
+
+def test_missing_blueprint_surfaces_friendly_error(
+    tmp_path, monkeypatch, patch_agent_cfg
+):
+    """deployed.json existe mas blueprint.json some.
+
+    O default (sem --agent) precisa do blueprint para achar o
+    client-facing, entao load_blueprint dispara DeployError. Esse erro
+    NAO pode vazar cru: a CLI so trata PairError/PairingError, entao o
+    orquestrador deve traduzi-lo para PairError (mensagem amigavel).
+    """
+    session = tmp_path / "sess"
+    session.mkdir(parents=True, exist_ok=True)
+    (session / "deployed.json").write_text(
+        json.dumps({"version": 1, "agents": {"Atendente": "atendente"}}),
+        encoding="utf-8",
+    )
+    # Sem blueprint.json de proposito.
+    _patch_pair_by_code(monkeypatch)
+
+    with pytest.raises(PairError, match="blueprint"):
+        asyncio.run(pair_discovery_whatsapp(session_dir=str(session)))
+
+
+def test_missing_blueprint_does_not_leak_deploy_error(
+    tmp_path, monkeypatch, patch_agent_cfg
+):
+    """Mesmo cenario: garante que DeployError nao escapa cru.
+
+    Se DeployError vazar, a CLI nao o captura e o usuario ve traceback.
+    """
+    session = tmp_path / "sess"
+    session.mkdir(parents=True, exist_ok=True)
+    (session / "deployed.json").write_text(
+        json.dumps({"version": 1, "agents": {"Atendente": "atendente"}}),
+        encoding="utf-8",
+    )
+    _patch_pair_by_code(monkeypatch)
+
+    try:
+        asyncio.run(pair_discovery_whatsapp(session_dir=str(session)))
+        raise AssertionError("esperava um erro de blueprint ausente")
+    except PairError:
+        pass  # comportamento desejado
+    except DeployError as exc:  # pragma: no cover - documenta o leak
+        raise AssertionError(
+            "DeployError vazou de pair_discovery_whatsapp; a CLI nao o "
+            f"captura e o usuario veria um traceback cru: {exc}",
+        )
+
+
+# --- CLI (CliRunner): wrapper fino + mapeamento de erros -------------------
+
+
+def _patch_discovery_pair(monkeypatch, *, result=None, exc=None):
+    """Substitui pair_discovery_whatsapp visto pela CLI.
+
+    A CLI faz ``from ..discovery import pair_discovery_whatsapp`` dentro
+    da funcao, entao patchamos o atributo no pacote ``qwenpaw.discovery``.
+    """
+
+    async def _fake(**kwargs):
+        if exc is not None:
+            raise exc
+        return result
+
+    import qwenpaw.discovery as discovery_pkg
+
+    monkeypatch.setattr(
+        discovery_pkg,
+        "pair_discovery_whatsapp",
+        _fake,
+    )
+
+
+def _import_cmd():
+    from qwenpaw.cli.discovery_cmd import discovery_pair
+
+    return discovery_pair
+
+
+def test_cli_mutual_exclusion_usage_error():
+    runner = CliRunner()
+    result = runner.invoke(
+        _import_cmd(),
+        ["somedir", "--session", "abc"],
+    )
+    assert result.exit_code != 0
+    assert "nao ambos" in result.output
+
+
+def test_cli_no_session_usage_error():
+    runner = CliRunner()
+    result = runner.invoke(_import_cmd(), [])
+    assert result.exit_code != 0
+    assert "Informe o diretorio" in result.output
+
+
+def test_cli_dependency_error_maps_to_install_hint(monkeypatch):
+    # A CLI repassa str(exc); a propria PairingDependencyError ja carrega
+    # a dica de instalacao (ver app/channels/whatsapp/pairing.py).
+    _patch_discovery_pair(
+        monkeypatch,
+        exc=PairingDependencyError(
+            "neonize-qwenpaw nao instalado. "
+            "Instale com: pip install qwenpaw[whatsapp]",
+        ),
+    )
+    runner = CliRunner()
+    result = runner.invoke(_import_cmd(), ["somedir"])
+    assert result.exit_code != 0
+    assert "pip install qwenpaw[whatsapp]" in result.output
+
+
+def test_cli_pair_error_maps_to_click_exception(monkeypatch):
+    _patch_discovery_pair(
+        monkeypatch,
+        exc=PairError("numero invalido use --phone"),
+    )
+    runner = CliRunner()
+    result = runner.invoke(_import_cmd(), ["somedir"])
+    assert result.exit_code != 0
+    assert "numero invalido use --phone" in result.output
+
+
+def test_cli_pairing_error_maps_to_click_exception(monkeypatch):
+    _patch_discovery_pair(
+        monkeypatch,
+        exc=PairingError("falha no PairPhone"),
+    )
+    runner = CliRunner()
+    result = runner.invoke(_import_cmd(), ["somedir"])
+    assert result.exit_code != 0
+    assert "falha no PairPhone" in result.output
+
+
+def test_cli_success_message(monkeypatch):
+    _patch_discovery_pair(
+        monkeypatch,
+        result=PairResult(
+            agent_name="Atendente",
+            agent_id="atendente",
+            phone="+5511987654321",
+            auth_dir="/tmp/auth",
+            connected=True,
+        ),
+    )
+    runner = CliRunner()
+    result = runner.invoke(_import_cmd(), ["somedir"])
+    assert result.exit_code == 0
+    assert "Atendente conectado" in result.output
+
+
+def test_cli_timeout_message(monkeypatch):
+    _patch_discovery_pair(
+        monkeypatch,
+        result=PairResult(
+            agent_name="Atendente",
+            agent_id="atendente",
+            phone="+5511987654321",
+            auth_dir="/tmp/auth",
+            connected=False,
+        ),
+    )
+    runner = CliRunner()
+    result = runner.invoke(_import_cmd(), ["somedir"])
+    assert result.exit_code == 0
+    assert "Tempo esgotado" in result.output
+    assert "+5511987654321" in result.output
