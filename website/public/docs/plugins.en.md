@@ -352,6 +352,23 @@ const resp = await window.QwenPaw.host.fetch("/api/v1/my-endpoint", {
 const data = await resp.json();
 ```
 
+**A2UI generative UI helpers (render read-only generative surfaces in chat bubbles):**
+
+```ts
+host.A2uiRenderer; // React.FC<{ surface }> — renders an A2UI surface read-only
+host.emptySurface(surfaceId); // create a fresh, empty surface
+host.applyA2uiMessage(surface, msg); // fold one A2UI message into a surface
+```
+
+```ts
+const { A2uiRenderer, applyA2uiMessage, emptySurface } = window.QwenPaw.host;
+// Accumulate the createSurface / updateComponents / updateDataModel /
+// deleteSurface messages your tool emitted, then render the surface.
+let surface = emptySurface("s1");
+for (const msg of messages) surface = applyA2uiMessage(surface, msg);
+return <A2uiRenderer surface={surface} />;
+```
+
 ### Sidebar Menu — `window.QwenPaw.menu`
 
 | Method     | Signature                                | Description                          |
