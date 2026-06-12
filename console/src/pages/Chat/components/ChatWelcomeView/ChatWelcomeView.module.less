@@ -1,44 +1,44 @@
 @import "../../../../styles/aionui-tokens.less";
 
-// ── Root ──────────────────────────────────────────────────────────────────────
-.welcomeRoot {
+.root {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 52px 20px 32px;
+  padding: 56px 24px 40px;
 }
 
 // ── Title ─────────────────────────────────────────────────────────────────────
 .title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   color: @text-primary;
   text-align: center;
-  margin: 0 0 24px;
-  line-height: 1.2;
+  margin: 0 0 28px;
+  line-height: 1.25;
 }
 
 // ── Chips row ─────────────────────────────────────────────────────────────────
-.chipsRow {
+.chips {
   display: flex;
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-bottom: 28px;
+  margin-bottom: 10px;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   height: 34px;
-  padding: 0 10px 0 5px;
+  width: 34px;
+  padding: 0;
   border-radius: 17px;
   border: 1.5px solid @border-base;
   background: @bg-base;
@@ -50,15 +50,8 @@
   transition:
     border-color @transition-fast @ease-spring,
     background @transition-fast @ease-spring,
-    box-shadow @transition-fast @ease-spring;
-
-  // icon-only chip (no label)
-  &:not(.chipActive):not(.chipPlus) {
-    padding: 0;
-    width: 34px;
-    height: 34px;
-    justify-content: center;
-  }
+    box-shadow @transition-fast @ease-spring,
+    width @transition-fast @ease-spring;
 
   &:hover {
     border-color: @aou-4;
@@ -66,72 +59,65 @@
   }
 }
 
+// active chip shows label → wider
 .chipActive {
+  width: auto;
+  padding: 0 12px 0 5px;
+  gap: 6px;
   border-color: @brand;
   background: @brand-light;
   color: @aou-8;
   font-weight: 600;
-  padding: 0 12px 0 5px;
+}
+
+// icon-only chip (no label, just avatar)
+.chipIcon {
+  padding: 0;
+}
+
+.chipText {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chipPlus {
-  padding: 0;
-  width: 34px;
-  height: 34px;
-  justify-content: center;
   border-style: dashed;
   color: @text-muted;
   font-size: 17px;
   font-weight: 500;
 }
 
-.chipLabel {
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-// ── Avatar (shared by chips and cards) ───────────────────────────────────────
-.avatar {
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-  user-select: none;
-}
-
 // ── "Select assistant" label ──────────────────────────────────────────────────
 .selectLabel {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: @text-muted;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   text-align: center;
 }
 
 // ── Card grid ─────────────────────────────────────────────────────────────────
-.cardGrid {
+.grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 9px;
   width: 100%;
 }
 
 .card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 13px 14px;
+  gap: 11px;
+  padding: 12px 14px;
   background: @bg-base;
   border: 1.5px solid @border-base;
   border-radius: @card-radius;
   cursor: pointer;
   text-align: left;
+  min-height: 68px;
   transition:
     border-color @transition-fast @ease-spring,
     box-shadow @transition-fast @ease-spring,
@@ -139,31 +125,20 @@
 
   &:hover {
     border-color: @aou-4;
-    box-shadow: 0 2px 12px rgba(117, 131, 178, 0.18);
+    box-shadow: 0 3px 12px rgba(117, 131, 178, 0.18);
     transform: translateY(-1px);
   }
 
-  &:active { transform: none; }
-}
-
-.cardMore {
-  border-style: dashed;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: @text-muted;
-  min-height: 70px;
-  gap: 0;
-
-  &:hover {
-    border-color: @aou-5;
-    color: @brand;
-    box-shadow: none;
+  &:active {
     transform: none;
   }
 }
 
-.cardInfo {
+.cardAvatar {
+  flex-shrink: 0;
+}
+
+.cardBody {
   flex: 1;
   min-width: 0;
 }
@@ -192,15 +167,36 @@
   line-height: 1.4;
 }
 
+.cardMore {
+  border-style: dashed;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: @text-muted;
+  gap: 0;
+
+  &:hover {
+    border-color: @aou-5;
+    color: @brand;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
 // ── Dark mode ─────────────────────────────────────────────────────────────────
 :global(.dark-mode) {
-  .title { color: @text-primary-dark; }
+  .title {
+    color: @text-primary-dark;
+  }
 
   .chip {
     background: @bg-2-dark;
     border-color: @border-base-dark;
     color: @text-primary-dark;
-    &:hover { border-color: @aou-7; }
+
+    &:hover {
+      border-color: @aou-7;
+    }
   }
 
   .chipActive {
@@ -209,20 +205,39 @@
     color: @brand-dark;
   }
 
-  .selectLabel { color: @text-muted-dark; }
+  .selectLabel {
+    color: @text-muted-dark;
+  }
 
   .card {
     background: @bg-1-dark;
     border-color: @border-base-dark;
-    &:hover { border-color: @aou-7; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+
+    &:hover {
+      border-color: @aou-7;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+    }
   }
 
-  .cardMore { border-color: @border-base-dark; color: @text-muted-dark; }
-  .cardName { color: @text-primary-dark; }
-  .cardSub  { color: @text-muted-dark; }
+  .cardMore {
+    border-color: @border-base-dark;
+    color: @text-muted-dark;
+  }
+
+  .cardName {
+    color: @text-primary-dark;
+  }
+
+  .cardSub {
+    color: @text-muted-dark;
+  }
 }
 
 // ── Reduced motion ────────────────────────────────────────────────────────────
 @media (prefers-reduced-motion: reduce) {
-  .chip, .card { transition: none; transform: none !important; }
+  .chip,
+  .card {
+    transition: none;
+    transform: none !important;
+  }
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppMessage } from "../hooks/useAppMessage";
-import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import {
   SparkChatTabFill,
   SparkExitFullscreenLine,
@@ -78,7 +78,6 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   const [accountForm] = Form.useForm();
   // collapsedProp from MainLayout is the source of truth; fall back to local state
   // for standalone use (e.g. tests that don't pass the prop).
-  const [searchQuery, setSearchQuery] = useState('');
   const [collapsedLocal, setCollapsedLocal] = useState(false);
   const [recentSessions, setRecentSessions] = useState<Array<{ id: string; name: string }>>([]);
   const collapsed = collapsedProp ?? collapsedLocal;
@@ -93,10 +92,6 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   const [isMobile, setIsMobile] = useState(isMobileSidebarViewport);
   const [hasInboxUnread, setHasInboxUnread] = useState(false);
 
-  // Limpa o campo de busca sempre que sidebar colapsa.
-  useEffect(() => {
-    if (collapsed) setSearchQuery('');
-  }, [collapsed]);
 
   // Menu + route snapshots from registry (builtin + plugin registrations merged).
   const agentMenu = useMenuItems("primary.agentScoped");
@@ -125,7 +120,6 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
       setIsMobile(mediaQuery.matches);
       if (mediaQuery.matches) {
         setCollapsed(true);
-        setSearchQuery('');
       }
     };
 
@@ -180,20 +174,6 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
     label?: React.ReactNode;
   };
 
-  /** Filtra recursivamente antd menu items pelo searchQuery (case-insensitive no label string). */
-  const filterAntdItems = (items: AntdItem[], query: string): AntdItem[] => {
-    if (!query) return items;
-    const lower = query.toLowerCase();
-    return items.reduce<AntdItem[]>((acc, item) => {
-      const label = typeof item.label === 'string' ? item.label : '';
-      const filteredChildren = item.children ? filterAntdItems(item.children, query) : undefined;
-      if (label.toLowerCase().includes(lower) || (filteredChildren && filteredChildren.length > 0)) {
-        acc.push(filteredChildren ? { ...item, children: filteredChildren } : item);
-      }
-      return acc;
-    }, []);
-  };
-
   // ── Adapter: convert MenuItem trees to antd, with inbox badge decoration.
 
   /** Wrap the inbox label with the unread-Badge while keeping all other labels intact. */
@@ -207,16 +187,14 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
   };
 
   const agentMenuItems = useMemo(() => {
-    const items = toAntdItems(agentMenu, { collapsed, decorateLabel }) as AntdItem[];
-    return filterAntdItems(items, searchQuery);
+    return toAntdItems(agentMenu, { collapsed, decorateLabel }) as AntdItem[];
     // hasInboxUnread closure inside decorateLabel — listed as dep explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agentMenu, collapsed, hasInboxUnread, searchQuery]);
+  }, [agentMenu, collapsed, hasInboxUnread]);
 
   const settingsMenuItems = useMemo(() => {
-    const items = toAntdItems(settingsMenu, { collapsed }) as AntdItem[];
-    return filterAntdItems(items, searchQuery);
-  }, [settingsMenu, collapsed, searchQuery]);
+    return toAntdItems(settingsMenu, { collapsed }) as AntdItem[];
+  }, [settingsMenu, collapsed]);
 
   const derivedOpenKeys = useMemo(
     () => [...deriveOpenKeys(agentMenu), ...deriveOpenKeys(settingsMenu)],
@@ -444,18 +422,8 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
         </nav>
       ) : (
         <>
-          {/* Agent-scoped section: search + nav */}
+          {/* Agent-scoped section: nav */}
           <div className={styles.agentScopedSection}>
-            <div className={styles.siderSearch}>
-              <Input
-                prefix={<SearchOutlined style={{ fontSize: 12, opacity: 0.5 }} />}
-                placeholder={t('nav.search', 'Search...')}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                allowClear
-                size="small"
-              />
-            </div>
             <Slot name="sider.top" kind="fill" />
             <Menu
               mode="inline"
@@ -481,7 +449,7 @@ export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCo
             className={styles.sideMenu}
           />
           <Slot name="sider.bottom" kind="fill" />
-          {recentSessions.length > 0 && !searchQuery && (
+          {recentSessions.length > 0 && (
             <div className={styles.recentSessions}>
               <div className={styles.recentSessionsLabel}>{t('nav.recentChats', 'Recent')}</div>
               <div className={styles.recentSessionsList}>
