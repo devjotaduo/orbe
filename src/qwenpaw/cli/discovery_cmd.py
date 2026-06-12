@@ -97,5 +97,77 @@ def discovery_deploy(session_dir: str | None, session_id: str | None) -> None:
             "  1. Abra o Console e selecione o agente de atendimento.\n"
             "  2. Va em Canais > WhatsApp e inicie o pareamento "
             "(QR/codigo).\n"
-            f"  3. Use o numero {num} no aparelho que vai parear.",
+            f"  3. Use o numero {num} no aparelho que vai parear.\n"
+            "  Ou pareie pelo terminal: 'qwenpaw discovery pair'.",
+        )
+
+
+@discovery_group.command("pair")
+@click.argument("session_dir", required=False, default=None)
+@click.option(
+    "--session",
+    "session_id",
+    default=None,
+    help="ID da sessao (resolve para ./discovery/<id>).",
+)
+@click.option(
+    "--agent",
+    "agent_id",
+    default=None,
+    help="Agente alvo (default: 1o de atendimento ja deployado).",
+)
+@click.option(
+    "--phone",
+    "phone",
+    default=None,
+    help="Numero E.164 (default: numero de onboarding do blueprint).",
+)
+def discovery_pair(
+    session_dir: str | None,
+    session_id: str | None,
+    agent_id: str | None,
+    phone: str | None,
+) -> None:
+    """Pareia o WhatsApp do agente de atendimento via codigo PIN."""
+    from ..app.channels.whatsapp.pairing import (
+        PairingDependencyError,
+        PairingError,
+    )
+    from ..discovery import PairError, pair_discovery_whatsapp
+
+    if session_dir and session_id:
+        raise click.UsageError(
+            "Informe SESSION_DIR ou --session, nao ambos.",
+        )
+    if not session_dir and not session_id:
+        raise click.UsageError(
+            "Informe o diretorio da sessao (SESSION_DIR) ou --session <id>.",
+        )
+
+    try:
+        result = asyncio.run(
+            pair_discovery_whatsapp(
+                session_dir=session_dir,
+                session_id=session_id,
+                agent_id=agent_id,
+                phone=phone,
+            ),
+        )
+    except PairingDependencyError:
+        raise click.ClickException(
+            "neonize-qwenpaw nao instalado. "
+            "Instale com: pip install qwenpaw[whatsapp]",
+        )
+    except (PairError, PairingError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if result.connected:
+        click.echo(
+            f"\nWhatsApp do agente {result.agent_name} conectado!",
+        )
+    else:
+        click.echo(
+            f"\nTempo esgotado aguardando a confirmacao no celular "
+            f"({result.phone}). O codigo nao foi digitado a tempo — "
+            "rode 'qwenpaw discovery pair' de novo para tentar outra vez.",
         )
