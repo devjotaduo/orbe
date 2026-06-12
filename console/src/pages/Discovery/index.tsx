@@ -52,11 +52,20 @@ function mutateArray(
   return setPath(data, path, fn(Array.isArray(arr) ? arr.slice() : []));
 }
 
+function newSessionId(): string {
+  // Date.now() alone can collide on a fast restart (same ms); add entropy so
+  // each interview maps to a fresh server-side session.
+  return `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export default function DiscoveryPage() {
   const { t } = useTranslation();
   const { token } = theme.useToken();
 
-  const sessionId = useRef(`sess-${Date.now()}`).current;
+  // Stateful so restart() can regenerate it: the backend keys discovery
+  // sessions by session_id in-memory, so reusing the id would resume the old
+  // interview instead of starting fresh.
+  const [sessionId, setSessionId] = useState(newSessionId);
   const [transcript, setTranscript] = useState<Turn[]>([]);
   const [state, setState] = useState<Record<string, unknown>>({});
   const [surface, setSurface] = useState<A2uiSurface | null>(null);
@@ -315,6 +324,9 @@ export default function DiscoveryPage() {
     setApproved(false);
     setApproving(false);
     setApproveError(null);
+    // New id → fresh server-side session (the old one stays keyed by its own
+    // id until the backend evicts it on blueprint/approve).
+    setSessionId(newSessionId());
   }, []);
 
   const completed = done;

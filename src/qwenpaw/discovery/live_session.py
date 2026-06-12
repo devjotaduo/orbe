@@ -110,13 +110,17 @@ class LiveDiscoverySession:
         # O agente gravar o blueprint é o sinal de parada canônico.
         if self._session.emitted:
             return True
-        # ``ready_to_emit`` (fallback) só encerra quando havia áreas críticas
-        # (priority>=3) satisfeitas E o perfil mínimo está preenchido; sem
-        # isto, fechar todas as áreas geraria um blueprint degenerado
-        # (proposed_team vazio) que o a2ui/builder consome mal.
-        critical_exists = any(a.priority >= 3 for a in self._state.open_areas)
+        # Fallback ``ready_to_emit``: encerra quando o perfil mínimo (segmento)
+        # está preenchido E toda área prioritária (priority>=3) foi satisfeita
+        # — seja por confiança alta, seja por ter sido fechada via
+        # ``close_area_ids``. NÃO exigimos que ainda haja área crítica *aberta*:
+        # como fechar áreas as remove de ``open_areas``, esse antigo guard
+        # ``critical_exists`` travava o fim assim que o agente concluía todas as
+        # ramificações. O perfil mínimo já basta para evitar um blueprint
+        # degenerado (a área-semente ``segmento`` começa com confiança 0, então
+        # ``ready_to_emit`` segura o fim prematuro no primeiro turno).
         has_profile = bool(self._state.company.segment)
-        return critical_exists and has_profile and self._state.ready_to_emit()
+        return has_profile and self._state.ready_to_emit()
 
     def _snapshot(self) -> dict[str, Any]:
         return self._state.model_dump(mode="json")

@@ -105,3 +105,41 @@ async def test_not_done_without_segment_even_if_areas_closed(
     # Áreas fechadas mas sem segmento -> não encerra (evita blueprint raso).
     assert r0.done is False
     assert r0.question
+
+
+async def test_done_when_all_critical_areas_closed_with_segment(
+    tmp_path,
+    monkeypatch,
+):
+    """Regressão: fechar TODAS as áreas críticas (removendo-as de
+    ``open_areas``) com o perfil preenchido deve encerrar via fallback.
+
+    Antes, ``_is_done`` exigia que ainda houvesse uma área crítica *aberta*
+    (``critical_exists``); como fechar áreas as remove da lista, a sessão
+    nunca terminava pelo fallback uma vez concluídas todas as ramificações.
+    """
+
+    class _ClosesAllAreasAgent:
+        def __init__(self, session) -> None:
+            self.session = session
+
+        async def reply(self, msg):
+            st = self.session.state
+            st.company.segment = "ecommerce"
+            # Fecha (remove) todas as áreas abertas — sem emitir blueprint.
+            st.open_areas = []
+            return _MsgStub("Perfeito, acho que entendi seu negócio.")
+
+    monkeypatch.setattr(
+        live_mod.runner_mod,
+        "build_discovery_agent",
+        lambda session, **kw: _ClosesAllAreasAgent(session),
+    )
+    sess = LiveDiscoverySession(session_id="fb3", out_dir=tmp_path)
+    r0 = await sess.next_turn(None)
+    assert sess._session.emitted is False  # agente não gravou blueprint.json
+    assert r0.done is True
+    assert r0.blueprint is not None
+    bp = TeamBlueprint.model_validate(r0.blueprint)
+    assert bp.company_profile.segment == "ecommerce"
+    assert r0.blueprint["open_questions"] == []
