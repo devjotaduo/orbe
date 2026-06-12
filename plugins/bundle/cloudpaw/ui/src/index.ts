@@ -1142,6 +1142,61 @@ function buildPlugin() {
 
   const API_BASE = "/a2a/agents";
 
+  const A2A_TEXT_MAP: Record<string, string> = {
+    "阿里云Agent Hub": "Alibaba Cloud Agent Hub",
+    "ecs文件备份基础版助手": "Assistente de backup de arquivos ECS",
+    "ECS文件备份基础版助手": "Assistente de backup de arquivos ECS",
+    "dataworks-基础设施管家": "DataWorks - gerenciador de infraestrutura",
+    "DataWorks 基础设施管家": "DataWorks - gerenciador de infraestrutura",
+    "dataworks元数据助手": "Assistente de metadados DataWorks",
+    "DataWorks元数据助手": "Assistente de metadados DataWorks",
+    "ecs智能诊断助手": "Assistente de diagnóstico ECS",
+    "ECS智能诊断助手": "Assistente de diagnóstico ECS",
+    "阿里云elasticsearch实例管理助手":
+      "Assistente de gerenciamento de instancias Elasticsearch",
+    "emr-spark智能管理助手": "Assistente de gerenciamento EMR Spark",
+    "pts压测运维助手": "Assistente de operacao de testes de carga PTS",
+    "智能": "",
+    "基础设施": "infraestrutura",
+    "元数据": "metadados",
+    "助手": "assistente",
+    "管家": "gerenciador",
+    "文件备份": "backup de arquivos",
+    "诊断": "diagnostico",
+    "实例管理": "gerenciamento de instancias",
+    "压测运维": "operacao de testes de carga",
+    "未连接": "Nao conectado",
+    "已连接": "Conectado",
+    "错误": "Erro",
+  };
+
+  function translateA2AText(value: any): string {
+    if (value == null) return "";
+    let text = String(value);
+    if (A2A_TEXT_MAP[text]) return A2A_TEXT_MAP[text];
+    Object.entries(A2A_TEXT_MAP).forEach(([from, to]) => {
+      text = text.split(from).join(to);
+    });
+    return text;
+  }
+
+  function normalizeA2AAgent(agent: any) {
+    if (!agent) return agent;
+    return {
+      ...agent,
+      alias: translateA2AText(agent.alias),
+      name: translateA2AText(agent.name),
+      description: translateA2AText(agent.description),
+      skills: Array.isArray(agent.skills)
+        ? agent.skills.map((skill: any) => ({
+            ...skill,
+            name: translateA2AText(skill?.name),
+            description: translateA2AText(skill?.description),
+          }))
+        : agent.skills,
+    };
+  }
+
   function getSelectedAgentId(): string | null {
     try {
       const raw =
@@ -1186,12 +1241,12 @@ function buildPlugin() {
       ? "#ff4d4f"
       : "#d9d9d9";
     const statusText = isConnected
-      ? "已连接"
+      ? "Conectado"
       : agent.status === "error"
-      ? "错误"
-      : "未连接";
+      ? "Erro"
+      : "Nao conectado";
     const authLabels: Record<string, string> = {
-      gateway: "阿里云Agent Hub",
+      gateway: "Alibaba Cloud Agent Hub",
       bearer: "Bearer Token",
       api_key: "API Key",
     };
@@ -1210,7 +1265,7 @@ function buildPlugin() {
           React.createElement(
             "span",
             null,
-            agent.alias || agent.name || agent.url,
+            translateA2AText(agent.alias || agent.name || agent.url),
           ),
         ),
         extra: agent.auth_type
@@ -1236,7 +1291,7 @@ function buildPlugin() {
           ? React.createElement(
               "div",
               { style: { marginBottom: 4, color: "#999" } },
-              agent.description,
+          translateA2AText(agent.description),
             )
           : null,
         agent.skills?.length > 0
@@ -1249,7 +1304,7 @@ function buildPlugin() {
                   React.createElement(
                     Tag,
                     { key: i, style: { fontSize: 11 } },
-                    s.name,
+                    translateA2AText(s.name),
                   ),
                 ),
               agent.skills.length > 3
@@ -1324,7 +1379,7 @@ function buildPlugin() {
     const validateAlias = (value: string): string | null => {
       if (!value || !value.trim()) return null; // optional field
       if (/\s/.test(value)) {
-        return "别名不能包含空格";
+        return "O apelido nao pode conter espacos";
       }
       return null;
     };
@@ -1341,7 +1396,7 @@ function buildPlugin() {
       setLoading(true);
       try {
         const data = await a2aFetch(API_BASE);
-        setAgents(data?.agents || []);
+        setAgents((data?.agents || []).map(normalizeA2AAgent));
       } catch {
         setAgents([]);
       } finally {
@@ -1400,12 +1455,12 @@ function buildPlugin() {
             body: JSON.stringify({ new_alias: trimmed }),
           },
         );
-        antdMsg.success("别名已修改");
+        antdMsg.success("Apelido alterado");
         setEditingAlias(false);
         setActiveAgent(updated);
         await fetchAgents();
       } catch (e: any) {
-        antdMsg.error(e.message || "修改失败");
+        antdMsg.error(e.message || "Falha ao alterar");
       }
     }, [activeAgent, newAliasValue, fetchAgents, cancelEditAlias]);
 
@@ -1437,11 +1492,11 @@ function buildPlugin() {
           method: "POST",
           body: JSON.stringify(body),
         });
-        antdMsg.success("A2A Agent 注册成功");
+        antdMsg.success("A2A Agent registrado");
         await fetchAgents();
         handleClose();
       } catch (e: any) {
-        antdMsg.error(e.message || "注册失败");
+        antdMsg.error(e.message || "Falha ao registrar");
       } finally {
         setSaving(false);
       }
@@ -1450,23 +1505,23 @@ function buildPlugin() {
     const handleDelete = useCallback(async () => {
       if (!activeAgent) return;
       const alias = activeAgent.alias || activeAgent.url;
-      const displayName = activeAgent.name || alias;
+      const displayName = translateA2AText(activeAgent.name || alias);
       Modal.confirm({
-        title: `确认删除`,
-        content: `确定删除 A2A Agent「${displayName}」吗？此操作不可撤销。`,
-        okText: "删除",
-        cancelText: "取消",
+        title: `Confirmar exclusao`,
+        content: `Excluir o A2A Agent "${displayName}"? Esta acao nao pode ser desfeita.`,
+        okText: "Excluir",
+        cancelText: "Cancelar",
         okButtonProps: { danger: true },
         async onOk() {
           try {
             await a2aFetch(`${API_BASE}?alias=${encodeURIComponent(alias)}`, {
               method: "DELETE",
             });
-            antdMsg.success(`已删除 A2A Agent「${displayName}」`);
+            antdMsg.success(`A2A Agent "${displayName}" excluido`);
             await fetchAgents();
             handleClose();
           } catch (e: any) {
-            antdMsg.error(e.message || "删除失败");
+            antdMsg.error(e.message || "Falha ao excluir");
           }
         },
       });
@@ -1483,11 +1538,11 @@ function buildPlugin() {
             method: "POST",
           },
         );
-        antdMsg.success("Agent Card 已刷新");
+        antdMsg.success("Cartao do Agent atualizado");
         await fetchAgents();
         if (updated) setActiveAgent(updated);
       } catch (e: any) {
-        antdMsg.error(e.message || "刷新失败");
+        antdMsg.error(e.message || "Falha ao atualizar");
       } finally {
         setRefreshing(false);
       }
@@ -1545,10 +1600,10 @@ function buildPlugin() {
         const data = await resp.json();
         const agents = data?.agents || [];
         if (agents.length === 0) {
-          antdMsg.warning("未找到可用的 Agent");
+          antdMsg.warning("Nenhum Agent disponivel encontrado");
           return;
         }
-        setHubAgents(agents);
+        setHubAgents(agents.map(normalizeA2AAgent));
         // Auto-select only agents that haven't been imported yet
         const currentImportedUrls = importedUrlsRef.current;
         setSelectedAgents(
@@ -1560,7 +1615,7 @@ function buildPlugin() {
         );
       } catch (e: any) {
         if (e?.name === "AbortError") return;
-        antdMsg.error(e.message || "获取 Agent 列表失败");
+        antdMsg.error(e.message || "Falha ao obter lista de Agents");
       } finally {
         setImporting(false);
         importAbortRef.current = null;
@@ -1595,7 +1650,7 @@ function buildPlugin() {
         (a: any) => selectedAgents.has(a.url) && !importedUrls.has(a.url),
       );
       if (toImport.length === 0) {
-        antdMsg.warning("请至少选择一个 Agent");
+        antdMsg.warning("Selecione pelo menos um Agent");
         return;
       }
       setImporting(true);
@@ -1619,18 +1674,18 @@ function buildPlugin() {
           results.push({ name: agent.name || agent.url, success: true });
         } catch (e: any) {
           results.push({
-            name: agent.name || agent.url,
+            name: translateA2AText(agent.name || agent.url),
             success: false,
-            error: e.message || "注册失败",
+            error: e.message || "Falha ao registrar",
           });
         }
         setImportResults([...results]);
       }
       await fetchAgents();
       antdMsg.success(
-        `导入完成：成功 ${results.filter((r) => r.success).length} 个，失败 ${
+        `Importacao concluida: ${results.filter((r) => r.success).length} sucesso(s), ${
           results.filter((r) => !r.success).length
-        } 个`,
+        } falha(s)`,
       );
       setImporting(false);
       // Auto-close modal after 0.8s
@@ -1648,7 +1703,7 @@ function buildPlugin() {
         {
           name: "url",
           label: "Agent URL",
-          rules: [{ required: true, message: "请输入 Agent URL" }],
+          rules: [{ required: true, message: "Informe a URL do Agent" }],
         },
         React.createElement(Input, {
           placeholder: "https://agent.example.com",
@@ -1658,7 +1713,7 @@ function buildPlugin() {
         Form.Item,
         {
           name: "alias",
-          label: "别名",
+          label: "Apelido",
           rules: [
             {
               validator: (_rule: any, value: string) => {
@@ -1669,15 +1724,15 @@ function buildPlugin() {
           ],
         },
         React.createElement(Input, {
-          placeholder: "输入别名（可选，仅小写字母、数字和连字符）",
+          placeholder: "Informe um apelido opcional",
         }),
       ),
       React.createElement(
         Form.Item,
-        { name: "auth_type", label: "认证类型" },
+        { name: "auth_type", label: "Tipo de autenticacao" },
         React.createElement(
           Select,
-          { allowClear: true, placeholder: "无认证" },
+          { allowClear: true, placeholder: "Sem autenticacao" },
           React.createElement(
             Select.Option,
             { value: "bearer" },
@@ -1687,7 +1742,7 @@ function buildPlugin() {
           React.createElement(
             Select.Option,
             { value: "gateway" },
-            "阿里云Agent Hub",
+            "Alibaba Cloud Agent Hub",
           ),
         ),
       ),
@@ -1705,13 +1760,13 @@ function buildPlugin() {
                 color: "#52c41a",
               },
             },
-            "阿里云Agent Hub 模式将自动使用环境变量中的 AK-SK 换取 Bearer Token",
+            "O modo Alibaba Cloud Agent Hub usa automaticamente o AK-SK das variaveis de ambiente para obter um Bearer Token",
           )
         : null,
       authTypeValue && authTypeValue !== "gateway"
         ? React.createElement(
             Form.Item,
-            { name: "auth_token", label: "认证凭证" },
+            { name: "auth_token", label: "Credencial de autenticacao" },
             React.createElement(Input.Password, {
               placeholder: "Bearer Token 或 API Key",
             }),
@@ -1734,7 +1789,7 @@ function buildPlugin() {
             ),
             React.createElement(
               Descriptions.Item,
-              { label: "别名" },
+              { label: "Apelido" },
               editingAlias
                 ? React.createElement(
                     "div",
@@ -1746,7 +1801,7 @@ function buildPlugin() {
                       onChange: (e: any) => setNewAliasValue(e.target.value),
                       onPressEnter: saveAlias,
                       autoFocus: true,
-                      placeholder: "输入新别名",
+                      placeholder: "Informe novo apelido",
                       size: "small",
                       style: { flex: 1 },
                     }),
@@ -1759,7 +1814,7 @@ function buildPlugin() {
                         disabled: !newAliasValue.trim(),
                         style: { padding: 0 },
                       },
-                      "保存",
+                      "Salvar",
                     ),
                   )
                 : React.createElement(
@@ -1774,18 +1829,18 @@ function buildPlugin() {
                         style: { fontSize: 12 },
                         onClick: startEditAlias,
                       },
-                      "修改",
+                      "Alterar",
                     ),
                   ),
             ),
             React.createElement(
               Descriptions.Item,
-              { label: "Agent 名称" },
-              activeAgent.name || "-",
+              { label: "Nome do Agent" },
+              translateA2AText(activeAgent.name) || "-",
             ),
             React.createElement(
               Descriptions.Item,
-              { label: "状态" },
+              { label: "Status" },
               React.createElement(Badge, {
                 color:
                   activeAgent.status === "connected"
@@ -1795,37 +1850,37 @@ function buildPlugin() {
                     : "#d9d9d9",
                 text:
                   activeAgent.status === "connected"
-                    ? "已连接"
+                    ? "Conectado"
                     : activeAgent.status === "error"
-                    ? "错误"
-                    : "未连接",
+                    ? "Erro"
+                    : "Nao conectado",
               }),
             ),
             React.createElement(
               Descriptions.Item,
-              { label: "认证类型" },
+              { label: "Tipo de autenticacao" },
               activeAgent.auth_type
                 ? React.createElement(
                     Tag,
                     { color: "blue" },
                     (
                       {
-                        gateway: "阿里云Agent Hub",
+                        gateway: "Alibaba Cloud Agent Hub",
                         bearer: "Bearer Token",
                         api_key: "API Key",
                       } as any
                     )[activeAgent.auth_type] || activeAgent.auth_type,
                   )
-                : "无认证",
+                : "Sem autenticacao",
             ),
             React.createElement(
               Descriptions.Item,
-              { label: "描述" },
-              activeAgent.description || "-",
+              { label: "Descricao" },
+              translateA2AText(activeAgent.description) || "-",
             ),
             React.createElement(
               Descriptions.Item,
-              { label: "版本" },
+              { label: "Versao" },
               activeAgent.version || "-",
             ),
           ),
@@ -1833,17 +1888,17 @@ function buildPlugin() {
             ? React.createElement(
                 "div",
                 { style: { marginTop: 16 } },
-                React.createElement("h4", null, "技能"),
+                React.createElement("h4", null, "Skills"),
                 ...activeAgent.skills.map((s: any, i: number) =>
                   React.createElement(
                     Card,
                     { key: i, size: "small", style: { marginBottom: 8 } },
-                    React.createElement("strong", null, s.name),
+                    React.createElement("strong", null, translateA2AText(s.name)),
                     s.description
                       ? React.createElement(
                           "div",
                           { style: { color: "#666", fontSize: 12 } },
-                          s.description,
+                          translateA2AText(s.description),
                         )
                       : null,
                   ),
@@ -1854,7 +1909,7 @@ function buildPlugin() {
             ? React.createElement(
                 "div",
                 { style: { marginTop: 16 } },
-                React.createElement("h4", null, "能力"),
+                React.createElement("h4", null, "Capacidades"),
                 React.createElement(
                   Space,
                   null,
@@ -1910,7 +1965,7 @@ function buildPlugin() {
                 loading: refreshing,
                 onClick: handleRefresh,
               },
-              "刷新 Agent Card",
+              "Atualizar cartao do Agent",
             ),
             React.createElement(
               Button,
@@ -1921,7 +1976,7 @@ function buildPlugin() {
                   : null,
                 onClick: handleDelete,
               },
-              "删除",
+              "Excluir",
             ),
           ),
         )
@@ -1931,8 +1986,8 @@ function buildPlugin() {
       Drawer,
       {
         title: isCreateMode
-          ? "注册远程 A2A Agent"
-          : activeAgent?.name || activeAgent?.alias || "Agent 详情",
+          ? "Registrar A2A Agent remoto"
+          : translateA2AText(activeAgent?.name || activeAgent?.alias) || "Detalhes do Agent",
         open: drawerOpen,
         onClose: handleClose,
         width: 480,
@@ -1940,11 +1995,11 @@ function buildPlugin() {
           ? React.createElement(
               Space,
               { style: { display: "flex", justifyContent: "flex-end" } },
-              React.createElement(Button, { onClick: handleClose }, "取消"),
+              React.createElement(Button, { onClick: handleClose }, "Cancelar"),
               React.createElement(
                 Button,
                 { type: "primary", loading: saving, onClick: handleSubmit },
-                "注册",
+                "Registrar",
               ),
             )
           : null,
@@ -1964,7 +2019,7 @@ function buildPlugin() {
             alignItems: "center",
           },
         },
-        React.createElement("h2", { style: { margin: 0 } }, "A2A 远程 Agent"),
+        React.createElement("h2", { style: { margin: 0 } }, "A2A Agents remotos"),
         React.createElement(
           Space,
           null,
@@ -1975,7 +2030,7 @@ function buildPlugin() {
               onClick: fetchAgents,
               loading,
             },
-            "刷新列表",
+            "Atualizar lista",
           ),
           React.createElement(
             Button,
@@ -1983,7 +2038,7 @@ function buildPlugin() {
               icon: ApiOutlined ? React.createElement(ApiOutlined) : null,
               onClick: openImportModal,
             },
-            "从阿里云AgentHub导入",
+            "Importar do Alibaba Cloud Agent Hub",
           ),
           React.createElement(
             Button,
@@ -1992,7 +2047,7 @@ function buildPlugin() {
               icon: PlusOutlined ? React.createElement(PlusOutlined) : null,
               onClick: handleCreateClick,
             },
-            "注册 Agent",
+            "Registrar Agent",
           ),
         ),
       ),
@@ -2011,7 +2066,7 @@ function buildPlugin() {
               style: { marginRight: 4, color: "#faad14" },
             })
           : null,
-        "当前 A2A 功能仅支持 CloudPaw 插件连接阿里云 Skills 门户 Agent，连接其他 Agent 可能存在不兼容问题。",
+        "No momento, o A2A conecta pelo CloudPaw aos Agents do portal Alibaba Cloud Skills. Outros Agents podem ter incompatibilidades.",
       ),
     );
 
@@ -2023,7 +2078,7 @@ function buildPlugin() {
         )
       : agents.length === 0
       ? React.createElement(Empty, {
-          description: "暂无注册的远程 A2A Agent",
+          description: "Nenhum A2A Agent remoto registrado",
         })
       : React.createElement(
           "div",
@@ -2049,7 +2104,7 @@ function buildPlugin() {
     const importModalEl = React.createElement(
       Modal,
       {
-        title: hasResults ? "导入结果" : "从阿里云AgentHub导入 Agent",
+        title: hasResults ? "Resultado da importacao" : "Importar Agent do Alibaba Cloud Agent Hub",
         open: importModalOpen,
         onCancel: closeImportModal,
         closable: !importing || hasResults,
@@ -2062,7 +2117,7 @@ function buildPlugin() {
               React.createElement(
                 Button,
                 { type: "primary", onClick: closeImportModal },
-                "关闭",
+                "Fechar",
               ),
             )
           : hubAgents.length > 0
@@ -2072,7 +2127,7 @@ function buildPlugin() {
               React.createElement(
                 Button,
                 { onClick: closeImportModal },
-                "取消",
+                "Cancelar",
               ),
               React.createElement(
                 Button,
@@ -2082,7 +2137,7 @@ function buildPlugin() {
                   disabled: selectedAgents.size === 0,
                   onClick: handleConfirmImport,
                 },
-                `确认导入 (${selectedAgents.size}/${hubAgents.length})`,
+                `Confirmar importacao (${selectedAgents.size}/${hubAgents.length})`,
               ),
             )
           : null,
@@ -2106,7 +2161,7 @@ function buildPlugin() {
           React.createElement(
             "span",
             { style: { fontSize: 13, color: token.colorTextTertiary } },
-            "正在从 AgentHub 获取 Agent 列表...",
+            "Obtendo lista de Agents do Agent Hub...",
           ),
         ),
       // Agent selection list (hide after import completed)
@@ -2132,7 +2187,7 @@ function buildPlugin() {
             React.createElement(
               "span",
               null,
-              `共 ${hubAgents.length} 个 Agent，已选 ${selectedAgents.size} 个`,
+              `${hubAgents.length} Agents, ${selectedAgents.size} selecionado(s)`,
             ),
             React.createElement(
               Space,
@@ -2145,7 +2200,7 @@ function buildPlugin() {
                   style: { padding: 0, height: "auto" },
                   onClick: selectAllAgents,
                 },
-                "全选",
+                "Selecionar todos",
               ),
               React.createElement(
                 Button,
@@ -2155,7 +2210,7 @@ function buildPlugin() {
                   style: { padding: 0, height: "auto" },
                   onClick: deselectAllAgents,
                 },
-                "取消全选",
+                "Limpar selecao",
               ),
             ),
           ),
@@ -2211,7 +2266,7 @@ function buildPlugin() {
                         marginBottom: 2,
                       },
                     },
-                    agent.name || agent.url,
+                    translateA2AText(agent.name || agent.url),
                   ),
                   agent.description
                     ? React.createElement(
@@ -2225,7 +2280,7 @@ function buildPlugin() {
                             whiteSpace: "nowrap",
                           },
                         },
-                        agent.description,
+                        translateA2AText(agent.description),
                       )
                     : null,
                   agent.skills?.length > 0
@@ -2244,7 +2299,7 @@ function buildPlugin() {
                                 fontWeight: 500,
                               },
                             },
-                            s.name,
+                            translateA2AText(s.name),
                           ),
                         ),
                         agent.skills.length > 3
@@ -2272,7 +2327,7 @@ function buildPlugin() {
                           borderRadius: 4,
                         },
                       },
-                      "✓ 已导入",
+                      "Importado",
                     )
                   : null,
               );
