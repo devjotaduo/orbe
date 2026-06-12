@@ -33,7 +33,13 @@ def get_engine() -> Any:
     if not database_url.startswith("postgresql"):
         raise RuntimeError(f"{DB_URL_ENV} must use a PostgreSQL URL")
 
-    from sqlalchemy import create_engine
+    try:
+        from sqlalchemy import create_engine
+    except ImportError as exc:
+        raise RuntimeError(
+            f"{DB_URL_ENV} is set but SQLAlchemy is not installed; "
+            "run `pip install qwenpaw[enterprise]`",
+        ) from exc
 
     return create_engine(
         database_url,

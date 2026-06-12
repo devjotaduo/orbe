@@ -21,11 +21,13 @@ from typing import Any, Optional
 try:
     from qwenpaw_ext.nexora import audit as _audit
     from qwenpaw_ext.nexora import db as _db
+    from qwenpaw_ext.nexora import rbac as _rbac
 
     ENTERPRISE_AVAILABLE = True
 except ImportError:  # extension not installed
     _audit = None  # type: ignore[assignment]
     _db = None  # type: ignore[assignment]
+    _rbac = None  # type: ignore[assignment]
     ENTERPRISE_AVAILABLE = False
 
 
@@ -63,6 +65,55 @@ def check_database_health() -> None:
     if not ENTERPRISE_AVAILABLE:
         return
     _db.check_database_health()
+
+
+def get_rbac() -> Optional[Any]:
+    """Return the RBAC module, or None when the extension is missing.
+
+    Used by the user/role management endpoints; callers must answer
+    501 (not implemented) when this returns ``None``.
+    """
+    return _rbac if ENTERPRISE_AVAILABLE else None
+
+
+def default_roles() -> dict:
+    """Built-in role definitions, or ``{}`` without the extension."""
+    if not ENTERPRISE_AVAILABLE:
+        return {}
+    return _rbac.default_roles()
+
+
+def required_permission(path: str, method: str) -> Optional[str]:
+    """Permission required for *method* + *path*, or None for no check."""
+    if not ENTERPRISE_AVAILABLE:
+        return None
+    return _rbac.required_permission(path, method)
+
+
+def user_has_permission(username: str, permission: str) -> bool:
+    """Check RBAC permission for *username*.
+
+    Without the extension this returns ``True``, which is coherent:
+    ``required_permission`` returns ``None`` in that case so the
+    middleware never reaches this check.
+    """
+    if not ENTERPRISE_AVAILABLE:
+        return True
+    return _rbac.user_has_permission(username, permission)
+
+
+def auth_repository() -> Optional[Any]:
+    """PostgreSQL auth repository module when DB storage is enabled.
+
+    Returns ``None`` when the extension is missing or ``NEXORA_DB_URL``
+    is not configured.  The import is lazy because the repository module
+    imports sqlalchemy at module level.
+    """
+    if not is_database_enabled():
+        return None
+    from qwenpaw_ext.nexora.repositories import auth_postgres
+
+    return auth_postgres
 
 
 def record_audit_event(

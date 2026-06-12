@@ -319,7 +319,8 @@ def create_user(
     if auth._find_user(data, username)[1] is not None:
         return None
 
-    valid_roles = _valid_role_ids(data, roles or ["operator"]) or ["operator"]
+    # New users start without roles until an admin assigns them.
+    valid_roles = _valid_role_ids(data, roles or [])
     pw_hash, salt = auth._hash_password(password)
     ts = auth._now()
     user = {
@@ -351,8 +352,8 @@ def update_user(
         return None
 
     if roles is not None:
-        valid_roles = _valid_role_ids(data, roles)
-        user["roles"] = valid_roles or ["operator"]
+        # An empty list is allowed: it clears every role assignment.
+        user["roles"] = _valid_role_ids(data, roles)
 
     if status is not None:
         if status not in ("active", "disabled"):
