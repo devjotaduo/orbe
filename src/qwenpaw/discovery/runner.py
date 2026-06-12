@@ -65,31 +65,8 @@ async def run_discovery_session(
             _persist(state, out_dir)
             break
         if user_text.lower() in ("/fim", "/sair", "exit", "quit"):
-            # pede ao agente que feche com o que já sabe
-            close_text = (
-                "Pode encerrar a entrevista e gerar o blueprint com o "
-                "que já temos, listando o que ficou em aberto. Antes de "
-                "emitir, peça meu WhatsApp para o onboarding."
-            )
             state.transcript.append(Turn(role="user", text="/fim"))
-            reply = await agent.reply(UserMsg(name="user", content=close_text))
-            _persist(state, out_dir)
-            print(f"\nConsultor: {reply.get_text_content()}")
-            if not session.emitted:
-                break
-            # /fim com onboarding pendente: dá UMA chance de informar o número
-            if state.onboarding is None:
-                try:
-                    contact = _read_user_input("\nVocê: ").strip()
-                except EOFError:
-                    break
-                if contact:
-                    state.transcript.append(Turn(role="user", text=contact))
-                    reply = await agent.reply(
-                        UserMsg(name="user", content=contact)
-                    )
-                    _persist(state, out_dir)
-                    print(f"\nConsultor: {reply.get_text_content()}")
+            await _close_interview(agent, session, out_dir)
             break
         state.transcript.append(Turn(role="user", text=user_text))
         reply = await agent.reply(UserMsg(name="user", content=user_text))
@@ -102,6 +79,48 @@ async def run_discovery_session(
     else:
         print("\n(Entrevista encerrada sem blueprint — estado salvo para retomar.)")
     return session
+
+
+async def _close_interview(
+    agent, session: DiscoverySession, out_dir: Path, max_tries: int = 3
+) -> None:
+    """Fecha a entrevista no /fim: insiste no emit_blueprint, pedindo o
+    WhatsApp do onboarding apenas se ainda faltar. O modelo costuma dar uma
+    despedida conversacional sem chamar a tool — por isso reprisamos com
+    instruções cada vez mais diretas até `emit_blueprint` rodar."""
+    state = session.state
+    closing = (
+        "Vamos encerrar agora. Gere o plano final do time chamando "
+        "emit_blueprint com o que já temos (liste o que ficou em aberto). "
+        "Se ainda não tiver meu WhatsApp para o onboarding, peça primeiro. "
+        "NÃO se despeça sem gerar o plano."
+    )
+    for _ in range(max_tries):
+        reply = await agent.reply(UserMsg(name="user", content=closing))
+        _persist(state, out_dir)
+        print(f"\nConsultor: {reply.get_text_content()}")
+        if session.emitted:
+            break
+        if state.onboarding is not None:
+            closing = (
+                "Já tem meu WhatsApp registrado. Gere o plano final AGORA "
+                "chamando emit_blueprint, por favor."
+            )
+        else:
+            try:
+                contact = _read_user_input("\nVocê: ").strip()
+            except EOFError:
+                contact = ""
+            if contact and contact.lower() not in (
+                "/fim", "/sair", "exit", "quit"
+            ):
+                state.transcript.append(Turn(role="user", text=contact))
+                closing = contact
+            else:
+                closing = (
+                    "Pode gerar o plano com o que já temos chamando "
+                    "emit_blueprint, por favor."
+                )
 
 
 async def _run_requirements_phase(session: DiscoverySession) -> None:
