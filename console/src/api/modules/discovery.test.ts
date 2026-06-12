@@ -61,7 +61,9 @@ describe("discoveryApi.streamTurn", () => {
 
   it("POSTs to /api/discovery/stream with session, message and auth", async () => {
     (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      streamResponse(['data: {"type":"RUN_FINISHED","threadId":"t","runId":"r"}\n\n']),
+      streamResponse([
+        'data: {"type":"RUN_FINISHED","threadId":"t","runId":"r"}\n\n',
+      ]),
     );
 
     await discoveryApi.streamTurn("sess-1", "hello", () => {});
@@ -107,7 +109,9 @@ describe("discoveryApi.streamTurn", () => {
     // streamTurn takes (sessionId, message, onEvent, signal?) and passes the
     // signal into fetch so the caller can cancel an in-flight turn (unmount).
     (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-      streamResponse(['data: {"type":"RUN_FINISHED","threadId":"t","runId":"r"}\n\n']),
+      streamResponse([
+        'data: {"type":"RUN_FINISHED","threadId":"t","runId":"r"}\n\n',
+      ]),
     );
 
     const controller = new AbortController();
@@ -167,7 +171,13 @@ describe("discoveryApi.streamTurn", () => {
     );
 
     const controller = new AbortController();
-    await discoveryApi.action("s1", "approve_team", {}, () => {}, controller.signal);
+    await discoveryApi.action(
+      "s1",
+      "approve_team",
+      {},
+      () => {},
+      controller.signal,
+    );
 
     const [, init] = (fetch as unknown as ReturnType<typeof vi.fn>).mock
       .calls[0];

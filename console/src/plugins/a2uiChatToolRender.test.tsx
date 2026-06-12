@@ -62,9 +62,7 @@ const SURFACE_MSGS = [
   {
     messageType: "updateComponents",
     surfaceId: "s",
-    components: [
-      { id: "root", type: "Column", properties: {}, children: [] },
-    ],
+    components: [{ id: "root", type: "Column", properties: {}, children: [] }],
   },
   { messageType: "updateDataModel", surfaceId: "s", data: { name: "Ada" } },
 ];

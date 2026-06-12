@@ -47,11 +47,19 @@ const AGENT_HELLO: AguiEvent[] = [
 
 // Final turn: agent text + a CUSTOM a2ui surface (createSurface + components).
 const BLUEPRINT_TURN: AguiEvent[] = [
-  { type: "TEXT_MESSAGE_CONTENT", messageId: "m2", delta: "Aqui esta seu time." },
+  {
+    type: "TEXT_MESSAGE_CONTENT",
+    messageId: "m2",
+    delta: "Aqui esta seu time.",
+  },
   {
     type: "CUSTOM",
     name: "a2ui",
-    value: { messageType: "createSurface", surfaceId: "blueprint", root: "root" },
+    value: {
+      messageType: "createSurface",
+      surfaceId: "blueprint",
+      root: "root",
+    },
   },
   {
     type: "CUSTOM",
@@ -78,7 +86,11 @@ const EDITABLE_TURN: AguiEvent[] = [
   {
     type: "CUSTOM",
     name: "a2ui",
-    value: { messageType: "createSurface", surfaceId: "blueprint", root: "root" },
+    value: {
+      messageType: "createSurface",
+      surfaceId: "blueprint",
+      root: "root",
+    },
   },
   {
     type: "CUSTOM",
@@ -128,7 +140,11 @@ const STRUCTURAL_TURN: AguiEvent[] = [
   {
     type: "CUSTOM",
     name: "a2ui",
-    value: { messageType: "createSurface", surfaceId: "blueprint", root: "root" },
+    value: {
+      messageType: "createSurface",
+      surfaceId: "blueprint",
+      root: "root",
+    },
   },
   {
     type: "CUSTOM",
@@ -401,11 +417,15 @@ describe("DiscoveryPage", () => {
     scriptTurn(BLUEPRINT_TURN);
     renderWithProviders(<DiscoveryPage />);
     fireEvent.click(screen.getByText("discovery.start"));
-    await waitFor(() => expect(screen.getByText("discovery.restart")).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText("discovery.restart")).toBeTruthy(),
+    );
 
     fireEvent.click(screen.getByText("discovery.restart"));
 
-    await waitFor(() => expect(screen.getByText("discovery.start")).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText("discovery.start")).toBeTruthy(),
+    );
     expect(screen.queryByText("Time proposto")).toBeNull();
   });
 
@@ -528,9 +548,7 @@ describe("DiscoveryPage", () => {
     it("remove_agent removes the agent at the given index locally", async () => {
       await renderStructural();
       fireEvent.click(screen.getByText("Remover 0"));
-      await waitFor(() =>
-        expect(screen.queryByDisplayValue("A1")).toBeNull(),
-      );
+      await waitFor(() => expect(screen.queryByDisplayValue("A1")).toBeNull());
       expect(screen.getByDisplayValue("A2")).toBeTruthy();
       expect(mockAction).not.toHaveBeenCalled();
     });
@@ -569,9 +587,7 @@ describe("DiscoveryPage", () => {
     it("remove_item removes the string item locally", async () => {
       await renderStructural();
       fireEvent.click(screen.getByText("- Tarefa"));
-      await waitFor(() =>
-        expect(screen.queryByDisplayValue("t1")).toBeNull(),
-      );
+      await waitFor(() => expect(screen.queryByDisplayValue("t1")).toBeNull());
       expect(mockAction).not.toHaveBeenCalled();
     });
 

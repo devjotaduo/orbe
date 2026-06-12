@@ -102,30 +102,30 @@ export default function DiscoveryPage() {
           sessionId,
           message,
           (ev: AguiEvent) => {
-          switch (ev.type) {
-            case "TEXT_MESSAGE_CONTENT":
-              pendingText += ev.delta;
-              break;
-            case "STATE_SNAPSHOT":
-              setState(ev.snapshot);
-              break;
-            case "CUSTOM":
-              if (ev.name === "a2ui") {
-                gotSurface = true;
-                const next = applyA2uiMessage(
-                  surfaceRef.current ?? emptySurface("blueprint"),
-                  ev.value as unknown as A2uiMessage,
-                );
-                surfaceRef.current = next;
-                setSurface({ ...next });
-              }
-              break;
-            case "RUN_ERROR":
-              setError(ev.message);
-              break;
-            default:
-              break;
-          }
+            switch (ev.type) {
+              case "TEXT_MESSAGE_CONTENT":
+                pendingText += ev.delta;
+                break;
+              case "STATE_SNAPSHOT":
+                setState(ev.snapshot);
+                break;
+              case "CUSTOM":
+                if (ev.name === "a2ui") {
+                  gotSurface = true;
+                  const next = applyA2uiMessage(
+                    surfaceRef.current ?? emptySurface("blueprint"),
+                    ev.value as unknown as A2uiMessage,
+                  );
+                  surfaceRef.current = next;
+                  setSurface({ ...next });
+                }
+                break;
+              case "RUN_ERROR":
+                setError(ev.message);
+                break;
+              default:
+                break;
+            }
           },
           controller.signal,
         );
@@ -148,7 +148,10 @@ export default function DiscoveryPage() {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
         if (!controller.signal.aborted && pendingText) {
-          setTranscript((prev) => [...prev, { role: "agent", text: pendingText }]);
+          setTranscript((prev) => [
+            ...prev,
+            { role: "agent", text: pendingText },
+          ]);
         }
         // Only the latest turn clears the busy flag / its controller.
         if (abortRef.current === controller) {
@@ -323,7 +326,10 @@ export default function DiscoveryPage() {
         <div className={styles.inner}>
           {!started ? (
             <div className={styles.intro}>
-              <div className={styles.introIcon} style={{ color: token.colorPrimary }}>
+              <div
+                className={styles.introIcon}
+                style={{ color: token.colorPrimary }}
+              >
                 <CompassOutlined />
               </div>
               <Typography.Title level={3} style={{ marginTop: 0 }}>
