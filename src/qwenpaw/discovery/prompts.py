@@ -251,7 +251,10 @@ _EXAMPLE = {
         {
             "name": "Atendente WhatsApp",
             "role": "SAC 24/7",
-            "objective": "responder cardápio, horários e reservas sem intervenção humana",  # noqa: E501
+            "objective": (
+                "responder cardápio, horários e reservas"
+                " sem intervenção humana"
+            ),
             "tasks": [
                 "responder FAQ",
                 "registrar reservas",

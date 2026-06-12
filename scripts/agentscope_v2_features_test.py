@@ -44,7 +44,9 @@ def _msg(text: str):
     from agentscope.message import Msg, TextBlock
 
     return Msg(
-        name="user", role="user", content=[TextBlock(type="text", text=text)]
+        name="user",
+        role="user",
+        content=[TextBlock(type="text", text=text)],
     )
 
 
@@ -72,7 +74,9 @@ async def feat_streaming(timeout):
     with tempfile.TemporaryDirectory() as wd:
         agent = amt._build_test_agent(pid, model, Path(wd), "feat-stream")
         seen, _ = await _collect_events(
-            agent, "Diga 'olá' em uma palavra.", timeout
+            agent,
+            "Diga 'olá' em uma palavra.",
+            timeout,
         )
     kinds = set(seen)
     needed = {"ReplyStartEvent", "ReplyEndEvent"}
@@ -151,7 +155,8 @@ async def feat_state_roundtrip(timeout):
     with tempfile.TemporaryDirectory() as wd:
         a1 = amt._build_test_agent(pid, model, Path(wd), "feat-state-1")
         await asyncio.wait_for(
-            a1.reply(_msg("Meu nome é Duo. Responda 'ok'.")), timeout=timeout
+            a1.reply(_msg("Meu nome é Duo. Responda 'ok'.")),
+            timeout=timeout,
         )
         dumped = a1.state_dict()
         is_v2 = isinstance(dumped, dict) and "state" in dumped
@@ -203,7 +208,7 @@ async def main():
     timeout = 150.0
     print(
         f"== Testando {len(FEATURES)} features novas "
-        f"do AgentScope 2.0 no qwenpaw =="
+        f"do AgentScope 2.0 no qwenpaw ==",
     )
     results = []
     for title, fn in FEATURES:

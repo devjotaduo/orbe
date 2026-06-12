@@ -249,7 +249,11 @@ class ScoreResult:
 
 
 def _add(
-    result: ScoreResult, name: str, score: float, max_score: float, note: str
+    result: ScoreResult,
+    name: str,
+    score: float,
+    max_score: float,
+    note: str,
 ):
     result.criteria.append(CriterionScore(name, score, max_score, note))
 
@@ -304,7 +308,7 @@ def score_session(
     elif detected == persona.expected_segment:
         _add(result, "Segmento", 20, 20, f"Correto: `{detected}`")
         result.positives.append(
-            f"Segmento detectado corretamente: `{detected}`"
+            f"Segmento detectado corretamente: `{detected}`",
         )
     elif detected:
         _add(
@@ -315,12 +319,12 @@ def score_session(
             f"Errado: `{detected}` (esperado: `{persona.expected_segment}`)",
         )
         result.issues.append(
-            f"Segmento detectado incorretamente: `{detected}` (esperado `{persona.expected_segment}`)"
+            f"Segmento detectado incorretamente: `{detected}` (esperado `{persona.expected_segment}`)",
         )
     else:
         _add(result, "Segmento", 0, 20, "Não detectado")
         result.issues.append(
-            "Segmento NÃO detectado — `segment_lookup` não foi chamado ou falhou"
+            "Segmento NÃO detectado — `segment_lookup` não foi chamado ou falhou",
         )
 
     # 2. Blueprint emitido (20 pts)
@@ -330,7 +334,7 @@ def score_session(
     else:
         _add(result, "Blueprint gerado", 0, 20, "Não emitido")
         result.issues.append(
-            "Blueprint NÃO emitido — a entrevista terminou sem conclusão"
+            "Blueprint NÃO emitido — a entrevista terminou sem conclusão",
         )
 
     # 3. Qualidade do blueprint (40 pts, só pontuável se emitido)
@@ -379,7 +383,7 @@ def score_session(
             "Apenas 1 agente — muito simples",
         )
         result.issues.append(
-            "Apenas 1 agente proposto — time insuficiente para a maioria das PMEs"
+            "Apenas 1 agente proposto — time insuficiente para a maioria das PMEs",
         )
     else:
         _add(result, "Agentes propostos", 0, 15, "Nenhum agente")
@@ -389,14 +393,14 @@ def score_session(
     if roadmap_steps >= 3:
         _add(result, "Roadmap", 10, 10, f"{roadmap_steps} etapas — detalhado")
         result.positives.append(
-            f"Roadmap com {roadmap_steps} etapas bem definidas"
+            f"Roadmap com {roadmap_steps} etapas bem definidas",
         )
     elif roadmap_steps == 2:
         _add(result, "Roadmap", 7, 10, "2 etapas — funcional")
     elif roadmap_steps == 1:
         _add(result, "Roadmap", 3, 10, "Apenas 1 etapa — superficial")
         result.issues.append(
-            "Roadmap com apenas 1 etapa — sem progressão de implantação"
+            "Roadmap com apenas 1 etapa — sem progressão de implantação",
         )
     else:
         _add(result, "Roadmap", 0, 10, "Sem roadmap")
@@ -412,12 +416,12 @@ def score_session(
             f"{process_map_len} processos mapeados",
         )
         result.positives.append(
-            f"{process_map_len} processos mapeados no blueprint"
+            f"{process_map_len} processos mapeados no blueprint",
         )
     elif process_map_len == 1:
         _add(result, "Mapa de processos", 5, 10, "1 processo — incompleto")
         result.issues.append(
-            "Apenas 1 processo no mapa — pode estar superficial"
+            "Apenas 1 processo no mapa — pode estar superficial",
         )
     else:
         _add(result, "Mapa de processos", 0, 10, "Sem mapa de processos")
@@ -433,16 +437,20 @@ def score_session(
             f"{open_questions} perguntas documentadas",
         )
         result.positives.append(
-            f"{open_questions} perguntas em aberto documentadas (boa prática)"
+            f"{open_questions} perguntas em aberto documentadas (boa prática)",
         )
     elif open_questions == 1:
         _add(result, "Perguntas em aberto", 3, 5, "1 pergunta — aceitável")
     else:
         _add(
-            result, "Perguntas em aberto", 0, 5, "Nenhuma pergunta documentada"
+            result,
+            "Perguntas em aberto",
+            0,
+            5,
+            "Nenhuma pergunta documentada",
         )
         result.issues.append(
-            "Nenhuma pergunta em aberto — entrevista pode ter sido superficial"
+            "Nenhuma pergunta em aberto — entrevista pode ter sido superficial",
         )
 
     # 4. Integrações detectadas (10 pts)
@@ -456,7 +464,7 @@ def score_session(
             f"{integ_count} integrações",
         )
         result.positives.append(
-            f"{integ_count} integrações detectadas corretamente"
+            f"{integ_count} integrações detectadas corretamente",
         )
     elif integ_count == 1:
         _add(
@@ -467,7 +475,7 @@ def score_session(
             "1 integração — insuficiente",
         )
         result.issues.append(
-            "Apenas 1 integração detectada — o empresário mencionou mais ferramentas"
+            "Apenas 1 integração detectada — o empresário mencionou mais ferramentas",
         )
     else:
         _add(
@@ -478,7 +486,7 @@ def score_session(
             "Nenhuma integração detectada",
         )
         result.issues.append(
-            "Nenhuma integração detectada — o agente não usou `reflect` para capturar ferramentas"
+            "Nenhuma integração detectada — o agente não usou `reflect` para capturar ferramentas",
         )
 
     # 5. Profundidade da entrevista (10 pts)
@@ -492,7 +500,7 @@ def score_session(
             f"{user_turns} turnos do usuário",
         )
         result.positives.append(
-            f"Entrevista aprofundada: {user_turns} turnos do empresário"
+            f"Entrevista aprofundada: {user_turns} turnos do empresário",
         )
     elif user_turns >= 3:
         _add(
@@ -511,7 +519,7 @@ def score_session(
             f"{user_turns} turno(s) — muito curto",
         )
         result.issues.append(
-            f"Entrevista muito curta: apenas {user_turns} turno(s) do usuário"
+            f"Entrevista muito curta: apenas {user_turns} turno(s) do usuário",
         )
     else:
         _add(
@@ -522,7 +530,7 @@ def score_session(
             "Nenhum turno capturado",
         )
         result.issues.append(
-            "Nenhum turno de usuário na transcrição — erro de captura"
+            "Nenhum turno de usuário na transcrição — erro de captura",
         )
 
     # 6. Onboarding WhatsApp (10 pts)
@@ -770,7 +778,8 @@ async def _run_persona(
         )
     except Exception as exc:
         score = ScoreResult(
-            persona_id=persona.id, error=traceback.format_exc()
+            persona_id=persona.id,
+            error=traceback.format_exc(),
         )
         session = None  # type: ignore[assignment]
         print(f"[ERRO] {persona.name}: {exc}", file=sys.stderr)
@@ -786,7 +795,8 @@ async def _run_persona(
             qual = await _judge_transcript(buf.getvalue(), final_report)
         except Exception as exc:
             print(
-                f"[JUDGE] falhou para {persona.name}: {exc}", file=sys.stderr
+                f"[JUDGE] falhou para {persona.name}: {exc}",
+                file=sys.stderr,
             )
     if qual:
         for key, label in _QUAL_CRITERIA:
@@ -1059,7 +1069,7 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
         for c in run.score.criteria:
             bar = _bar(c.score, c.max_score, 10)
             lines.append(
-                f"| {c.name} | {c.score:.0f} | {c.max_score:.0f} | `{bar}` | {c.note} |"
+                f"| {c.name} | {c.score:.0f} | {c.max_score:.0f} | `{bar}` | {c.note} |",
             )
         lines.append("")
 

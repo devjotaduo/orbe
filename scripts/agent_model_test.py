@@ -140,7 +140,10 @@ SCENARIOS = [
 
 
 def _build_test_agent(
-    provider_id: str, model: str, workspace_dir: Path, session_id: str
+    provider_id: str,
+    model: str,
+    workspace_dir: Path,
+    session_id: str,
 ):
     """Replicate runtime.build_agent but with a chosen active_model and a
     SAFE-only toolkit, without mutating global/persisted config."""
@@ -165,7 +168,8 @@ def _build_test_agent(
         "channel": "console",
     }
     context_manager = LightContextManager(
-        working_dir=wd_str, agent_id="default"
+        working_dir=wd_str,
+        agent_id="default",
     )
     env_context = build_env_context(
         session_id=session_id,
@@ -257,7 +261,8 @@ async def _run_one(provider_id: str, model: str, scenarios, timeout_s: float):
                     content=[TextBlock(type="text", text=sc["prompt"])],
                 )
                 resp = await asyncio.wait_for(
-                    agent.reply(msg), timeout=timeout_s
+                    agent.reply(msg),
+                    timeout=timeout_s,
                 )
                 entry["latency_ms"] = int((time.time() - t0) * 1000)
                 text = (
@@ -283,7 +288,7 @@ async def _run_one(provider_id: str, model: str, scenarios, timeout_s: float):
             results.append(entry)
             print(
                 f"   [{model}] {sc['id']:16} ok={entry['ok']} pass={entry['passed']} "
-                f"{entry['latency_ms']}ms {entry['note']}"
+                f"{entry['latency_ms']}ms {entry['note']}",
             )
     return results
 
@@ -292,7 +297,8 @@ def _write_reports(run, out_dir: Path, stamp: str):
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / f"report-{stamp}.json"
     json_path.write_text(
-        json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(run, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
 
     md = []
@@ -300,13 +306,13 @@ def _write_reports(run, out_dir: Path, stamp: str):
     md.append("")
     md.append(
         f"- Modelos testados: **{len(run['models'])}**  |  "
-        f"Cenários: **{len(run['scenarios'])}**"
+        f"Cenários: **{len(run['scenarios'])}**",
     )
     md.append(
-        f"- Tools habilitadas (read-only): `{', '.join(sorted(SAFE_TOOLS))}`"
+        f"- Tools habilitadas (read-only): `{', '.join(sorted(SAFE_TOOLS))}`",
     )
     md.append(
-        f"- Gerado por `scripts/agent_model_test.py` (agente completo, ReAct)."
+        f"- Gerado por `scripts/agent_model_test.py` (agente completo, ReAct).",
     )
     md.append("")
 
@@ -324,7 +330,7 @@ def _write_reports(run, out_dir: Path, stamp: str):
         errs = sum(1 for r in rs if r["error"])
         md.append(
             f"| `{mr['provider']}:{mr['model']}` | {oks}/{len(rs)} | "
-            f"{passed}/{len(rs)} | {avg} | {errs} |"
+            f"{passed}/{len(rs)} | {avg} | {errs} |",
         )
     md.append("")
 
@@ -347,7 +353,9 @@ def _write_reports(run, out_dir: Path, stamp: str):
             else:
                 cells.append("✗")
         md.append(
-            f"| `{mr['provider']}:{mr['model']}` | " + " | ".join(cells) + " |"
+            f"| `{mr['provider']}:{mr['model']}` | "
+            + " | ".join(cells)
+            + " |",
         )
     md.append("")
 
@@ -374,7 +382,9 @@ def _write_reports(run, out_dir: Path, stamp: str):
 async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
-        "--smoke", action="store_true", help="1 modelo, 2 cenários"
+        "--smoke",
+        action="store_true",
+        help="1 modelo, 2 cenários",
     )
     ap.add_argument(
         "--models",
@@ -382,12 +392,15 @@ async def main():
         help="lista provider:model separada por vírgula",
     )
     ap.add_argument(
-        "--timeout", type=float, default=120.0, help="timeout por cenário (s)"
+        "--timeout",
+        type=float,
+        default=120.0,
+        help="timeout por cenário (s)",
     )
     args = ap.parse_args()
 
     models = [m.strip() for m in args.models.split(",") if m.strip()] or list(
-        DEFAULT_MODELS
+        DEFAULT_MODELS,
     )
     scenarios = SCENARIOS
     if args.smoke:
@@ -414,7 +427,7 @@ async def main():
         print(f"\n-- {provider_id} : {model} --")
         results = await _run_one(provider_id, model, scenarios, args.timeout)
         run["models"].append(
-            {"provider": provider_id, "model": model, "results": results}
+            {"provider": provider_id, "model": model, "results": results},
         )
 
     out_dir = Path("reports/agent-model-tests")
