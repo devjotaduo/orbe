@@ -148,3 +148,7 @@ e2e/__pycache__/
 graphify-out/
 local-docs/
 docs-site/
+
+# Next.js build output (never version build cache — leaked a secret once)
+**/.next/
+aionui-clone/.next/
