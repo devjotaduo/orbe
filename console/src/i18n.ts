@@ -19,7 +19,13 @@ const resources = {
   ja: {
     translation: ja,
   },
+  pt: {
+    translation: ptBR,
+  },
   "pt-BR": {
+    translation: ptBR,
+  },
+  "pt-br": {
     translation: ptBR,
   },
   id: {
@@ -29,8 +35,8 @@ const resources = {
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: localStorage.getItem("language") || navigator.language || "en",
-  fallbackLng: "en",
+  lng: localStorage.getItem("language") || navigator.language || "pt-BR",
+  fallbackLng: ["pt-BR", "pt", "en"],
   supportedLngs: Object.keys(resources),
   nonExplicitSupportedLngs: true,
   interpolation: {

@@ -41,7 +41,7 @@ async function executePluginScript(entryUrl: string): Promise<void> {
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const response = await fetch(entryUrl, { headers });
+  const response = await fetch(entryUrl, { cache: "no-store", headers });
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} for ${entryUrl}`);
   }

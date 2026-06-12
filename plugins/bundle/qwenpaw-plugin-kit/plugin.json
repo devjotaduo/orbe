@@ -1,0 +1,50 @@
+{
+  "id": "qwenpaw-plugin-kit",
+  "name": "QwenPaw Plugin Kit",
+  "version": "0.1.0",
+  "type": "general",
+  "description": "Basic Portuguese plugin kit showing QwenPaw extension elements.",
+  "description_i18n": {
+    "zh-CN": "展示 QwenPaw 插件扩展点的基础插件套件。",
+    "en-US": "Basic plugin kit showing QwenPaw extension elements.",
+    "pt-BR": "Kit basico em portugues mostrando os elementos que plugins QwenPaw podem usar."
+  },
+  "author": "QwenPaw Team",
+  "entry": {
+    "backend": "plugin.py",
+    "frontend": "dist/index.js"
+  },
+  "dependencies": [],
+  "min_version": "1.1.7",
+  "meta": {
+    "category": "examples",
+    "features": [
+      "backend-router",
+      "startup-hook",
+      "shutdown-hook",
+      "agent-tool",
+      "frontend-menu",
+      "frontend-route",
+      "frontend-slot"
+    ],
+    "tools": [
+      {
+        "name": "plugin_kit_describe_elements",
+        "description": "Describe the QwenPaw plugin elements available to developers.",
+        "icon": "🧩",
+        "requires_config": false,
+        "config_fields": [
+          {
+            "name": "language",
+            "label": "Idioma",
+            "type": "select",
+            "required": false,
+            "default": "pt-BR",
+            "options": ["pt-BR", "en-US"],
+            "help": "Idioma usado na resposta do exemplo."
+          }
+        ]
+      }
+    ]
+  }
+}

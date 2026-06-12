@@ -148,7 +148,7 @@ class BaseChannel(ABC):
         self.require_mention = require_mention
         self.access_control_dm = access_control_dm
         self.access_control_group = access_control_group
-        self._language = "zh"
+        self._language = "pt"
         self._enqueue: EnqueueCallback = None
         self._workspace = None
         cfg = load_config()

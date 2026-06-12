@@ -6,6 +6,82 @@
   background: @bg-1;
 }
 
+// ─── TitleBar left controls ───────────────────────────────────────────────────
+// AionUi: collapse + back + forward buttons on the left side of the titlebar
+.titlebarLeft {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.titlebarCenter {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.titlebarBtn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+  color: @text-secondary !important;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring !important;
+
+  &:hover:not(:disabled) {
+    background: @bg-hover !important;
+    color: @text-primary !important;
+  }
+
+  &:disabled {
+    color: @text-disabled !important;
+  }
+}
+
+// ─── Sidebar BrandHeader ──────────────────────────────────────────────────────
+// AionUi: 52px height, logo square (28px rounded-8) + app name 16px semibold
+.brandHeader {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 10px;
+  flex-shrink: 0;
+}
+
+.brandLogoSquare {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.brandLogoImg {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.brandName {
+  font-size: 16px;
+  font-weight: 600;
+  color: @text-primary;
+  line-height: 1;
+}
+
 // ─── Header / TitleBar ────────────────────────────────────────────────────────
 // AionUi: 36px, bg-bg-2, border-b border-border-base — compact titlebar style
 .header {
@@ -91,64 +167,64 @@
   border-right: 1px solid @border-base !important;
   overflow: auto;
   height: calc(100vh - @titlebar-height);
-  padding: 0 8px;
+  padding: 0 10px;
   display: flex;
   flex-direction: column;
 
   scrollbar-width: none;
   -ms-overflow-style: none;
 
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
-  // Agent-scoped section — AionUi uses bg-bg-3/aou-1 tint instead of amber
+  // SiderToolbar — botão Nova Conversa, AionUi scale animation
+  .siderToolbar {
+    padding: 6px 0 4px;
+    flex-shrink: 0;
+  }
+
+  .newChatBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 32px;
+    padding: 0 12px;
+    border: none;
+    border-radius: @sidebar-radius;
+    background: @brand;
+    color: @text-white;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      transform @transition-fast @ease-spring,
+      background @transition-fast @ease-spring;
+
+    &:hover {
+      background: @brand-hover;
+      transform: scale(0.98);
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+  }
+
+  // Agent-scoped section — AionUi: flat, no box, no border
   .agentScopedSection {
-    background: @aou-1;
-    border-radius: 10px;
-    border: 1px solid @border-base;
-    padding: 4px;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    padding: 0;
 
     :global {
       .qwenpaw-menu {
         background: transparent !important;
       }
     }
-  }
-
-  // AgentSelector + Chat container - sticky at top
-  .agentSelectorContainer {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    margin-bottom: 4px;
-    background: @aou-1;
-    border-radius: 10px 10px 0 0;
-  }
-
-  // Sticky Chat button — AionUi NavRow style
-  .stickyChatButton {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    height: @nav-row-height;
-    padding: 0 10px;
-    border: none;
-    border-radius: @sidebar-radius;
-    background: transparent;
-    color: @text-secondary;
-    font-size: @nav-font-size;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-
-    &:hover {
-      background: @bg-hover;
-      color: @text-primary;
-    }
-  }
-
-  .stickyChatButtonActive {
-    background: @bg-active;
-    color: @text-primary;
   }
 
   // Menu takes remaining space
@@ -158,16 +234,64 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
 
-    &::-webkit-scrollbar { display: none; }
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .recentSessions {
+    flex-shrink: 0;
+    padding: 8px 0 4px;
+    border-top: 1px solid @border-base;
+    margin-top: 4px;
+  }
+
+  .recentSessionsLabel {
+    font-size: @section-label-font-size;
+    font-weight: 500;
+    color: @text-muted;
+    padding: 0 10px;
+    margin-bottom: 2px;
+  }
+
+  .recentSessionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .recentSessionItem {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: @nav-row-height;
+    padding: 0 10px;
+    border: none;
+    border-radius: @sidebar-radius;
+    background: transparent;
+    color: @text-secondary;
+    font-size: @nav-font-size;
+    cursor: pointer;
+    text-align: left;
+    transition:
+      background @transition-fast @ease-spring,
+      color @transition-fast @ease-spring;
+
+    &:hover {
+      background: @bg-hover;
+      color: @text-primary;
+    }
+  }
+
+  .recentSessionName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
   }
 
   &.siderCollapsed {
     padding: 0 6px;
-
-    .agentSelectorContainer {
-      display: flex;
-      justify-content: center;
-    }
 
     .collapseToggleContainer {
       justify-content: center;
@@ -207,28 +331,42 @@
   :global {
     .qwenpaw-menu {
       border-inline-end: 0 !important;
+      background: transparent !important;
     }
 
-    // Group labels — AionUi: 12px muted text
+    // Group labels — AionUi: 12px muted text, collapsible
     .qwenpaw-menu-submenu-title {
       font-size: @section-label-font-size !important;
       font-weight: 500 !important;
       line-height: 28px !important;
       color: @text-muted !important;
       padding-left: 10px !important;
+      cursor: pointer !important;
 
       &:hover {
-        background: transparent !important;
-        color: @text-muted !important;
+        background: @bg-hover !important;
+        color: @text-secondary !important;
+        border-radius: @sidebar-radius !important;
       }
     }
 
+    // Chevron collapse icon — visible, rotates on open/close
     .qwenpaw-menu-submenu-arrow {
-      display: none !important;
+      display: inline-flex !important;
+      inset-inline-end: 10px !important;
+      color: @text-muted !important;
+      opacity: 0.7 !important;
+      font-size: 11px !important;
+      transition:
+        transform 0.2s,
+        opacity 0.15s !important;
     }
 
-    .qwenpaw-menu-submenu > .qwenpaw-menu {
-      display: block !important;
+    .qwenpaw-menu-submenu-open
+      > .qwenpaw-menu-submenu-title
+      .qwenpaw-menu-submenu-arrow {
+      transform: rotate(180deg) !important;
+      opacity: 1 !important;
     }
 
     .qwenpaw-menu-item {
@@ -259,21 +397,83 @@
   }
 }
 
+// ─── Sidebar drag-to-resize handle ───────────────────────────────────────────
+.siderResizeHandle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: @sider-drag-handle-width;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  border-radius: 2px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: @brand;
+    opacity: 0.5;
+  }
+
+  &:active {
+    background: @brand;
+    opacity: 0.8;
+  }
+}
+
+// ─── Mobile overlay sidebar ───────────────────────────────────────────────────
+.siderMobileOverlay {
+  position: fixed !important;
+  left: 0 !important;
+  top: @titlebar-height !important;
+  height: calc(100vh - @titlebar-height) !important;
+  z-index: @z-sider-mobile !important;
+  transform: translateX(-100%) !important;
+  transition: transform @transition-medium @ease-spring !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.siderMobileOverlayOpen {
+  transform: translateX(0) !important;
+}
+
+.siderBackdrop {
+  position: fixed;
+  inset: 0;
+  top: @titlebar-height;
+  background: @mobile-backdrop-bg;
+  z-index: @z-sider-backdrop;
+  cursor: pointer;
+  animation: backdropIn @transition-medium @ease-spring forwards;
+}
+
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 // ─── Sidebar dark ─────────────────────────────────────────────────────────────
 .siderDark {
-  background: @bg-2-dark !important;
+  background: @bg-1-dark !important;
   border-right-color: @border-base-dark !important;
 
   .agentScopedSection {
-    background: @brand-light-dark;
-    border-color: @border-base-dark;
+    background: transparent;
+    border: none;
   }
 
-  .agentSelectorContainer {
-    background: @brand-light-dark;
+  .recentSessions {
+    border-top-color: @border-base-dark;
   }
 
-  .stickyChatButton {
+  .recentSessionsLabel {
+    color: @text-muted-dark;
+  }
+
+  .recentSessionItem {
     color: @text-secondary-dark;
 
     &:hover {
@@ -282,14 +482,18 @@
     }
   }
 
-  .stickyChatButtonActive {
-    background: @bg-active-dark;
+  .newChatBtn {
+    background: @brand-dark;
     color: @text-primary-dark;
+
+    &:hover {
+      background: @brand-hover-dark;
+    }
   }
 
   :global {
     .qwenpaw-menu {
-      background: @bg-2-dark !important;
+      background: @bg-1-dark !important;
       border-inline-end: 0 !important;
     }
 
@@ -297,7 +501,12 @@
       color: @text-muted-dark !important;
 
       &:hover {
-        background: transparent !important;
+        background: @bg-hover-dark !important;
+        color: @text-secondary-dark !important;
+        border-radius: @sidebar-radius !important;
+      }
+
+      .qwenpaw-menu-submenu-arrow {
         color: @text-muted-dark !important;
       }
     }
@@ -362,7 +571,9 @@
 .collapseToggle {
   color: @text-muted;
   border-radius: @sidebar-radius;
-  transition: all 0.15s;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
 
   &:hover {
     background: @bg-hover !important;
@@ -387,7 +598,9 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .collapsedNavItem {
@@ -401,11 +614,18 @@
   background: transparent;
   cursor: pointer;
   color: @text-muted;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
 
   &:hover {
     background: @bg-hover;
     color: @text-primary;
+    transform: scale(0.92);
+  }
+
+  &:active {
+    transform: scale(0.84);
   }
 }
 
@@ -521,7 +741,7 @@
 .updateViewReleasesBtn {
   background: @brand !important;
   border-color: @brand !important;
-  color: #fff !important;
+  color: @text-white !important;
 
   &:hover {
     background: @aou-7 !important;
@@ -585,22 +805,29 @@
 
 // ─── Dark mode overrides ──────────────────────────────────────────────────────
 :global(.dark-mode) {
+  .titlebarBtn {
+    color: @text-secondary-dark !important;
+
+    &:hover:not(:disabled) {
+      background: @bg-hover-dark !important;
+      color: @text-primary-dark !important;
+    }
+
+    &:disabled {
+      color: @text-disabled-dark !important;
+    }
+  }
+
+  .brandName {
+    color: @text-primary-dark;
+  }
+
   .header {
     background: @bg-2-dark !important;
     border-bottom-color: @border-base-dark !important;
     color: @text-primary-dark;
 
-    :global(.qwenpaw-btn-text),
-    :global(.ant-btn-text) {
-      color: @text-secondary-dark !important;
-
-      &:hover {
-        color: @text-primary-dark !important;
-        background: @bg-hover-dark !important;
-      }
-
-      .anticon, svg { color: inherit !important; }
-    }
+    // btn-text hoisted out — nested :global() is invalid in Less CSS Modules
 
     :global(.anticon) {
       color: @text-secondary-dark;
@@ -621,7 +848,7 @@
   }
 
   .sider {
-    background: @bg-2-dark !important;
+    background: @bg-1-dark !important;
     border-right-color: @border-base-dark !important;
   }
 
@@ -649,6 +876,10 @@
 
   .collapseToggleContainer {
     border-top-color: @border-base-dark;
+  }
+
+  .collapseBtn {
+    color: @brand-dark;
   }
 
   .collapsedNavItem {
@@ -683,5 +914,32 @@
     background: @bg-2-dark;
     border-color: @border-base-dark;
     color: @text-secondary-dark;
+  }
+}
+
+// Header btn-text dark overrides — hoisted to top-level to avoid illegal nested :global()
+:global(html.dark-mode) .header :global(.qwenpaw-btn-text),
+:global(html.dark-mode) .header :global(.ant-btn-text) {
+  color: @text-secondary-dark !important;
+
+  &:hover {
+    color: @text-primary-dark !important;
+    background: @bg-hover-dark !important;
+  }
+
+  .anticon,
+  svg {
+    color: inherit !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titlebarBtn,
+  .collapsedNavItem,
+  .authBtn,
+  .collapseToggle,
+  .brandLogoSquare {
+    transition: none !important;
+    transform: none !important;
   }
 }

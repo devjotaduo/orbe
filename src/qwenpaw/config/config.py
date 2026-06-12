@@ -455,6 +455,21 @@ class WeChatConfig(BaseChannelConfig):
     message_merge_delay_ms: Optional[int] = 0
 
 
+class WhatsAppConfig(BaseChannelConfig):
+    """WhatsApp channel config (neonize backend)."""
+
+    auth_dir: str = ""
+    send_read_receipts: bool = True
+    self_chat_mode: bool = False
+    text_chunk_limit: int = 4096
+    groups: List[str] = Field(default_factory=list)
+    group_allow_from: List[str] = Field(default_factory=list)
+    ack_reaction_thinking: str = "🤔"
+    ack_reaction_done: str = "👀"
+    ack_reaction_error: str = "⚠️"
+    reply_to_trigger: bool = True
+
+
 class ChannelConfig(BaseModel):
     """Built-in channel configs; extra keys allowed for plugin channels."""
 
@@ -476,6 +491,7 @@ class ChannelConfig(BaseModel):
     xiaoyi: XiaoYiConfig = XiaoYiConfig()
     yuanbao: YuanbaoConfig = YuanbaoConfig()
     wechat: WeChatConfig = WeChatConfig()
+    whatsapp: WhatsAppConfig = WhatsAppConfig()
     onebot: OneBotConfig = OneBotConfig()
 
     @model_validator(mode="before")
@@ -1151,7 +1167,7 @@ class AgentProfileConfig(BaseModel):
         description="Active model for this agent (provider_id + model)",
     )
     language: str = Field(
-        default="zh",
+        default="pt",
         description="Language setting for this agent",
     )
     approval_level: str = Field(
@@ -1220,7 +1236,7 @@ class AgentsConfig(BaseModel):
     llm_routing: AgentsLLMRoutingConfig = Field(
         default_factory=AgentsLLMRoutingConfig,
     )
-    language: str = Field(default="zh")
+    language: str = Field(default="pt")
     installed_md_files_language: Optional[str] = None
     system_prompt_files: List[str] = Field(
         default_factory=lambda: ["AGENTS.md", "SOUL.md", "PROFILE.md"],
@@ -1842,6 +1858,7 @@ ChannelConfigUnion = Union[
     WecomConfig,
     XiaoYiConfig,
     WeChatConfig,
+    WhatsAppConfig,
 ]
 
 
@@ -2282,7 +2299,7 @@ def migrate_legacy_config_to_multi_agent() -> bool:
         language=(
             default_agent_config.language
             if hasattr(default_agent_config, "language")
-            else "zh"
+            else "pt"
         ),
         system_prompt_files=default_agent_config.system_prompt_files,
     )

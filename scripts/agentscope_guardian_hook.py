@@ -116,15 +116,16 @@ def main() -> int:
     sys.stderr.write(
         "[agentscope-guardian] BLOCKED edit to a qwenpaw/AgentScope file:\n"
         f"    {rel}\n\n"
-        "This file uses qwenpaw or AgentScope. Before changing it you MUST run the\n"
-        "guardian review so the change is checked against the AgentScope v2 knowledge\n"
-        "base (docs/agentscope-v2/).\n\n"
+        "This file uses qwenpaw or AgentScope. Before changing it you\n"
+        "MUST run the guardian review so the change is checked against\n"
+        "the AgentScope v2 knowledge base (docs/agentscope-v2/).\n\n"
         "Do this:\n"
         "  1. Invoke the skill:  /agentscope-guardian\n"
-        "     (describe the change + the file path; it reads the relevant KB file,\n"
-        "      then returns APPROVE or REJECT with the correct AgentScope v2 API to use).\n"
-        "  2. If APPROVED, the guardian records approval and this edit will go through.\n\n"
-        "Escape hatch (only if the user explicitly authorizes skipping review):\n"
+        "     (describe the change + the file path; it reads the relevant\n"
+        "      KB file, returns APPROVE or REJECT with AgentScope v2 API).\n"
+        "  2. If APPROVED, the guardian records approval and this edit\n"
+        "     will go through.\n\n"
+        "Escape hatch (only if the user explicitly authorizes skipping):\n"
         "  set QWENPAW_GUARDIAN_OFF=1 for the session.\n",
     )
     return 2

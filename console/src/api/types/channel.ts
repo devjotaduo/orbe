@@ -168,6 +168,19 @@ export interface OneBotConfig extends BaseChannelConfig {
   share_session_in_group: boolean;
 }
 
+export interface WhatsAppConfig extends BaseChannelConfig {
+  auth_dir?: string;
+  send_read_receipts?: boolean;
+  self_chat_mode?: boolean;
+  text_chunk_limit?: number;
+  groups?: string[];
+  group_allow_from?: string[];
+  ack_reaction_thinking?: string;
+  ack_reaction_done?: string;
+  ack_reaction_error?: string;
+  reply_to_trigger?: boolean;
+}
+
 export interface ChannelConfig {
   imessage: IMessageChannelConfig;
   discord: DiscordConfig;
@@ -185,6 +198,7 @@ export interface ChannelConfig {
   xiaoyi: XiaoYiConfig;
   yuanbao: YuanbaoConfig;
   wechat: WeChatConfig;
+  whatsapp: WhatsAppConfig;
   onebot: OneBotConfig;
 }
 
@@ -205,4 +219,5 @@ export type SingleChannelConfig =
   | SIPChannelConfig
   | XiaoYiConfig
   | YuanbaoConfig
+  | WhatsAppConfig
   | OneBotConfig;
