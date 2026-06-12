@@ -37,6 +37,28 @@
     "genericSubTitle": "При отображении этой страницы произошла непредвиденная ошибка.",
     "reload": "Перезагрузить"
   },
+  "home": {
+    "title": "Hello",
+    "subtitle": "What would you like to do today?",
+    "cards": {
+      "chat": {
+        "title": "Start Chatting",
+        "desc": "Talk with your AI agent in real time"
+      },
+      "skills": {
+        "title": "Skills",
+        "desc": "Add and manage agent capabilities"
+      },
+      "mcp": {
+        "title": "MCP",
+        "desc": "Connect tools via Model Context Protocol"
+      },
+      "settings": {
+        "title": "Agents",
+        "desc": "Manage agents and their configuration"
+      }
+    }
+  },
   "nav": {
     "chat": "Чат",
     "control": "Управление",
@@ -2372,25 +2394,6 @@
       "NOT_FOUND": "Файл не найден. Возможно, он был перемещён или удалён.",
       "LOAD_FAILED": "Не удалось загрузить предпросмотр файла.",
       "LOAD_FAILED_DETAIL": "Не удалось загрузить предпросмотр файла: {{detail}}"
-    }
-  },
-  "home": {
-    "greeting": "Чем могу помочь?",
-    "pillBar": { "label": "Выбор бэкенда" },
-    "pills": { "all": "Все", "chat": "Чат", "code": "Код", "agent": "Агент" },
-    "assistants": {
-      "chat": { "name": "Чат", "desc": "Начните разговор с ИИ-ассистентом" },
-      "coding": { "name": "Программирование", "desc": "Парное программирование с ИИ-редактором" },
-      "agent": { "name": "Агент", "desc": "Управление сессиями автономных агентов" },
-      "inbox": { "name": "Входящие", "desc": "Просмотр сообщений и уведомлений" },
-      "workspace": { "name": "Рабочее пространство", "desc": "Просмотр файлов и контекста проекта" },
-      "mcp": { "name": "Инструменты MCP", "desc": "Подключение и управление серверами MCP" }
-    },
-    "footer": {
-      "label": "Быстрые действия",
-      "reportIssue": "Сообщить о проблеме",
-      "star": "Звезда на GitHub",
-      "remote": "Удалённое подключение"
     }
   }
 }

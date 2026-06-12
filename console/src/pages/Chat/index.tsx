@@ -30,6 +30,8 @@ import { IconButton } from "@agentscope-ai/design";
 import ChatActionGroup from "./components/ChatActionGroup";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
+import { ChatThreePanel } from "./components/ChatThreePanel";
+import { ChatWelcomeView } from "./components/ChatWelcomeView";
 import { ApprovalCard } from "../../components/ApprovalCard/ApprovalCard";
 import { commandsApi } from "../../api/modules/commands";
 import { useApprovalContext } from "../../contexts/ApprovalContext";
@@ -694,6 +696,11 @@ const timestampStyle: React.CSSProperties = {
 
 export default function ChatPage() {
   const { t, i18n } = useTranslation();
+  const [chatReady, setChatReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setChatReady(true), 400);
+    return () => clearTimeout(t);
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark } = useTheme();
@@ -1547,7 +1554,10 @@ export default function ChatPage() {
           : {}),
         ...(extPrompts !== undefined ? { prompts: extPrompts } : {}),
         // SDK uses `render` if present and ignores the other fields.
-        ...(wrappedWelcomeRender ? { render: wrappedWelcomeRender } : {}),
+        // Plugin render wins; otherwise use our AionUi-style welcome.
+        ...(wrappedWelcomeRender
+          ? { render: wrappedWelcomeRender }
+          : { render: (props: WelcomeRenderProps) => <ChatWelcomeView {...props} /> }),
       },
       sender: {
         ...(i18nConfig as any)?.sender,
@@ -1747,7 +1757,7 @@ export default function ChatPage() {
     handleWhisperTranscription,
   ]);
 
-  return (
+  const chatContent = (
     <div
       style={{
         height: "100%",
@@ -1756,7 +1766,28 @@ export default function ChatPage() {
         flexDirection: "column",
       }}
     >
-      <div className={styles.chatMessagesArea}>
+      <div className={styles.chatMessagesArea} style={{ position: "relative" }}>
+        {!chatReady && (
+          <div className={styles.chatSkeleton}>
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={`${styles.skeletonMsg} ${i % 2 === 0 ? styles.skeletonMsgRight : ""}`}
+              >
+                <div className={styles.skeletonAvatar} />
+                <div className={styles.skeletonLines}>
+                  <div
+                    className={styles.skeletonLine}
+                    style={{ width: i === 1 ? "70%" : i === 2 ? "50%" : "80%" }}
+                  />
+                  {i !== 2 && (
+                    <div className={styles.skeletonLine} style={{ width: "40%" }} />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <AgentScopeRuntimeWebUI
           ref={chatRef}
           key={refreshKey}
@@ -1915,4 +1946,6 @@ export default function ChatPage() {
       </Modal>
     </div>
   );
+
+  return <ChatThreePanel chat={chatContent} />;
 }

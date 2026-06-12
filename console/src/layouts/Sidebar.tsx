@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppMessage } from "../hooks/useAppMessage";
-import AgentSelector from "../components/AgentSelector";
+import { PlusOutlined } from "@ant-design/icons";
 import {
   SparkChatTabFill,
   SparkExitFullscreenLine,
@@ -51,11 +51,19 @@ const INBOX_BADGE_POLLING_MS = 6000;
 interface SidebarProps {
   /** Route id of the currently active page (e.g. "core.workspace"). */
   selectedKey: string;
+  /** Controlled collapse state — driven by MainLayout so Header can toggle it too. */
+  collapsed?: boolean;
+  /** Sets collapse to a specific value (preferred over onToggleCollapse for programmatic use). */
+  onSetCollapsed?: (val: boolean) => void;
+  /** Controlled pixel width from MainLayout drag-to-resize (overrides internal calculation). */
+  siderWidth?: number;
+  /** mousedown handler for the drag handle, provided by MainLayout. */
+  onDragStart?: (e: React.MouseEvent) => void;
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────
 
-export default function Sidebar({ selectedKey }: SidebarProps) {
+export default function Sidebar({ selectedKey, collapsed: collapsedProp, onSetCollapsed, siderWidth: siderWidthProp, onDragStart }: SidebarProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { message } = useAppMessage();
@@ -68,9 +76,22 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountForm] = Form.useForm();
-  const [collapsed, setCollapsed] = useState(false);
+  // collapsedProp from MainLayout is the source of truth; fall back to local state
+  // for standalone use (e.g. tests that don't pass the prop).
+  const [collapsedLocal, setCollapsedLocal] = useState(false);
+  const [recentSessions, setRecentSessions] = useState<Array<{ id: string; name: string }>>([]);
+  const collapsed = collapsedProp ?? collapsedLocal;
+  const setCollapsed = (val: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof val === "function" ? val(collapsed) : val;
+    if (onSetCollapsed) {
+      onSetCollapsed(next);
+    } else {
+      setCollapsedLocal(next);
+    }
+  };
   const [isMobile, setIsMobile] = useState(isMobileSidebarViewport);
   const [hasInboxUnread, setHasInboxUnread] = useState(false);
+
 
   // Menu + route snapshots from registry (builtin + plugin registrations merged).
   const agentMenu = useMenuItems("primary.agentScoped");
@@ -134,6 +155,25 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    import('../pages/Chat/sessionApi').then(({ default: sessionApi }) => {
+      sessionApi.getSessionList()
+        .then(sessions => {
+          setRecentSessions(
+            sessions.slice(0, 15).map(s => ({ id: s.id, name: s.name || '' }))
+          );
+        })
+        .catch(() => {});
+    });
+  }, []);
+
+  // ── Search filter ─────────────────────────────────────────────────────────
+
+  type AntdItem = NonNullable<import("antd").MenuProps["items"]>[number] & {
+    children?: AntdItem[];
+    label?: React.ReactNode;
+  };
+
   // ── Adapter: convert MenuItem trees to antd, with inbox badge decoration.
 
   /** Wrap the inbox label with the unread-Badge while keeping all other labels intact. */
@@ -146,22 +186,33 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
     );
   };
 
-  const agentMenuItems = useMemo(
-    () => toAntdItems(agentMenu, { collapsed, decorateLabel }),
+  const agentMenuItems = useMemo(() => {
+    return toAntdItems(agentMenu, { collapsed, decorateLabel }) as AntdItem[];
     // hasInboxUnread closure inside decorateLabel — listed as dep explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [agentMenu, collapsed, hasInboxUnread],
-  );
+  }, [agentMenu, collapsed, hasInboxUnread]);
 
-  const settingsMenuItems = useMemo(
-    () => toAntdItems(settingsMenu, { collapsed }),
-    [settingsMenu, collapsed],
-  );
+  const settingsMenuItems = useMemo(() => {
+    return toAntdItems(settingsMenu, { collapsed }) as AntdItem[];
+  }, [settingsMenu, collapsed]);
 
-  const openKeys = useMemo(
+  const derivedOpenKeys = useMemo(
     () => [...deriveOpenKeys(agentMenu), ...deriveOpenKeys(settingsMenu)],
     [agentMenu, settingsMenu],
   );
+  const [openKeys, setOpenKeys] = useState<string[]>(() => [
+    ...deriveOpenKeys(agentMenu),
+    ...deriveOpenKeys(settingsMenu),
+  ]);
+  // Sync any newly registered group keys without closing user-toggled ones.
+  useEffect(() => {
+    setOpenKeys((prev) => {
+      const next = derivedOpenKeys.filter((k) => !prev.includes(k));
+      return next.length ? [...prev, ...next] : prev;
+    });
+  }, [derivedOpenKeys]);
+
+  const handleOpenChange = (keys: string[]) => setOpenKeys(keys);
 
   const collapsedNavItems = useMemo(() => {
     // Sticky chat is its own carve-out (lives outside menu data — see builtinMenu.ts).
@@ -270,7 +321,11 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const siderWidth = collapsed ? (isMobile ? 56 : 72) : 240;
+  // If MainLayout provides a controlled width (drag-to-resize), use it.
+  // Otherwise fall back to the default AionUi values.
+  const siderWidth = siderWidthProp !== undefined
+    ? siderWidthProp
+    : collapsed ? (isMobile ? 56 : 72) : 260;
   // Sticky chat is active when on /chat* or /coding routes.
   const isChatActive =
     selectedKey === "core.chat" || selectedKey === "core.coding";
@@ -278,13 +333,61 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
   void renderIcon;
 
   return (
+    <>
+    {isMobile && !collapsed && (
+      <div
+        className={styles.siderBackdrop}
+        onClick={() => setCollapsed(true)}
+        aria-hidden="true"
+      />
+    )}
     <Sider
       width={siderWidth}
+      style={{ position: 'relative' }}
       className={`${styles.sider}${
         collapsed ? ` ${styles.siderCollapsed}` : ""
-      }${isDark ? ` ${styles.siderDark}` : ""}`}
+      }${isDark ? ` ${styles.siderDark}` : ""}${
+        isMobile ? ` ${styles.siderMobileOverlay}` : ""
+      }${isMobile && !collapsed ? ` ${styles.siderMobileOverlayOpen}` : ""}`}
     >
-      {collapsed ? (
+      {/* Drag-to-resize handle — AionUi canônico */}
+      {!collapsed && !isMobile && onDragStart && (
+        <div
+          className={styles.siderResizeHandle}
+          onMouseDown={onDragStart}
+          aria-hidden="true"
+        />
+      )}
+      {/* AionUi BrandHeader — 52px, logo square + app name */}
+      {!collapsed && (
+        <div className={styles.brandHeader}>
+          <Slot name="header.logo" kind="replace">
+            <div className={styles.brandLogoSquare}>
+              <img
+                src={isDark ? "/logo-dark.svg" : "/logo-light.svg"}
+                alt="QwenPaw"
+                className={styles.brandLogoImg}
+              />
+            </div>
+          </Slot>
+          <span className={styles.brandName}>QwenPaw</span>
+        </div>
+      )}
+
+
+      {/* SiderToolbar — Nova Conversa, visível em modo expandido e colapsado */}
+      <div className={styles.siderToolbar}>
+        <button
+          className={styles.newChatBtn}
+          onClick={() => navigate('/chat')}
+          title={t('nav.newChat', 'Nova Conversa')}
+        >
+          <PlusOutlined style={{ fontSize: 14 }} />
+          {!collapsed && <span>{t('nav.newChat', 'Nova Conversa')}</span>}
+        </button>
+      </div>
+
+            {collapsed ? (
         <nav className={styles.collapsedNav}>
           {collapsedNavItems.map((item) => {
             const isActive =
@@ -319,26 +422,14 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         </nav>
       ) : (
         <>
-          {/* Agent-scoped section: selector + Chat + Control + Workspace */}
+          {/* Agent-scoped section: nav */}
           <div className={styles.agentScopedSection}>
-            <div className={styles.agentSelectorContainer}>
-              <AgentSelector collapsed={collapsed} />
-              {/* Chat entry — sticky together with agent selector */}
-              <button
-                className={`${styles.stickyChatButton}${
-                  isChatActive ? ` ${styles.stickyChatButtonActive}` : ""
-                }`}
-                onClick={() => navigate(chatPath)}
-              >
-                <SparkChatTabFill size={16} />
-                <span>{t("nav.chat")}</span>
-              </button>
-            </div>
             <Slot name="sider.top" kind="fill" />
             <Menu
               mode="inline"
               selectedKeys={[selectedKey]}
               openKeys={openKeys}
+              onOpenChange={handleOpenChange}
               onClick={({ key }) => handleMenuClick(String(key), agentMenu)}
               items={agentMenuItems}
               theme={isDark ? "dark" : "light"}
@@ -351,12 +442,30 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
             mode="inline"
             selectedKeys={[selectedKey]}
             openKeys={openKeys}
+            onOpenChange={handleOpenChange}
             onClick={({ key }) => handleMenuClick(String(key), settingsMenu)}
             items={settingsMenuItems}
             theme={isDark ? "dark" : "light"}
             className={styles.sideMenu}
           />
           <Slot name="sider.bottom" kind="fill" />
+          {recentSessions.length > 0 && (
+            <div className={styles.recentSessions}>
+              <div className={styles.recentSessionsLabel}>{t('nav.recentChats', 'Recent')}</div>
+              <div className={styles.recentSessionsList}>
+                {recentSessions.slice(0, 8).map(s => (
+                  <button
+                    key={s.id}
+                    className={styles.recentSessionItem}
+                    onClick={() => navigate(`/chat/${s.id}`)}
+                    title={s.name}
+                  >
+                    <span className={styles.recentSessionName}>{s.name || t('nav.untitledChat', 'Untitled')}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -473,5 +582,6 @@ export default function Sidebar({ selectedKey }: SidebarProps) {
         </Form>
       </Modal>
     </Sider>
+    </>
   );
 }
