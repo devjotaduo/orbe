@@ -282,3 +282,91 @@ def test_system_prompt_mentions_connector_lookup():
     from qwenpaw.discovery.prompts import build_discovery_system_prompt
 
     assert "connector_lookup" in build_discovery_system_prompt()
+
+
+# --- _friendly_tool_name: fallback p/ conectores sem slug (status build) -----
+# Adaptação do MISSING TEST do reviewer ("empty slug_or_url renders origin
+# alone"): a renderização `origin:slug` no MD foi substituída pelo relatório
+# leigo — o fallback agora vive em _friendly_tool_name.
+
+def _bp_with_build_connector():
+    from qwenpaw.discovery.state import (
+        AgentSpec,
+        CompanyProfile,
+        ConnectorRef,
+        TeamBlueprint,
+    )
+
+    return TeamBlueprint(
+        company_profile=CompanyProfile(segment="ecommerce"),
+        proposed_team=[
+            AgentSpec(
+                name="Agente Delivery",
+                role="pedidos",
+                objective="acompanhar pedidos",
+                tools_integrations=["Conector iFood próprio"],
+            )
+        ],
+        recommended_connectors=[
+            ConnectorRef(
+                integration_kind="delivery",
+                name="Conector iFood próprio",
+                origin="build",
+                slug_or_url="",
+                status="build",
+                notes="sem conector curado — construir",
+            )
+        ],
+    )
+
+
+def test_friendly_tool_name_resolves_origin_slug_ref():
+    from qwenpaw.discovery.state import (
+        CompanyProfile,
+        ConnectorRef,
+        TeamBlueprint,
+    )
+    from qwenpaw.discovery.tools import _friendly_tool_name
+
+    bp = TeamBlueprint(
+        company_profile=CompanyProfile(segment="ecommerce"),
+        recommended_connectors=[
+            ConnectorRef(
+                integration_kind="whatsapp",
+                name="Evolution API v2",
+                origin="clawhub",
+                slug_or_url="evolution-api",
+                status="recomendado",
+            )
+        ],
+    )
+    friendly = _friendly_tool_name("clawhub:evolution-api", bp)
+    assert friendly == "Evolution API v2"
+
+
+def test_friendly_tool_name_build_connector_matches_by_name():
+    """Conector build (slug vazio): a referência por nome resolve no MD."""
+    from qwenpaw.discovery.tools import _friendly_tool_name
+
+    bp = _bp_with_build_connector()
+    assert (
+        _friendly_tool_name("conector ifood próprio", bp)
+        == "Conector iFood próprio"
+    )
+
+
+def test_friendly_tool_name_unknown_ref_falls_back_to_title():
+    from qwenpaw.discovery.state import CompanyProfile, TeamBlueprint
+    from qwenpaw.discovery.tools import _friendly_tool_name
+
+    bp = TeamBlueprint(company_profile=CompanyProfile(segment="ecommerce"))
+    assert _friendly_tool_name("mcp:google-sheets", bp) == "Google Sheets"
+
+
+def test_blueprint_markdown_build_connector_has_no_technical_ref():
+    """Build connector (slug vazio) não vaza 'build:' nem slug no relatório."""
+    from qwenpaw.discovery.tools import _blueprint_to_markdown
+
+    md = _blueprint_to_markdown(_bp_with_build_connector())
+    assert "Conector iFood próprio" in md
+    assert "build:" not in md
