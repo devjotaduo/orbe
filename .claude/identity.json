@@ -6,9 +6,7 @@
     "codeComments": true,
     "explanations": true
   },
-  "domains": [
-    "javascript"
-  ],
+  "domains": ["javascript"],
   "suggestedBy": "ecc-tools-repo-analysis",
   "createdAt": "2026-06-12T10:27:33.543Z"
 }

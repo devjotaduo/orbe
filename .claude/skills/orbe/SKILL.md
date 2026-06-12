@@ -1,4 +1,4 @@
-```markdown
+````markdown
 # orbe Development Patterns
 
 > Auto-generated skill from repository analysis
@@ -21,7 +21,7 @@ This skill guides contributors through the development patterns, coding conventi
 - Use **alias imports** for modules.
   - Example:
     ```js
-    import { Sidebar } from '@/layouts/Sidebar';
+    import { Sidebar } from "@/layouts/Sidebar";
     ```
 
 ### Export Style
@@ -29,7 +29,9 @@ This skill guides contributors through the development patterns, coding conventi
 - Use **named exports**.
   - Example:
     ```js
-    export function HomePage() { /* ... */ }
+    export function HomePage() {
+      /* ... */
+    }
     export const SIDEBAR_WIDTH = 240;
     ```
 
@@ -53,6 +55,7 @@ This skill guides contributors through the development patterns, coding conventi
 3. Add or update tests in `tests/discovery/` (e.g., `test_tools.py`, `test_runner.py`, `test_taxonomy.py`).
 
 **Example:**
+
 ```python
 # src/qwenpaw/discovery/tools.py
 def new_tool(...):
@@ -62,6 +65,7 @@ def new_tool(...):
 def test_new_tool():
     assert new_tool(...) == ...
 ```
+````
 
 ---
 
@@ -75,6 +79,7 @@ def test_new_tool():
 3. Optionally, add or update `scripts/check_ptbr.py` and its tests for automated verification.
 
 **Example:**
+
 ```json
 // console/src/locales/pt-BR.json
 {
@@ -98,6 +103,7 @@ def test_new_tool():
 6. Add or update tests for Home page or layout.
 
 **Example:**
+
 ```less
 // console/src/styles/aionui-tokens.less
 @primary-color: #1a73e8;
@@ -121,10 +127,11 @@ export function Home() {
 4. Add or update tests if needed.
 
 **Example:**
+
 ```js
 // console/src/layouts/Sidebar.tsx
 export function Sidebar({ collapsed }) {
-  return <aside className={collapsed ? 'sidebar-collapsed' : 'sidebar'} />;
+  return <aside className={collapsed ? "sidebar-collapsed" : "sidebar"} />;
 }
 ```
 
@@ -139,6 +146,7 @@ export function Sidebar({ collapsed }) {
 2. Add or update a test in the corresponding `tests/` directory to cover the fixed scenario.
 
 **Example:**
+
 ```js
 // src/qwenpaw/discovery/runner.py
 def run_discovery(...):
@@ -157,14 +165,15 @@ def test_run_discovery_handles_edge_case():
 - **Test file pattern:** `*.test.tsx`
 - **Location:** Tests are placed alongside or within a `tests/` directory corresponding to the module.
 - **Test Example:**
+
   ```tsx
   // console/src/pages/Home/index.test.tsx
-  import { render } from '@testing-library/react';
-  import { Home } from './index';
+  import { render } from "@testing-library/react";
+  import { Home } from "./index";
 
-  test('renders Home page', () => {
+  test("renders Home page", () => {
     const { getByText } = render(<Home />);
-    expect(getByText('Welcome!')).toBeInTheDocument();
+    expect(getByText("Welcome!")).toBeInTheDocument();
   });
   ```
 
@@ -172,11 +181,14 @@ def test_run_discovery_handles_edge_case():
 
 ## Commands
 
-| Command              | Purpose                                                                 |
-|----------------------|-------------------------------------------------------------------------|
-| /new-discovery-tool  | Add or update a Discovery tool, session, or agent feature with tests     |
-| /add-ptbr-i18n       | Add or update Brazilian Portuguese (pt-BR) i18n support and tests        |
-| /ui-theme-refactor   | Refactor UI theme tokens, layout, or Home page with i18n and dark mode   |
-| /enhance-sidebar     | Enhance sidebar and layout features (collapse, drag, search, etc.)       |
-| /bugfix-with-test    | Fix a bug and add or update a targeted test for regression coverage      |
+| Command             | Purpose                                                                |
+| ------------------- | ---------------------------------------------------------------------- |
+| /new-discovery-tool | Add or update a Discovery tool, session, or agent feature with tests   |
+| /add-ptbr-i18n      | Add or update Brazilian Portuguese (pt-BR) i18n support and tests      |
+| /ui-theme-refactor  | Refactor UI theme tokens, layout, or Home page with i18n and dark mode |
+| /enhance-sidebar    | Enhance sidebar and layout features (collapse, drag, search, etc.)     |
+| /bugfix-with-test   | Fix a bug and add or update a targeted test for regression coverage    |
+
+```
+
 ```

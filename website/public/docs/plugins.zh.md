@@ -352,6 +352,23 @@ const resp = await window.QwenPaw.host.fetch("/api/v1/my-endpoint", {
 const data = await resp.json();
 ```
 
+**A2UI 生成式 UI 辅助函数（在聊天气泡中只读渲染生成式界面）：**
+
+```ts
+host.A2uiRenderer; // React.FC<{ surface }> —— 只读渲染 A2UI surface
+host.emptySurface(surfaceId); // 创建一个全新的空 surface
+host.applyA2uiMessage(surface, msg); // 将一条 A2UI 消息合并进 surface
+```
+
+```ts
+const { A2uiRenderer, applyA2uiMessage, emptySurface } = window.QwenPaw.host;
+// 累积工具产生的 createSurface / updateComponents / updateDataModel /
+// deleteSurface 消息，然后渲染该 surface。
+let surface = emptySurface("s1");
+for (const msg of messages) surface = applyA2uiMessage(surface, msg);
+return <A2uiRenderer surface={surface} />;
+```
+
 ### 侧边栏菜单 — `window.QwenPaw.menu`
 
 | 方法       | 签名                                     | 说明             |

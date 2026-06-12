@@ -39,12 +39,18 @@ from ...exceptions import convert_model_exception
 from ...agents.utils.file_handling import (
     read_text_file_with_encoding_fallback,
 )
+from ...compat import ensure_agentscope_runtime_compat
 from ...config.config import load_agent_config
 from ...constant import WORKING_DIR
 
 if TYPE_CHECKING:
     from ...agents.memory import BaseMemoryManager
     from ...agents.context import BaseContextManager
+
+# Antes de qualquer stream_query: o engine Runner (framework_type
+# "agentscope") importa lazy os adapters do agentscope-runtime 1.1.6, que
+# referenciam nomes 1.x removidos no agentscope 2.0 (ToolUseBlock etc.).
+ensure_agentscope_runtime_compat()
 
 logger = logging.getLogger(__name__)
 

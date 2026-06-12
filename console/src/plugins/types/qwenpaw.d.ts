@@ -35,6 +35,52 @@ export interface HostSessionInfo {
   id: string;
 }
 
+// ── A2UI generative UI (read-only surfaces rendered in chat bubbles) ─────────
+// Mirror of `console/src/api/types/a2ui.ts` (itself a mirror of the backend
+// `src/qwenpaw/a2ui/schema.py`). Kept inline so this public contract stays
+// self-contained for plugin authors who copy it.
+
+export interface A2uiComponent {
+  id: string;
+  type: string;
+  properties: Record<string, unknown>;
+  children: string[];
+}
+
+export type A2uiMessage =
+  | { messageType: "createSurface"; surfaceId: string; root: string }
+  | {
+      messageType: "updateComponents";
+      surfaceId: string;
+      components: A2uiComponent[];
+    }
+  | {
+      messageType: "updateDataModel";
+      surfaceId: string;
+      data: Record<string, unknown>;
+    }
+  | { messageType: "deleteSurface"; surfaceId: string };
+
+export interface A2uiSurface {
+  surfaceId: string;
+  /** id of the root component (empty until createSurface arrives) */
+  root: string;
+  /** id -> component */
+  components: Record<string, A2uiComponent>;
+  /** raw data model carried by updateDataModel (reserved for binding) */
+  data: Record<string, unknown>;
+}
+
+export interface A2uiRendererProps {
+  surface: A2uiSurface;
+  /** Data model to resolve binds against. Defaults to `surface.data`. */
+  data?: Record<string, unknown>;
+  /** Called with the next data model when an editable field changes. */
+  onDataChange?: (next: Record<string, unknown>) => void;
+  /** Called when a Button carrying `properties.action` is activated. */
+  onAction?: (name: string, params?: Record<string, unknown>) => void;
+}
+
 export interface ChatPromptItem {
   label?: React.ReactNode;
   value: string;
@@ -230,6 +276,14 @@ export interface QwenPawHostNamespace {
 
   /** Auth-aware fetch. Automatically injects `Authorization` and `X-Agent-Id`. */
   fetch(path: string, init?: RequestInit): Promise<Response>;
+
+  // ── A2UI generative UI helpers (read-only surfaces in chat bubbles) ───────
+  /** Renders an accumulated A2UI surface as React nodes (read-only by default). */
+  A2uiRenderer: React.FC<A2uiRendererProps>;
+  /** Folds one A2UI server→client message into a surface, returning a new one. */
+  applyA2uiMessage(surface: A2uiSurface, msg: A2uiMessage): A2uiSurface;
+  /** Creates a fresh, empty surface for the given id. */
+  emptySurface(surfaceId: string): A2uiSurface;
 }
 
 export interface QwenPawAuditNamespace {

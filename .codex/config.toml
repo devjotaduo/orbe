@@ -1,9 +1,16 @@
 #:schema https://developers.openai.com/codex/config-schema.json
 
-# ECC Tools generated Codex baseline
+# QwenPaw project Codex profile.
+# Keep this file intentionally lean: every always-on MCP/tool surface costs
+# context. Prefer shell/CLI first, then MCP only when it materially helps.
+
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 web_search = "live"
+persistent_instructions = "Use project AGENTS.md. Keep context lean: inspect targeted files, summarize findings, and delegate only bounded tasks to project agents."
+
+[features]
+multi_agent = true
 
 [mcp_servers.github]
 command = "npx"
@@ -23,13 +30,26 @@ args = ["-y", "@modelcontextprotocol/server-memory"]
 [mcp_servers.playwright]
 command = "npx"
 args = ["-y", "@playwright/mcp@latest", "--extension"]
+startup_timeout_sec = 30
 
 [mcp_servers.sequential-thinking]
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
 
-[features]
-multi_agent = true
+[profiles.economy]
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "cached"
+
+[profiles.review]
+approval_policy = "on-request"
+sandbox_mode = "read-only"
+web_search = "cached"
+
+[profiles.full]
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "live"
 
 [agents]
 max_threads = 6
@@ -46,3 +66,30 @@ config_file = "agents/reviewer.toml"
 [agents.docs_researcher]
 description = "Documentation specialist that verifies APIs, framework behavior, and release notes."
 config_file = "agents/docs-researcher.toml"
+
+[agents.qwenpaw_coder]
+description = "Bounded implementation agent for src/qwenpaw changes. Must respect the AgentScope guardian gate."
+config_file = "agents/qwenpaw-coder.toml"
+
+[agents.qwenpaw_reviewer]
+description = "Read-only reviewer for qwenpaw diffs, correctness, security, conventions, and tests."
+config_file = "agents/qwenpaw-reviewer.toml"
+
+[agents.qwenpaw_tester]
+description = "Focused pytest agent for changed qwenpaw behavior."
+config_file = "agents/qwenpaw-tester.toml"
+
+[agents.qwenpaw_frontend_designer]
+description = "Console UI/UX implementer for React, TypeScript, Ant Design, and LESS modules under console/."
+config_file = "agents/qwenpaw-frontend-designer.toml"
+
+[agents.e2e_runner]
+description = "Bounded E2E/browser validation agent for Console and website user journeys."
+config_file = "agents/e2e-runner.toml"
+
+[agents.security_reviewer]
+description = "Security reviewer for skills, plugins, agents, prompts, and qwenpaw security modules."
+config_file = "agents/security-reviewer.toml"
+
+[sandbox_workspace_write]
+network_access = true

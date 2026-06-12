@@ -30,7 +30,7 @@ Adds or updates a Discovery tool, session, or agent feature, and ensures it is c
 
 ## Typical Commit Signals
 
-- Implement or update feature in src/qwenpaw/discovery/*.py (tools.py, agent.py, runner.py, prompts.py, taxonomy.py, etc.)
+- Implement or update feature in src/qwenpaw/discovery/\*.py (tools.py, agent.py, runner.py, prompts.py, taxonomy.py, etc.)
 - Update or add supporting data files if needed (e.g., segments/data/cnae_seed.json)
 - Add or update tests in tests/discovery/ (test_tools.py, test_runner.py, test_taxonomy.py, etc.)
 

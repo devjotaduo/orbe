@@ -185,6 +185,72 @@
   }
 }
 
+/* ---- Skeleton shimmer loading state ---- */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.chatSkeleton {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-1, #f9fafb);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 5;
+}
+
+.skeletonMsg {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.skeletonMsgRight {
+  flex-direction: row-reverse;
+}
+
+.skeletonAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    var(--bg-3, #e5e6eb) 25%,
+    var(--bg-2, #f2f3f5) 50%,
+    var(--bg-3, #e5e6eb) 75%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.skeletonLines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.skeletonLine {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-3, #e5e6eb) 25%,
+    var(--bg-2, #f2f3f5) 50%,
+    var(--bg-3, #e5e6eb) 75%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
 /* ---- Rate-limit guidance banner ---- */
 .rateLimitBanner {
   display: flex;
