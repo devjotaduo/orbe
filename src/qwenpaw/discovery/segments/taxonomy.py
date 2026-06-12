@@ -79,6 +79,30 @@ def load_connectors() -> tuple[ConnectorInfo, ...]:
     return conns
 
 
+def lookup_connectors(
+    kind: str,
+    segment: str | None = None,
+) -> tuple[ConnectorInfo, ...]:
+    """Conectores curados de um tipo de integração, ordenados por status.
+
+    Levanta ValueError quando `kind` não é canônico. Quando `segment` é
+    informado, exclui conectores restritos a outros segmentos; quando é
+    None/vazio, retorna todos do kind (inclusive os segmentados).
+    """
+    if kind not in CANONICAL_INTEGRATION_KINDS:
+        raise ValueError(
+            f"integration_kind desconhecido: '{kind}'. "
+            f"Válidos: {', '.join(sorted(CANONICAL_INTEGRATION_KINDS))}"
+        )
+    result = [
+        c for c in load_connectors()
+        if c.integration_kind == kind
+        and (not segment or not c.segments or segment in c.segments)
+    ]
+    result.sort(key=lambda c: _STATUS_ORDER[c.status])
+    return tuple(result)
+
+
 @lru_cache(maxsize=1)
 def load_segments() -> tuple[SegmentInfo, ...]:
     raw = json.loads(_DATA.read_text(encoding="utf-8"))
