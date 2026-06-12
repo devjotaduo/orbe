@@ -45,7 +45,8 @@ def test_discovery_start_default_out_no_blueprint(tmp_path):
 
     runner = CliRunner()
     with patch(
-        "qwenpaw.cli.discovery_cmd.asyncio.run", return_value=fake_session
+        "qwenpaw.cli.discovery_cmd.asyncio.run",
+        return_value=fake_session,
     ):
         result = runner.invoke(discovery_group, ["start"])
     assert result.exit_code == 0
@@ -61,12 +62,14 @@ def test_discovery_start_default_out_contains_session_id(tmp_path):
 
     runner = CliRunner()
     with patch(
-        "qwenpaw.cli.discovery_cmd.asyncio.run", return_value=fake_session
+        "qwenpaw.cli.discovery_cmd.asyncio.run",
+        return_value=fake_session,
     ):
         result = runner.invoke(discovery_group, ["start"])
     assert result.exit_code == 0
     # session_id gerado via uuid4().hex[:8] — 8 chars hex
     import re
+
     assert re.search(r"[0-9a-f]{8}", result.output)
 
 
@@ -79,10 +82,12 @@ def test_discovery_start_with_custom_out_emitted(tmp_path):
 
     runner = CliRunner()
     with patch(
-        "qwenpaw.cli.discovery_cmd.asyncio.run", return_value=fake_session
+        "qwenpaw.cli.discovery_cmd.asyncio.run",
+        return_value=fake_session,
     ):
         result = runner.invoke(
-            discovery_group, ["start", "--out", str(tmp_path)]
+            discovery_group,
+            ["start", "--out", str(tmp_path)],
         )
     assert result.exit_code == 0
     assert "blueprint.md" in result.output
@@ -105,7 +110,8 @@ def test_discovery_start_with_custom_out_passes_path(tmp_path):
     runner = CliRunner()
     with patch("qwenpaw.cli.discovery_cmd.asyncio.run", side_effect=fake_run):
         result = runner.invoke(
-            discovery_group, ["start", "--out", str(tmp_path)]
+            discovery_group,
+            ["start", "--out", str(tmp_path)],
         )
     assert result.exit_code == 0
 
@@ -119,7 +125,8 @@ def test_discovery_start_default_out_uses_discovery_subdir():
 
     runner = CliRunner()
     with patch(
-        "qwenpaw.cli.discovery_cmd.asyncio.run", return_value=fake_session
+        "qwenpaw.cli.discovery_cmd.asyncio.run",
+        return_value=fake_session,
     ):
         result = runner.invoke(discovery_group, ["start"])
     assert result.exit_code == 0

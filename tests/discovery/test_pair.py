@@ -148,7 +148,10 @@ def _patch_pair_by_code(monkeypatch, *, connected=True, sink=None):
 
 
 def test_default_client_facing_agent(
-    tmp_path, monkeypatch, patch_agent_cfg, capsys
+    tmp_path,
+    monkeypatch,
+    patch_agent_cfg,
+    capsys,
 ):
     team = [
         _spec("Financeiro", "controle financeiro"),
@@ -189,11 +192,15 @@ def test_explicit_agent_override(tmp_path, monkeypatch, patch_agent_cfg):
 
 
 def test_explicit_agent_not_deployed_raises(
-    tmp_path, monkeypatch, patch_agent_cfg
+    tmp_path,
+    monkeypatch,
+    patch_agent_cfg,
 ):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Atendente": "atendente"}
+        tmp_path,
+        team=team,
+        deployed={"Atendente": "atendente"},
     )
     _patch_pair_by_code(monkeypatch)
     with pytest.raises(PairError, match="nao foi deployado"):
@@ -208,7 +215,9 @@ def test_explicit_agent_not_deployed_raises(
 def test_no_client_facing_agent_raises(tmp_path, monkeypatch, patch_agent_cfg):
     team = [_spec("Financeiro", "controle financeiro")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Financeiro": "financeiro"}
+        tmp_path,
+        team=team,
+        deployed={"Financeiro": "financeiro"},
     )
     _patch_pair_by_code(monkeypatch)
     with pytest.raises(PairError, match="client-facing"):
@@ -234,7 +243,9 @@ def test_session_not_found_raises(tmp_path, monkeypatch, patch_agent_cfg):
 
 
 def test_phone_normalized_from_onboarding(
-    tmp_path, monkeypatch, patch_agent_cfg
+    tmp_path,
+    monkeypatch,
+    patch_agent_cfg,
 ):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
@@ -254,7 +265,9 @@ def test_phone_normalized_from_onboarding(
 def test_phone_override(tmp_path, monkeypatch, patch_agent_cfg):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Atendente": "atendente"}
+        tmp_path,
+        team=team,
+        deployed={"Atendente": "atendente"},
     )
     _patch_pair_by_code(monkeypatch)
     result = asyncio.run(
@@ -269,7 +282,9 @@ def test_phone_override(tmp_path, monkeypatch, patch_agent_cfg):
 def test_phone_override_invalid_raises(tmp_path, monkeypatch, patch_agent_cfg):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Atendente": "atendente"}
+        tmp_path,
+        team=team,
+        deployed={"Atendente": "atendente"},
     )
     _patch_pair_by_code(monkeypatch)
     with pytest.raises(PairError, match="invalido"):
@@ -282,7 +297,9 @@ def test_phone_override_invalid_raises(tmp_path, monkeypatch, patch_agent_cfg):
 
 
 def test_missing_onboarding_number_raises(
-    tmp_path, monkeypatch, patch_agent_cfg
+    tmp_path,
+    monkeypatch,
+    patch_agent_cfg,
 ):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
@@ -302,7 +319,9 @@ def test_missing_onboarding_number_raises(
 def test_auth_dir_from_workspace(tmp_path, monkeypatch, patch_agent_cfg):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Atendente": "atendente"}
+        tmp_path,
+        team=team,
+        deployed={"Atendente": "atendente"},
     )
     sink: dict = {}
     _patch_pair_by_code(monkeypatch, sink=sink)
@@ -316,7 +335,9 @@ def test_auth_dir_from_workspace(tmp_path, monkeypatch, patch_agent_cfg):
 def test_auth_dir_explicit_override(tmp_path, monkeypatch):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Atendente": "atendente"}
+        tmp_path,
+        team=team,
+        deployed={"Atendente": "atendente"},
     )
     explicit = str(tmp_path / "custom-auth")
 
@@ -339,7 +360,9 @@ def test_auth_dir_explicit_override(tmp_path, monkeypatch):
 def test_timeout_returns_not_connected(tmp_path, monkeypatch, patch_agent_cfg):
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Atendente": "atendente"}
+        tmp_path,
+        team=team,
+        deployed={"Atendente": "atendente"},
     )
     _patch_pair_by_code(monkeypatch, connected=False)
     result = asyncio.run(pair_discovery_whatsapp(session_dir=str(session)))
@@ -485,12 +508,15 @@ def test_resolve_auth_dir_load_config_error_raises_pair_error(monkeypatch):
 
 
 def test_resolve_auth_dir_load_config_error_through_orchestrator(
-    tmp_path, monkeypatch
+    tmp_path,
+    monkeypatch,
 ):
     """O erro de config tambem vira PairError via pair_discovery_whatsapp."""
     team = [_spec("Atendente", "atendimento ao cliente")]
     session = _write_session(
-        tmp_path, team=team, deployed={"Atendente": "atendente"}
+        tmp_path,
+        team=team,
+        deployed={"Atendente": "atendente"},
     )
 
     def _boom(agent_id):
@@ -509,7 +535,9 @@ def test_resolve_auth_dir_load_config_error_through_orchestrator(
 
 
 def test_missing_blueprint_surfaces_friendly_error(
-    tmp_path, monkeypatch, patch_agent_cfg
+    tmp_path,
+    monkeypatch,
+    patch_agent_cfg,
 ):
     """deployed.json existe mas blueprint.json some.
 
@@ -532,7 +560,9 @@ def test_missing_blueprint_surfaces_friendly_error(
 
 
 def test_missing_blueprint_does_not_leak_deploy_error(
-    tmp_path, monkeypatch, patch_agent_cfg
+    tmp_path,
+    monkeypatch,
+    patch_agent_cfg,
 ):
     """Mesmo cenario: garante que DeployError nao escapa cru.
 

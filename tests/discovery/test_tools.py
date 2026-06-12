@@ -33,8 +33,11 @@ async def test_reflect_mutates_state(tmp_path):
     s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
     s.state.open_areas.append(
         OpenArea(
-            id="segmento", topic="qual segmento", confidence=0.1, priority=5
-        )
+            id="segmento",
+            topic="qual segmento",
+            confidence=0.1,
+            priority=5,
+        ),
     )
     updates = json.dumps(
         {
@@ -46,7 +49,7 @@ async def test_reflect_mutates_state(tmp_path):
                     "topic": "entrega",
                     "confidence": 0.1,
                     "priority": 4,
-                }
+                },
             ],
             "integrations": [
                 {
@@ -54,11 +57,11 @@ async def test_reflect_mutates_state(tmp_path):
                     "name": "Sheets",
                     "data_location": "drive",
                     "confidence": 0.6,
-                }
+                },
             ],
             "company_updates": {"segment": "e-commerce"},
             "confidence_updates": {},
-        }
+        },
     )
     await s.reflect("e-commerce de roupas", updates)
     ids = [a.id for a in s.state.open_areas]
@@ -87,7 +90,7 @@ async def test_emit_blueprint_writes_files(tmp_path):
                 "tasks": ["responder"],
                 "tools_integrations": ["mcp:evolution-whatsapp"],
                 "talks_to": [],
-            }
+            },
         ],
         "roadmap": [{"order": 1, "title": "WhatsApp", "rationale": "dor"}],
         "open_questions": [],
@@ -110,6 +113,7 @@ async def test_emit_blueprint_invalid_json_does_not_write(tmp_path):
 
 
 # --- MISSING TESTS flagged by reviewer --------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_reflect_error_path_returns_error_state(tmp_path):
@@ -149,9 +153,11 @@ async def test_reflect_confidence_clamped(tmp_path):
     s = DiscoverySession(DiscoveryState(session_id="s1"), out_dir=tmp_path)
     s.state.open_areas.append(
         OpenArea(
-            id="estoque", topic="controle de estoque",
-            confidence=0.3, priority=3,
-        )
+            id="estoque",
+            topic="controle de estoque",
+            confidence=0.3,
+            priority=3,
+        ),
     )
     updates = json.dumps(
         {
@@ -161,7 +167,7 @@ async def test_reflect_confidence_clamped(tmp_path):
             "integrations": [],
             "company_updates": {},
             "confidence_updates": {"estoque": 2.0},
-        }
+        },
     )
     await s.reflect("usa planilha", updates)
     area = next(a for a in s.state.open_areas if a.id == "estoque")
@@ -169,6 +175,7 @@ async def test_reflect_confidence_clamped(tmp_path):
 
 
 # --- connector_lookup (spec known-connectors) --------------------------------
+
 
 @pytest.mark.asyncio
 async def test_connector_lookup_known_kind(tmp_path):
@@ -229,6 +236,7 @@ def test_requirements_toolkit_has_one_tool(tmp_path):
 
 # --- conectores no blueprint (MD leigo + JSON técnico) + prompt --------------
 
+
 def test_blueprint_markdown_uses_friendly_connector_names():
     """O MD é para o empresário: nomes amigáveis, sem slugs técnicos.
 
@@ -251,7 +259,7 @@ def test_blueprint_markdown_uses_friendly_connector_names():
                 role="SAC",
                 objective="responder clientes",
                 tools_integrations=["clawhub:evolution-api"],
-            )
+            ),
         ],
         recommended_connectors=[
             ConnectorRef(
@@ -261,7 +269,7 @@ def test_blueprint_markdown_uses_friendly_connector_names():
                 slug_or_url="evolution-api",
                 status="recomendado",
                 notes="não-oficial; risco de ban",
-            )
+            ),
         ],
     )
     md = _blueprint_to_markdown(bp)
@@ -289,6 +297,7 @@ def test_system_prompt_mentions_connector_lookup():
 # alone"): a renderização `origin:slug` no MD foi substituída pelo relatório
 # leigo — o fallback agora vive em _friendly_tool_name.
 
+
 def _bp_with_build_connector():
     from qwenpaw.discovery.state import (
         AgentSpec,
@@ -305,7 +314,7 @@ def _bp_with_build_connector():
                 role="pedidos",
                 objective="acompanhar pedidos",
                 tools_integrations=["Conector iFood próprio"],
-            )
+            ),
         ],
         recommended_connectors=[
             ConnectorRef(
@@ -315,7 +324,7 @@ def _bp_with_build_connector():
                 slug_or_url="",
                 status="build",
                 notes="sem conector curado — construir",
-            )
+            ),
         ],
     )
 
@@ -337,7 +346,7 @@ def test_friendly_tool_name_resolves_origin_slug_ref():
                 origin="clawhub",
                 slug_or_url="evolution-api",
                 status="recomendado",
-            )
+            ),
         ],
     )
     friendly = _friendly_tool_name("clawhub:evolution-api", bp)

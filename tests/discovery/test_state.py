@@ -12,7 +12,10 @@ from qwenpaw.discovery.state import (
 
 def test_open_area_confidence_bounds():
     OpenArea(
-        id="vendas", topic="processo de vendas", confidence=0.5, priority=3
+        id="vendas",
+        topic="processo de vendas",
+        confidence=0.5,
+        priority=3,
     )
     with pytest.raises(ValidationError):
         OpenArea(id="x", topic="t", confidence=1.5, priority=1)
@@ -42,7 +45,7 @@ def test_blueprint_roundtrip_json():
             "pains": ["atendimento lento"],
         },
         process_map=[
-            {"name": "atendimento", "description": "SAC via WhatsApp"}
+            {"name": "atendimento", "description": "SAC via WhatsApp"},
         ],
         detected_integrations=[
             {
@@ -50,7 +53,7 @@ def test_blueprint_roundtrip_json():
                 "name": "Evolution",
                 "data_location": "instância própria",
                 "confidence": 0.8,
-            }
+            },
         ],
         proposed_team=[
             {
@@ -60,14 +63,14 @@ def test_blueprint_roundtrip_json():
                 "tasks": ["responder dúvidas"],
                 "tools_integrations": ["mcp:evolution-whatsapp"],
                 "talks_to": [],
-            }
+            },
         ],
         roadmap=[
             {
                 "order": 1,
                 "title": "Atendimento WhatsApp",
                 "rationale": "dor principal",
-            }
+            },
         ],
         open_questions=["confirmar volume de mensagens/dia"],
     )
@@ -84,12 +87,13 @@ def test_reflect_update_parses():
         '"confidence":0.1,"priority":4}],'
         '"integrations":[{"kind":"planilha","name":"Google Sheets",'
         '"data_location":"drive","confidence":0.6}],'
-        '"company_updates":{"segment":"e-commerce"}}'
+        '"company_updates":{"segment":"e-commerce"}}',
     )
     assert upd.new_areas[0].id == "logistica"
 
 
 # --- MISSING TESTS (flagged by reviewer) ------------------------------------
+
 
 def test_open_area_id_uniqueness_enforced():
     """DiscoveryState deve rejeitar duas OpenArea com o mesmo id."""
@@ -119,6 +123,7 @@ def test_reflect_update_confidence_updates():
     assert upd.confidence_updates["area1"] == pytest.approx(0.85)
     # validate via JSON round-trip as well
     from pydantic import TypeAdapter
+
     raw_json = upd.model_dump_json()
     upd2 = ReflectUpdate.model_validate_json(raw_json)
     assert upd2.confidence_updates["area1"] == pytest.approx(0.85)
@@ -149,7 +154,7 @@ def test_blueprint_validates_with_recommended_connectors():
                 slug_or_url="evolution-api",
                 status="recomendado",
                 notes="não-oficial; risco de ban",
-            )
+            ),
         ],
     )
     assert bp.recommended_connectors[0].origin == "clawhub"

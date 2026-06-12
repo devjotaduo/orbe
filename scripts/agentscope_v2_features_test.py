@@ -29,8 +29,10 @@ import importlib.util as _u
 
 # Reuse the agent builder from the model harness.
 _spec = _u.spec_from_file_location(
-    "amt", str(Path(__file__).with_name("agent_model_test.py"))
+    "amt",
+    str(Path(__file__).with_name("agent_model_test.py")),
 )
+assert _spec is not None
 amt = _u.module_from_spec(_spec)
 _spec.loader.exec_module(amt)
 
@@ -41,7 +43,9 @@ THINKING_MODEL = "dashscope:qwen3-235b-a22b-thinking-2507"
 def _msg(text: str):
     from agentscope.message import Msg, TextBlock
 
-    return Msg(name="user", role="user", content=[TextBlock(type="text", text=text)])
+    return Msg(
+        name="user", role="user", content=[TextBlock(type="text", text=text)]
+    )
 
 
 async def _collect_events(agent, text, timeout):
@@ -67,7 +71,9 @@ async def feat_streaming(timeout):
     pid, model = MODEL.split(":", 1)
     with tempfile.TemporaryDirectory() as wd:
         agent = amt._build_test_agent(pid, model, Path(wd), "feat-stream")
-        seen, _ = await _collect_events(agent, "Diga 'olá' em uma palavra.", timeout)
+        seen, _ = await _collect_events(
+            agent, "Diga 'olá' em uma palavra.", timeout
+        )
     kinds = set(seen)
     needed = {"ReplyStartEvent", "ReplyEndEvent"}
     has_text = any("TextBlock" in k for k in kinds)
@@ -81,13 +87,18 @@ async def feat_tool_events(timeout):
     with tempfile.TemporaryDirectory() as wd:
         agent = amt._build_test_agent(pid, model, Path(wd), "feat-tool")
         seen, _ = await _collect_events(
-            agent, "Que horas são? Use a ferramenta get_current_time.", timeout
+            agent,
+            "Que horas são? Use a ferramenta get_current_time.",
+            timeout,
         )
     kinds = set(seen)
     has_call = any("ToolCall" in k for k in kinds)
     has_result = any("ToolResult" in k for k in kinds)
     ok = has_call and has_result
-    return ok, f"ToolCall={has_call} ToolResult={has_result}; tipos tool: {[k for k in sorted(kinds) if 'Tool' in k]}"
+    return (
+        ok,
+        f"ToolCall={has_call} ToolResult={has_result}; tipos tool: {[k for k in sorted(kinds) if 'Tool' in k]}",
+    )
 
 
 async def feat_thinking(timeout):
@@ -96,11 +107,16 @@ async def feat_thinking(timeout):
     with tempfile.TemporaryDirectory() as wd:
         agent = amt._build_test_agent(pid, model, Path(wd), "feat-think")
         seen, _ = await _collect_events(
-            agent, "Quanto é 17 x 23? Pense passo a passo.", timeout
+            agent,
+            "Quanto é 17 x 23? Pense passo a passo.",
+            timeout,
         )
     kinds = set(seen)
     has_think = any("ThinkingBlock" in k for k in kinds)
-    return has_think, f"ThinkingBlock events: {[k for k in sorted(kinds) if 'Thinking' in k] or 'nenhum'}"
+    return (
+        has_think,
+        f"ThinkingBlock events: {[k for k in sorted(kinds) if 'Thinking' in k] or 'nenhum'}",
+    )
 
 
 async def feat_structured_output(timeout):
@@ -132,14 +148,19 @@ async def feat_state_roundtrip(timeout):
     pid, model = MODEL.split(":", 1)
     with tempfile.TemporaryDirectory() as wd:
         a1 = amt._build_test_agent(pid, model, Path(wd), "feat-state-1")
-        await asyncio.wait_for(a1.reply(_msg("Meu nome é Duo. Responda 'ok'.")), timeout=timeout)
+        await asyncio.wait_for(
+            a1.reply(_msg("Meu nome é Duo. Responda 'ok'.")), timeout=timeout
+        )
         dumped = a1.state_dict()
         is_v2 = isinstance(dumped, dict) and "state" in dumped
         a2 = amt._build_test_agent(pid, model, Path(wd), "feat-state-2")
         a2.load_state_dict(dumped)
         restored = a2.state_dict()
         ok = is_v2 and restored.get("state") is not None
-    return ok, f"state_dict 2.0={is_v2}; round-trip carregou={restored.get('state') is not None}"
+    return (
+        ok,
+        f"state_dict 2.0={is_v2}; round-trip carregou={restored.get('state') is not None}",
+    )
 
 
 async def feat_middleware(timeout):
@@ -166,7 +187,10 @@ FEATURES = [
     ("1. streaming (reply_stream + AgentEvent)", feat_streaming),
     ("2. tool-call events (ToolCall*/ToolResult*)", feat_tool_events),
     ("3. thinking blocks (ThinkingBlock*)", feat_thinking),
-    ("4. structured output (generate_structured_output)", feat_structured_output),
+    (
+        "4. structured output (generate_structured_output)",
+        feat_structured_output,
+    ),
     ("5. agent state (AgentState round-trip)", feat_state_roundtrip),
     ("6. middleware (MiddlewareBase wiring)", feat_middleware),
 ]
@@ -174,7 +198,9 @@ FEATURES = [
 
 async def main():
     timeout = 150.0
-    print(f"== Testando {len(FEATURES)} features novas do AgentScope 2.0 no qwenpaw ==")
+    print(
+        f"== Testando {len(FEATURES)} features novas do AgentScope 2.0 no qwenpaw =="
+    )
     results = []
     for title, fn in FEATURES:
         entry = {"feature": title, "ok": False, "note": "", "error": ""}
@@ -182,7 +208,9 @@ async def main():
             ok, note = await fn(timeout)
             entry["ok"], entry["note"] = bool(ok), note
         except Exception as e:
-            entry["error"] = f"{type(e).__name__}: {(str(e).splitlines() or [''])[0][:160]}"
+            entry[
+                "error"
+            ] = f"{type(e).__name__}: {(str(e).splitlines() or [''])[0][:160]}"
             entry["note"] = "erro"
             entry["_tb"] = traceback.format_exc()[-800:]
         results.append(entry)
@@ -192,17 +220,29 @@ async def main():
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     out = Path("reports/agentscope-v2-features")
     out.mkdir(parents=True, exist_ok=True)
-    run = {"generated_at": stamp, "installed_agentscope": _agentscope_version(),
-           "results": results}
+    run = {
+        "generated_at": stamp,
+        "installed_agentscope": _agentscope_version(),
+        "results": results,
+    }
     (out / f"report-{stamp}.json").write_text(
-        json.dumps(run, ensure_ascii=False, indent=2), encoding="utf-8")
+        json.dumps(run, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
-    md = [f"# AgentScope 2.0 — teste de features novas no qwenpaw ({stamp})", "",
-          f"agentscope instalado: **{run['installed_agentscope']}** · "
-          f"agente real `QwenPawAgent`, modelo `{MODEL}` (thinking: `{THINKING_MODEL}`).", "",
-          "| Feature 2.0 | Resultado | Evidência |", "|---|---|---|"]
+    md = [
+        f"# AgentScope 2.0 — teste de features novas no qwenpaw ({stamp})",
+        "",
+        f"agentscope instalado: **{run['installed_agentscope']}** · "
+        f"agente real `QwenPawAgent`, modelo `{MODEL}` (thinking: `{THINKING_MODEL}`).",
+        "",
+        "| Feature 2.0 | Resultado | Evidência |",
+        "|---|---|---|",
+    ]
     for r in results:
-        status = "✅ OK" if r["ok"] else ("⚠️ erro" if r["error"] else "❌ falhou")
+        status = (
+            "✅ OK" if r["ok"] else ("⚠️ erro" if r["error"] else "❌ falhou")
+        )
         ev = (r["note"] or r["error"]).replace("|", "\\|")[:160]
         md.append(f"| {r['feature']} | {status} | {ev} |")
     passed = sum(1 for r in results if r["ok"])
@@ -215,6 +255,7 @@ async def main():
 def _agentscope_version():
     try:
         import agentscope
+
         return agentscope.__version__
     except Exception:
         return "?"

@@ -90,7 +90,7 @@ def main() -> int:
     sys.stderr.write(
         "[context-guard] BLOCKED high-token read: "
         f"{rel} ({reason}). Use rg/head/targeted extraction, or set "
-        f"{ALLOW_ENV}=1 if the full file is explicitly needed.\n"
+        f"{ALLOW_ENV}=1 if the full file is explicitly needed.\n",
     )
     return 2
 

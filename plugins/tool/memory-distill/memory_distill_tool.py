@@ -118,7 +118,7 @@ def _resolve_working_dir(working_dir: Optional[str] = None) -> Path:
         raise ValueError(
             f"working_dir '{wd}' does not look like an agent workspace "
             f"containing {daily_dir_name}/ or MEMORY.md. "
-            "Please pass the correct agent working directory."
+            "Please pass the correct agent working directory.",
         )
     return wd
 
@@ -315,7 +315,9 @@ async def consolidate_memory(
 
     # --- Step 1: Distill ---
     distill_result = await distill_memory(
-        working_dir=str(wd), days=days, dry_run=dry_run
+        working_dir=str(wd),
+        days=days,
+        dry_run=dry_run,
     )
     distill_text = (
         distill_result.content[0].text if distill_result.content else ""
@@ -341,7 +343,7 @@ async def consolidate_memory(
                 archived += 1
     report_lines.append(
         f"  [2/4 archive] {'Would archive' if dry_run else 'Archived'} "
-        f"{archived} daily note(s) older than {cutoff.isoformat()}."
+        f"{archived} daily note(s) older than {cutoff.isoformat()}.",
     )
 
     # --- Step 3: Clean stale tool_results/*.txt ---
@@ -355,7 +357,7 @@ async def consolidate_memory(
                 cleaned += 1
     report_lines.append(
         f"  [3/4 clean] {'Would remove' if dry_run else 'Removed'} "
-        f"{cleaned} stale .txt file(s) from tool_results/."
+        f"{cleaned} stale .txt file(s) from tool_results/.",
     )
 
     # --- Step 4: Audit MEMORY.md health ---
@@ -415,7 +417,7 @@ async def inspect_memory(
         lines.append(
             f"  MEMORY.md: {size_kb} KB · "
             f"~{topic_count} known topic(s) · "
-            f"{section_count} section(s)"
+            f"{section_count} section(s)",
         )
     else:
         lines.append("  MEMORY.md: not found")

@@ -98,16 +98,22 @@ def test_lookup_matches_servicos_b2b():
 
 def test_lookup_petshop_is_outside_seed():
     """Pet shop não tem trilho curado — deve cair no raciocínio livre."""
-    assert lookup_segment(
-        "tenho um pet shop com banho e tosa e vendemos ração"
-    ) is None
+    assert (
+        lookup_segment(
+            "tenho um pet shop com banho e tosa e vendemos ração",
+        )
+        is None
+    )
 
 
 def test_lookup_oficina_is_outside_seed():
     """Oficina mecânica não tem trilho curado — raciocínio livre."""
-    assert lookup_segment(
-        "tenho uma oficina mecânica, fazemos revisão e troca de óleo"
-    ) is None
+    assert (
+        lookup_segment(
+            "tenho uma oficina mecânica, fazemos revisão e troca de óleo",
+        )
+        is None
+    )
 
 
 def test_new_segments_have_complete_rails():
@@ -133,6 +139,6 @@ def test_common_integrations_are_canonical():
 
     for seg in load_segments():
         for kind in seg.common_integrations:
-            assert kind in CANONICAL_INTEGRATION_KINDS, (
-                f"Segmento '{seg.key}' usa kind não-canônico: '{kind}'"
-            )
+            assert (
+                kind in CANONICAL_INTEGRATION_KINDS
+            ), f"Segmento '{seg.key}' usa kind não-canônico: '{kind}'"

@@ -358,7 +358,9 @@ def test_colliding_names_get_unique_ids(tmp_path, fake_env):
 
 
 def test_partial_failure_no_duplicate_on_rerun(
-    tmp_path, fake_env, monkeypatch
+    tmp_path,
+    fake_env,
+    monkeypatch,
 ):
     session = tmp_path / "sessao"
     _write_blueprint(session, _sample_blueprint())

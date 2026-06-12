@@ -47,7 +47,8 @@ def test_lookup_orders_by_status():
     conns = lookup_connectors("crm")
     statuses = [c.status for c in conns]
     assert statuses == sorted(
-        statuses, key=lambda s: {"recomendado": 0, "validar": 1, "build": 2}[s]
+        statuses,
+        key=lambda s: {"recomendado": 0, "validar": 1, "build": 2}[s],
     )
     assert conns[0].status == "recomendado"
 
@@ -77,6 +78,7 @@ def test_lookup_canonical_kind_without_connectors_returns_empty():
 
 # --- MISSING TESTS flagged by reviewer ---------------------------------------
 
+
 def _valid_entry(**overrides):
     base = {
         "id": "x-test",
@@ -97,8 +99,10 @@ def test_connector_info_rejects_build_status_with_nonempty_slug():
     with pytest.raises(ValidationError) as exc:
         ConnectorInfo.model_validate(
             _valid_entry(
-                origin="build", status="build", slug_or_url="meu-slug"
-            )
+                origin="build",
+                status="build",
+                slug_or_url="meu-slug",
+            ),
         )
     assert "build" in str(exc.value)
 
@@ -107,14 +111,14 @@ def test_connector_info_rejects_build_status_with_nonbuild_origin():
     """status='build' exige origin='build' (validação no model)."""
     with pytest.raises(ValidationError):
         ConnectorInfo.model_validate(
-            _valid_entry(origin="clawhub", status="build", slug_or_url="")
+            _valid_entry(origin="clawhub", status="build", slug_or_url=""),
         )
 
 
 def test_connector_info_accepts_consistent_build_entry():
     """Entrada build consistente (origin='build', slug vazio) passa."""
     c = ConnectorInfo.model_validate(
-        _valid_entry(origin="build", status="build", slug_or_url="")
+        _valid_entry(origin="build", status="build", slug_or_url=""),
     )
     assert c.status == "build" and c.origin == "build"
 
@@ -123,7 +127,7 @@ def test_connector_info_rejects_noncanonical_kind():
     """integration_kind fora do vocabulário canônico é rejeitado no model."""
     with pytest.raises(ValidationError) as exc:
         ConnectorInfo.model_validate(
-            _valid_entry(integration_kind="blockchain")
+            _valid_entry(integration_kind="blockchain"),
         )
     assert "blockchain" in str(exc.value)
 

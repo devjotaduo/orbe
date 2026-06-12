@@ -36,12 +36,19 @@ def make_session(tmp_path):
     )
     from qwenpaw.discovery.tools import DiscoverySession
 
-    def _make(*, segment=None, emitted=True, n_integrations=2, n_turns=6,
-              onboarding=True):
+    def _make(
+        *,
+        segment=None,
+        emitted=True,
+        n_integrations=2,
+        n_turns=6,
+        onboarding=True,
+    ):
         state = DiscoveryState(session_id="t")
         state.company.segment = segment
         state.integrations = [
-            Integration(kind="whatsapp", name=f"tool{i}") for i in range(n_integrations)
+            Integration(kind="whatsapp", name=f"tool{i}")
+            for i in range(n_integrations)
         ]
         state.transcript = [
             Turn(role="user", text=f"resposta {i}") for i in range(n_turns)
@@ -65,8 +72,11 @@ def _write_requirements(tmp_path, *, agents=3):
             {
                 "agent_name": f"A{i}",
                 "requests": [
-                    {"item": "info", "why": "necessária",
-                     "group_message": "Pode nos mandar?"}
+                    {
+                        "item": "info",
+                        "why": "necessária",
+                        "group_message": "Pode nos mandar?",
+                    },
                 ],
             }
             for i in range(agents)
@@ -77,7 +87,9 @@ def _write_requirements(tmp_path, *, agents=3):
     return path
 
 
-def _write_blueprint(tmp_path, *, agents=3, roadmap=3, processes=2, questions=2):
+def _write_blueprint(
+    tmp_path, *, agents=3, roadmap=3, processes=2, questions=2
+):
     bp = {
         "company_profile": {"segment": "ecommerce", "pains": []},
         "process_map": [
@@ -85,10 +97,12 @@ def _write_blueprint(tmp_path, *, agents=3, roadmap=3, processes=2, questions=2)
         ],
         "detected_integrations": [],
         "proposed_team": [
-            {"name": f"A{i}", "role": "r", "objective": "o"} for i in range(agents)
+            {"name": f"A{i}", "role": "r", "objective": "o"}
+            for i in range(agents)
         ],
         "roadmap": [
-            {"order": i + 1, "title": f"t{i}", "rationale": "x"} for i in range(roadmap)
+            {"order": i + 1, "title": f"t{i}", "rationale": "x"}
+            for i in range(roadmap)
         ],
         "open_questions": [f"q{i}" for i in range(questions)],
     }
@@ -100,7 +114,9 @@ def _write_blueprint(tmp_path, *, agents=3, roadmap=3, processes=2, questions=2)
 def test_perfect_session_scores_full(eval_mod, make_session, tmp_path):
     persona = eval_mod.PERSONAS[0]  # ecommerce_roupas
     session = make_session(segment="ecommerce")
-    bp = _write_blueprint(tmp_path, agents=3, roadmap=3, processes=2, questions=2)
+    bp = _write_blueprint(
+        tmp_path, agents=3, roadmap=3, processes=2, questions=2
+    )
     _write_requirements(tmp_path, agents=3)
     result = eval_mod.score_session(persona, session, bp)
     # 100 originais + 10 onboarding + 10 requisitos
@@ -138,10 +154,14 @@ def test_wrong_segment_partial_credit(eval_mod, make_session, tmp_path):
     assert any("incorretamente" in i for i in result.issues)
 
 
-def test_no_blueprint_zeroes_quality_criteria(eval_mod, make_session, tmp_path):
+def test_no_blueprint_zeroes_quality_criteria(
+    eval_mod, make_session, tmp_path
+):
     persona = eval_mod.PERSONAS[0]
     session = make_session(segment="ecommerce", emitted=False)
-    result = eval_mod.score_session(persona, session, tmp_path / "missing.json")
+    result = eval_mod.score_session(
+        persona, session, tmp_path / "missing.json"
+    )
     by_name = {c.name: c for c in result.criteria}
     assert by_name["Blueprint gerado"].score == 0
     assert by_name["Agentes propostos"].score == 0
@@ -182,7 +202,10 @@ def test_recommendations_derived_from_issues(eval_mod, make_session, tmp_path):
     bp = _write_blueprint(tmp_path, agents=1)  # time insuficiente
     score = eval_mod.score_session(persona, session, bp)
     run = eval_mod.SessionRun(
-        persona=persona, score=score, stdout_log="", session=session,
+        persona=persona,
+        score=score,
+        stdout_log="",
+        session=session,
         out_dir=tmp_path,
     )
     recs = eval_mod._build_recommendations([run])
@@ -193,7 +216,9 @@ def test_recommendations_derived_from_issues(eval_mod, make_session, tmp_path):
     assert "Nenhum problema recorrente" not in joined
 
 
-def test_recommendations_fall_back_to_maintenance(eval_mod, make_session, tmp_path):
+def test_recommendations_fall_back_to_maintenance(
+    eval_mod, make_session, tmp_path
+):
     """Rodada perfeita gera recomendações de manutenção, não de conserto."""
     persona = eval_mod.PERSONAS[0]
     session = make_session(segment=persona.expected_segment)
@@ -202,7 +227,10 @@ def test_recommendations_fall_back_to_maintenance(eval_mod, make_session, tmp_pa
     score = eval_mod.score_session(persona, session, bp)
     assert score.total == score.max_total  # sanidade: rodada perfeita
     run = eval_mod.SessionRun(
-        persona=persona, score=score, stdout_log="", session=session,
+        persona=persona,
+        score=score,
+        stdout_log="",
+        session=session,
         out_dir=tmp_path,
     )
     recs = eval_mod._build_recommendations([run])
@@ -220,12 +248,14 @@ def test_e2e_smoke_single_persona(eval_mod, tmp_path):
     persona = next(p for p in eval_mod.PERSONAS if p.id == "ecommerce_roupas")
     run = asyncio.run(eval_mod._run_persona(persona, tmp_path))
     assert run.score.error is None, run.score.error
-    assert run.score.pct >= 60, (
-        f"Regressão de qualidade: {run.score.pct:.0f}% < 60%"
-    )
+    assert (
+        run.score.pct >= 60
+    ), f"Regressão de qualidade: {run.score.pct:.0f}% < 60%"
 
 
-def test_out_of_seed_persona_accepts_free_description(eval_mod, make_session, tmp_path):
+def test_out_of_seed_persona_accepts_free_description(
+    eval_mod, make_session, tmp_path
+):
     """Persona fora da seed pontua 20 se a descrição livre menciona o ramo."""
     persona = next(p for p in eval_mod.PERSONAS if p.id == "petshop")
     assert persona.expected_segment is None
@@ -236,7 +266,9 @@ def test_out_of_seed_persona_accepts_free_description(eval_mod, make_session, tm
     assert seg.score == 20
 
 
-def test_out_of_seed_persona_rejects_unrelated_description(eval_mod, make_session, tmp_path):
+def test_out_of_seed_persona_rejects_unrelated_description(
+    eval_mod, make_session, tmp_path
+):
     persona = next(p for p in eval_mod.PERSONAS if p.id == "petshop")
     session = make_session(segment="restaurante")
     bp = _write_blueprint(tmp_path)
@@ -246,7 +278,9 @@ def test_out_of_seed_persona_rejects_unrelated_description(eval_mod, make_sessio
     assert any("incorretamente" in i for i in result.issues)
 
 
-def test_out_of_seed_persona_zero_when_missing(eval_mod, make_session, tmp_path):
+def test_out_of_seed_persona_zero_when_missing(
+    eval_mod, make_session, tmp_path
+):
     persona = next(p for p in eval_mod.PERSONAS if p.id == "oficina_mecanica")
     session = make_session(segment=None)
     bp = _write_blueprint(tmp_path)
@@ -255,22 +289,31 @@ def test_out_of_seed_persona_zero_when_missing(eval_mod, make_session, tmp_path)
     assert seg.score == 0
 
 
-def test_qualitative_issue_maps_to_recommendation(eval_mod, make_session, tmp_path):
-    """Nota baixa do juiz vira issue e recomendação de condução conversacional."""
+def test_qualitative_issue_maps_to_recommendation(
+    eval_mod, make_session, tmp_path
+):
+    """Nota baixa do juiz vira issue e recomendação conversacional."""
     persona = eval_mod.PERSONAS[0]
     session = make_session(segment=persona.expected_segment)
     bp = _write_blueprint(tmp_path)
     score = eval_mod.score_session(persona, session, bp)
     score.issues.append(
         "Qualidade conversacional abaixo do esperado (não-repetição: 4/10) — "
-        "repetiu a mesma pergunta 4 vezes"
+        "repetiu a mesma pergunta 4 vezes",
     )
     run = eval_mod.SessionRun(
-        persona=persona, score=score, stdout_log="", session=session,
+        persona=persona,
+        score=score,
+        stdout_log="",
+        session=session,
         out_dir=tmp_path,
-        qual={"clareza": 9, "empatia": 9, "nao_repeticao": 4,
-              "linguagem_simples": 9,
-              "justificativa": "repetiu a mesma pergunta 4 vezes"},
+        qual={
+            "clareza": 9,
+            "empatia": 9,
+            "nao_repeticao": 4,
+            "linguagem_simples": 9,
+            "justificativa": "repetiu a mesma pergunta 4 vezes",
+        },
     )
     recs = eval_mod._build_recommendations([run])
     assert any("condução conversacional" in r for r in recs)
@@ -282,11 +325,18 @@ def test_report_renders_qualitative_section(eval_mod, make_session, tmp_path):
     bp = _write_blueprint(tmp_path)
     score = eval_mod.score_session(persona, session, bp)
     run = eval_mod.SessionRun(
-        persona=persona, score=score, stdout_log="Você: oi", session=session,
+        persona=persona,
+        score=score,
+        stdout_log="Você: oi",
+        session=session,
         out_dir=tmp_path,
-        qual={"clareza": 8, "empatia": 9, "nao_repeticao": 7,
-              "linguagem_simples": 9,
-              "justificativa": "Condução clara e acolhedora."},
+        qual={
+            "clareza": 8,
+            "empatia": 9,
+            "nao_repeticao": 7,
+            "linguagem_simples": 9,
+            "justificativa": "Condução clara e acolhedora.",
+        },
     )
     report = eval_mod.generate_report([run], "20260611_000000")
     assert "LLM-as-judge" in report
@@ -307,7 +357,7 @@ def test_report_includes_all_personas(eval_mod, make_session, tmp_path):
                 stdout_log="Você: oi\nConsultor: olá",
                 session=session,
                 out_dir=tmp_path,
-            )
+            ),
         )
     report = eval_mod.generate_report(runs, "20260611_000000")
     for run in runs:

@@ -35,6 +35,7 @@ if str(_SRC) not in sys.path:
 
 # ─── Personas ────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class Persona:
     id: str
@@ -43,7 +44,7 @@ class Persona:
     # Chave canônica da seed CNAE; None = segmento fora da taxonomia curada
     # (exercita o caminho de raciocínio livre do segment_lookup).
     expected_segment: Optional[str]
-    script: list[str]   # respostas em ordem; última deve ser /fim
+    script: list[str]  # respostas em ordem; última deve ser /fim
     # Para personas fora da seed: o segmento descrito livremente pelo LLM
     # é aceito se contiver qualquer um destes termos (lowercase).
     expected_segment_contains: list[str] = field(default_factory=list)
@@ -194,7 +195,14 @@ PERSONAS: list[Persona] = [
         name="Oficina Mecânica (fora da seed)",
         description="Oficina de manutenção automotiva — segmento fora da taxonomia curada",
         expected_segment=None,
-        expected_segment_contains=["mec", "auto", "oficina", "veic", "veíc", "carro"],
+        expected_segment_contains=[
+            "mec",
+            "auto",
+            "oficina",
+            "veic",
+            "veíc",
+            "carro",
+        ],
         script=[
             "Tenho uma oficina mecânica. Fazemos revisão, troca de óleo, freios e suspensão de carros de passeio.",
             "O cliente liga toda hora perguntando se o carro ficou pronto. Isso interrompe os mecânicos o dia inteiro.",
@@ -209,6 +217,7 @@ PERSONAS: list[Persona] = [
 
 
 # ─── Scoring ─────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class CriterionScore:
@@ -239,7 +248,9 @@ class ScoreResult:
         return (self.total / self.max_total * 100) if self.max_total else 0.0
 
 
-def _add(result: ScoreResult, name: str, score: float, max_score: float, note: str):
+def _add(
+    result: ScoreResult, name: str, score: float, max_score: float, note: str
+):
     result.criteria.append(CriterionScore(name, score, max_score, note))
 
 
@@ -258,35 +269,59 @@ def score_session(
     if persona.expected_segment is None:
         # Fora da seed: aceita descrição livre que mencione o ramo
         det_l = (detected or "").lower()
-        if det_l and any(t in det_l for t in persona.expected_segment_contains):
-            _add(result, "Segmento", 20, 20,
-                 f"Fora da seed — descrição livre coerente: `{detected}`")
+        if det_l and any(
+            t in det_l for t in persona.expected_segment_contains
+        ):
+            _add(
+                result,
+                "Segmento",
+                20,
+                20,
+                f"Fora da seed — descrição livre coerente: `{detected}`",
+            )
             result.positives.append(
-                f"Raciocínio livre funcionou: segmento descrito como `{detected}`"
+                f"Raciocínio livre funcionou: segmento descrito como `{detected}`",
             )
         elif det_l:
-            _add(result, "Segmento", 8, 20,
-                 f"Fora da seed — `{detected}` não menciona o ramo esperado "
-                 f"({', '.join(persona.expected_segment_contains)})")
+            _add(
+                result,
+                "Segmento",
+                8,
+                20,
+                f"Fora da seed — `{detected}` não menciona o ramo esperado "
+                f"({', '.join(persona.expected_segment_contains)})",
+            )
             result.issues.append(
                 f"Segmento detectado incorretamente: descrição livre `{detected}` "
-                f"não corresponde ao ramo do negócio"
+                f"não corresponde ao ramo do negócio",
             )
         else:
             _add(result, "Segmento", 0, 20, "Não detectado")
             result.issues.append(
                 "Segmento NÃO detectado — fora da seed, o raciocínio livre "
-                "deveria preencher company.segment via reflect"
+                "deveria preencher company.segment via reflect",
             )
     elif detected == persona.expected_segment:
         _add(result, "Segmento", 20, 20, f"Correto: `{detected}`")
-        result.positives.append(f"Segmento detectado corretamente: `{detected}`")
+        result.positives.append(
+            f"Segmento detectado corretamente: `{detected}`"
+        )
     elif detected:
-        _add(result, "Segmento", 8, 20, f"Errado: `{detected}` (esperado: `{persona.expected_segment}`)")
-        result.issues.append(f"Segmento detectado incorretamente: `{detected}` (esperado `{persona.expected_segment}`)")
+        _add(
+            result,
+            "Segmento",
+            8,
+            20,
+            f"Errado: `{detected}` (esperado: `{persona.expected_segment}`)",
+        )
+        result.issues.append(
+            f"Segmento detectado incorretamente: `{detected}` (esperado `{persona.expected_segment}`)"
+        )
     else:
         _add(result, "Segmento", 0, 20, "Não detectado")
-        result.issues.append("Segmento NÃO detectado — `segment_lookup` não foi chamado ou falhou")
+        result.issues.append(
+            "Segmento NÃO detectado — `segment_lookup` não foi chamado ou falhou"
+        )
 
     # 2. Blueprint emitido (20 pts)
     if session.emitted:
@@ -294,7 +329,9 @@ def score_session(
         result.positives.append("Blueprint gerado e salvo com sucesso")
     else:
         _add(result, "Blueprint gerado", 0, 20, "Não emitido")
-        result.issues.append("Blueprint NÃO emitido — a entrevista terminou sem conclusão")
+        result.issues.append(
+            "Blueprint NÃO emitido — a entrevista terminou sem conclusão"
+        )
 
     # 3. Qualidade do blueprint (40 pts, só pontuável se emitido)
     agents_count = 0
@@ -305,7 +342,7 @@ def score_session(
     if blueprint_path and blueprint_path.exists():
         try:
             bp = TeamBlueprint.model_validate_json(
-                blueprint_path.read_text(encoding="utf-8")
+                blueprint_path.read_text(encoding="utf-8"),
             )
             agents_count = len(bp.proposed_team)
             roadmap_steps = len(bp.roadmap)
@@ -316,14 +353,34 @@ def score_session(
 
     # 3a. Agentes propostos (15 pts)
     if agents_count >= 3:
-        _add(result, "Agentes propostos", 15, 15, f"{agents_count} agentes — equipe completa")
+        _add(
+            result,
+            "Agentes propostos",
+            15,
+            15,
+            f"{agents_count} agentes — equipe completa",
+        )
         result.positives.append(f"Time com {agents_count} agentes propostos")
     elif agents_count == 2:
-        _add(result, "Agentes propostos", 10, 15, f"{agents_count} agentes — adequado mas pode expandir")
+        _add(
+            result,
+            "Agentes propostos",
+            10,
+            15,
+            f"{agents_count} agentes — adequado mas pode expandir",
+        )
         result.positives.append(f"{agents_count} agentes propostos")
     elif agents_count == 1:
-        _add(result, "Agentes propostos", 4, 15, "Apenas 1 agente — muito simples")
-        result.issues.append("Apenas 1 agente proposto — time insuficiente para a maioria das PMEs")
+        _add(
+            result,
+            "Agentes propostos",
+            4,
+            15,
+            "Apenas 1 agente — muito simples",
+        )
+        result.issues.append(
+            "Apenas 1 agente proposto — time insuficiente para a maioria das PMEs"
+        )
     else:
         _add(result, "Agentes propostos", 0, 15, "Nenhum agente")
         result.issues.append("Nenhum agente proposto no blueprint")
@@ -331,111 +388,206 @@ def score_session(
     # 3b. Roadmap (10 pts)
     if roadmap_steps >= 3:
         _add(result, "Roadmap", 10, 10, f"{roadmap_steps} etapas — detalhado")
-        result.positives.append(f"Roadmap com {roadmap_steps} etapas bem definidas")
+        result.positives.append(
+            f"Roadmap com {roadmap_steps} etapas bem definidas"
+        )
     elif roadmap_steps == 2:
         _add(result, "Roadmap", 7, 10, "2 etapas — funcional")
     elif roadmap_steps == 1:
         _add(result, "Roadmap", 3, 10, "Apenas 1 etapa — superficial")
-        result.issues.append("Roadmap com apenas 1 etapa — sem progressão de implantação")
+        result.issues.append(
+            "Roadmap com apenas 1 etapa — sem progressão de implantação"
+        )
     else:
         _add(result, "Roadmap", 0, 10, "Sem roadmap")
         result.issues.append("Roadmap vazio no blueprint")
 
     # 3c. Mapa de processos (10 pts)
     if process_map_len >= 2:
-        _add(result, "Mapa de processos", 10, 10, f"{process_map_len} processos mapeados")
-        result.positives.append(f"{process_map_len} processos mapeados no blueprint")
+        _add(
+            result,
+            "Mapa de processos",
+            10,
+            10,
+            f"{process_map_len} processos mapeados",
+        )
+        result.positives.append(
+            f"{process_map_len} processos mapeados no blueprint"
+        )
     elif process_map_len == 1:
         _add(result, "Mapa de processos", 5, 10, "1 processo — incompleto")
-        result.issues.append("Apenas 1 processo no mapa — pode estar superficial")
+        result.issues.append(
+            "Apenas 1 processo no mapa — pode estar superficial"
+        )
     else:
         _add(result, "Mapa de processos", 0, 10, "Sem mapa de processos")
         result.issues.append("Mapa de processos ausente")
 
     # 3d. Perguntas em aberto (5 pts)
     if open_questions >= 2:
-        _add(result, "Perguntas em aberto", 5, 5, f"{open_questions} perguntas documentadas")
-        result.positives.append(f"{open_questions} perguntas em aberto documentadas (boa prática)")
+        _add(
+            result,
+            "Perguntas em aberto",
+            5,
+            5,
+            f"{open_questions} perguntas documentadas",
+        )
+        result.positives.append(
+            f"{open_questions} perguntas em aberto documentadas (boa prática)"
+        )
     elif open_questions == 1:
         _add(result, "Perguntas em aberto", 3, 5, "1 pergunta — aceitável")
     else:
-        _add(result, "Perguntas em aberto", 0, 5, "Nenhuma pergunta documentada")
-        result.issues.append("Nenhuma pergunta em aberto — entrevista pode ter sido superficial")
+        _add(
+            result, "Perguntas em aberto", 0, 5, "Nenhuma pergunta documentada"
+        )
+        result.issues.append(
+            "Nenhuma pergunta em aberto — entrevista pode ter sido superficial"
+        )
 
     # 4. Integrações detectadas (10 pts)
     integ_count = len(state.integrations)
     if integ_count >= 2:
-        _add(result, "Integrações detectadas", 10, 10, f"{integ_count} integrações")
-        result.positives.append(f"{integ_count} integrações detectadas corretamente")
+        _add(
+            result,
+            "Integrações detectadas",
+            10,
+            10,
+            f"{integ_count} integrações",
+        )
+        result.positives.append(
+            f"{integ_count} integrações detectadas corretamente"
+        )
     elif integ_count == 1:
-        _add(result, "Integrações detectadas", 5, 10, "1 integração — insuficiente")
-        result.issues.append("Apenas 1 integração detectada — o empresário mencionou mais ferramentas")
+        _add(
+            result,
+            "Integrações detectadas",
+            5,
+            10,
+            "1 integração — insuficiente",
+        )
+        result.issues.append(
+            "Apenas 1 integração detectada — o empresário mencionou mais ferramentas"
+        )
     else:
-        _add(result, "Integrações detectadas", 0, 10, "Nenhuma integração detectada")
-        result.issues.append("Nenhuma integração detectada — o agente não usou `reflect` para capturar ferramentas")
+        _add(
+            result,
+            "Integrações detectadas",
+            0,
+            10,
+            "Nenhuma integração detectada",
+        )
+        result.issues.append(
+            "Nenhuma integração detectada — o agente não usou `reflect` para capturar ferramentas"
+        )
 
     # 5. Profundidade da entrevista (10 pts)
     user_turns = len([t for t in state.transcript if t.role == "user"])
     if user_turns >= 5:
-        _add(result, "Profundidade da entrevista", 10, 10, f"{user_turns} turnos do usuário")
-        result.positives.append(f"Entrevista aprofundada: {user_turns} turnos do empresário")
+        _add(
+            result,
+            "Profundidade da entrevista",
+            10,
+            10,
+            f"{user_turns} turnos do usuário",
+        )
+        result.positives.append(
+            f"Entrevista aprofundada: {user_turns} turnos do empresário"
+        )
     elif user_turns >= 3:
-        _add(result, "Profundidade da entrevista", 6, 10, f"{user_turns} turnos — razoável")
+        _add(
+            result,
+            "Profundidade da entrevista",
+            6,
+            10,
+            f"{user_turns} turnos — razoável",
+        )
     elif user_turns >= 1:
-        _add(result, "Profundidade da entrevista", 2, 10, f"{user_turns} turno(s) — muito curto")
-        result.issues.append(f"Entrevista muito curta: apenas {user_turns} turno(s) do usuário")
+        _add(
+            result,
+            "Profundidade da entrevista",
+            2,
+            10,
+            f"{user_turns} turno(s) — muito curto",
+        )
+        result.issues.append(
+            f"Entrevista muito curta: apenas {user_turns} turno(s) do usuário"
+        )
     else:
-        _add(result, "Profundidade da entrevista", 0, 10, "Nenhum turno capturado")
-        result.issues.append("Nenhum turno de usuário na transcrição — erro de captura")
+        _add(
+            result,
+            "Profundidade da entrevista",
+            0,
+            10,
+            "Nenhum turno capturado",
+        )
+        result.issues.append(
+            "Nenhum turno de usuário na transcrição — erro de captura"
+        )
 
     # 6. Onboarding WhatsApp (10 pts)
     onboarding = getattr(state, "onboarding", None)
     if onboarding is not None:
-        _add(result, "Onboarding WhatsApp", 10, 10,
-             f"Contato registrado: {onboarding.responsible_name}")
+        _add(
+            result,
+            "Onboarding WhatsApp",
+            10,
+            10,
+            f"Contato registrado: {onboarding.responsible_name}",
+        )
         result.positives.append(
-            f"WhatsApp do responsável capturado ({onboarding.responsible_name})"
+            f"WhatsApp do responsável capturado ({onboarding.responsible_name})",
         )
     else:
         _add(result, "Onboarding WhatsApp", 0, 10, "Contato NÃO registrado")
         result.issues.append(
             "Onboarding NÃO registrado — o agente não pediu o WhatsApp do "
-            "empresário antes de encerrar"
+            "empresário antes de encerrar",
         )
 
     # 7. Requisitos por agente (10 pts)
     req_path = (
-        blueprint_path.parent / "requirements.json"
-        if blueprint_path else None
+        blueprint_path.parent / "requirements.json" if blueprint_path else None
     )
     req_items = 0
     if req_path and req_path.exists():
         try:
             from qwenpaw.discovery.state import RequirementsReport
+
             report = RequirementsReport.model_validate_json(
-                req_path.read_text(encoding="utf-8")
+                req_path.read_text(encoding="utf-8"),
             )
             req_items = len(report.items)
         except Exception as exc:
             result.issues.append(f"requirements.json inválido: {exc}")
     if req_items >= max(1, agents_count):
-        _add(result, "Requisitos por agente", 10, 10,
-             f"{req_items} agente(s) com pendências mapeadas")
+        _add(
+            result,
+            "Requisitos por agente",
+            10,
+            10,
+            f"{req_items} agente(s) com pendências mapeadas",
+        )
         result.positives.append(
-            "Fase de requisitos cobriu todos os agentes do time"
+            "Fase de requisitos cobriu todos os agentes do time",
         )
     elif req_items >= 1:
-        _add(result, "Requisitos por agente", 6, 10,
-             f"{req_items}/{agents_count} agentes cobertos")
+        _add(
+            result,
+            "Requisitos por agente",
+            6,
+            10,
+            f"{req_items}/{agents_count} agentes cobertos",
+        )
         result.issues.append(
             f"Requisitos cobriram só {req_items} de {agents_count} agentes "
-            f"do time"
+            f"do time",
         )
     else:
         _add(result, "Requisitos por agente", 0, 10, "Não gerados")
         result.issues.append(
             "Requisitos NÃO gerados — a fase pós-blueprint não produziu "
-            "requirements.json"
+            "requirements.json",
         )
 
     return result
@@ -541,7 +693,7 @@ def _build_judge_agent(judge: _JudgeSession):
         system_prompt=_JUDGE_PROMPT,
         model=model,
         toolkit=Toolkit(
-            tools=[FunctionTool(judge.submit_evaluation, is_read_only=False)]
+            tools=[FunctionTool(judge.submit_evaluation, is_read_only=False)],
         ),
         react_config=ReActConfig(max_iters=3),
     )
@@ -550,7 +702,8 @@ def _build_judge_agent(judge: _JudgeSession):
 
 
 async def _judge_transcript(
-    transcript_text: str, final_report: str = ""
+    transcript_text: str,
+    final_report: str = "",
 ) -> Optional[dict]:
     """Roda o juiz sobre a transcrição + relatório; None se o juiz falhar."""
     from agentscope.message import UserMsg
@@ -572,18 +725,21 @@ async def _judge_transcript(
 
 # ─── Execução de uma sessão ──────────────────────────────────────────────────
 
+
 @dataclass
 class SessionRun:
     persona: Persona
     score: ScoreResult
     stdout_log: str
-    session: object   # DiscoverySession
+    session: object  # DiscoverySession
     out_dir: Path
-    qual: Optional[dict] = None   # resultado do LLM-as-judge
+    qual: Optional[dict] = None  # resultado do LLM-as-judge
 
 
 async def _run_persona(
-    persona: Persona, tmp_dir: Path, use_judge: bool = True
+    persona: Persona,
+    tmp_dir: Path,
+    use_judge: bool = True,
 ) -> SessionRun:
     """Executa uma sessão completa com respostas pré-roteirizadas."""
     from qwenpaw.discovery import run_discovery_session
@@ -608,10 +764,14 @@ async def _run_persona(
                     out_dir=tmp_dir,
                 )
         score = score_session(
-            persona, session, tmp_dir / "blueprint.json"
+            persona,
+            session,
+            tmp_dir / "blueprint.json",
         )
     except Exception as exc:
-        score = ScoreResult(persona_id=persona.id, error=traceback.format_exc())
+        score = ScoreResult(
+            persona_id=persona.id, error=traceback.format_exc()
+        )
         session = None  # type: ignore[assignment]
         print(f"[ERRO] {persona.name}: {exc}", file=sys.stderr)
 
@@ -620,19 +780,20 @@ async def _run_persona(
     if use_judge and score.error is None and buf.getvalue().strip():
         report_md = tmp_dir / "blueprint.md"
         final_report = (
-            report_md.read_text(encoding="utf-8")
-            if report_md.exists() else ""
+            report_md.read_text(encoding="utf-8") if report_md.exists() else ""
         )
         try:
             qual = await _judge_transcript(buf.getvalue(), final_report)
         except Exception as exc:
-            print(f"[JUDGE] falhou para {persona.name}: {exc}", file=sys.stderr)
+            print(
+                f"[JUDGE] falhou para {persona.name}: {exc}", file=sys.stderr
+            )
     if qual:
         for key, label in _QUAL_CRITERIA:
             if qual[key] < 6:
                 score.issues.append(
                     f"Qualidade conversacional abaixo do esperado "
-                    f"({label.lower()}: {qual[key]}/10) — {qual['justificativa']}"
+                    f"({label.lower()}: {qual[key]}/10) — {qual['justificativa']}",
                 )
 
     return SessionRun(
@@ -765,14 +926,13 @@ def _build_recommendations(runs: list[SessionRun]) -> list[str]:
     )
     recs = [rec for marker, rec in _RECOMMENDATION_MAP if marker in all_issues]
     if any(run.score.error for run in runs):
-        failed = ", ".join(
-            run.persona.name for run in runs if run.score.error
-        )
+        failed = ", ".join(run.persona.name for run in runs if run.score.error)
         recs.append(
             f"**Investigar cenários com ERRO** ({failed}) — o traceback "
-            f"completo está na seção do cenário."
+            f"completo está na seção do cenário.",
         )
     return recs or list(_MAINTENANCE_RECS)
+
 
 def _segment_ok(run: SessionRun) -> bool:
     """True quando o segmento detectado satisfaz a expectativa da persona."""
@@ -844,7 +1004,7 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
                 f"| {run.persona.name} | {seg_ok} | {bp_ok} "
                 f"| {s.total:.0f}/{s.max_total:.0f} ({s.pct:.0f}%) "
                 f"| {_qual_cell(run)} "
-                f"| {_grade(s.pct)} |"
+                f"| {_grade(s.pct)} |",
             )
         lines += ["", f"**Média geral:** {avg:.1f}% — {_grade(avg)}", ""]
     else:
@@ -898,7 +1058,9 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
         lines += ["|----------|------:|----:|-------|------------|"]
         for c in run.score.criteria:
             bar = _bar(c.score, c.max_score, 10)
-            lines.append(f"| {c.name} | {c.score:.0f} | {c.max_score:.0f} | `{bar}` | {c.note} |")
+            lines.append(
+                f"| {c.name} | {c.score:.0f} | {c.max_score:.0f} | `{bar}` | {c.note} |"
+            )
         lines.append("")
 
         if run.qual:
@@ -912,7 +1074,7 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
             for key, label in _QUAL_CRITERIA:
                 lines.append(
                     f"| {label} | {run.qual[key]}/10 "
-                    f"| `{_bar(run.qual[key], 10, 10)}` |"
+                    f"| `{_bar(run.qual[key], 10, 10)}` |",
                 )
             lines += [
                 f"| **Total** | **{total_q}/40** | |",
@@ -997,28 +1159,38 @@ def generate_report(runs: list[SessionRun], run_ts: str) -> str:
 
 # ─── CLI ─────────────────────────────────────────────────────────────────────
 
+
 @click.command()
 @click.option(
-    "--out", "out_path",
+    "--out",
+    "out_path",
     default=None,
     help="Caminho do relatório .md. Default: reports/discovery_eval_<ts>.md",
 )
 @click.option(
-    "--persona", "persona_id",
+    "--persona",
+    "persona_id",
     default=None,
     help="Rodar apenas um persona pelo ID (ex: ecommerce_roupas).",
 )
 @click.option(
-    "--no-judge", "no_judge",
+    "--no-judge",
+    "no_judge",
     is_flag=True,
     help="Pula a avaliação qualitativa LLM-as-judge (rodada mais rápida).",
 )
 def main(
-    out_path: Optional[str], persona_id: Optional[str], no_judge: bool
+    out_path: Optional[str],
+    persona_id: Optional[str],
+    no_judge: bool,
 ) -> None:
     """Avalia o Discovery Agent com personas PME pré-roteirizadas."""
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_file = Path(out_path) if out_path else Path("reports") / f"discovery_eval_{ts}.md"
+    out_file = (
+        Path(out_path)
+        if out_path
+        else Path("reports") / f"discovery_eval_{ts}.md"
+    )
     out_file.parent.mkdir(parents=True, exist_ok=True)
 
     personas = PERSONAS
@@ -1026,7 +1198,10 @@ def main(
         personas = [p for p in PERSONAS if p.id == persona_id]
         if not personas:
             ids = ", ".join(p.id for p in PERSONAS)
-            raise click.BadParameter(f"Persona não encontrada. Disponíveis: {ids}", param_hint="--persona")
+            raise click.BadParameter(
+                f"Persona não encontrada. Disponíveis: {ids}",
+                param_hint="--persona",
+            )
 
     click.echo(f"Discovery Agent Evaluator — {len(personas)} cenário(s)\n")
 
@@ -1037,16 +1212,18 @@ def main(
             persona_dir = Path(tmp_root) / persona.id
             persona_dir.mkdir()
             run = asyncio.run(
-                _run_persona(persona, persona_dir, use_judge=not no_judge)
+                _run_persona(persona, persona_dir, use_judge=not no_judge),
             )
             runs.append(run)
             if run.score.error:
                 click.echo(" ❌ ERRO")
             else:
-                qual_txt = f" | qualidade {_qual_cell(run)}" if run.qual else ""
+                qual_txt = (
+                    f" | qualidade {_qual_cell(run)}" if run.qual else ""
+                )
                 click.echo(
                     f" {run.score.total:.0f}/{run.score.max_total:.0f} "
-                    f"({run.score.pct:.0f}%){qual_txt}"
+                    f"({run.score.pct:.0f}%){qual_txt}",
                 )
 
         # Lê arquivos antes de deletar o diretório temporário

@@ -56,7 +56,7 @@ def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
     lines: list[str] = ["# Seu Time de Agentes\n"]
     lines.append(
         "Preparamos este plano com base na nossa conversa. Aqui está o que "
-        "entendemos do seu negócio e o time que vamos montar para você.\n"
+        "entendemos do seu negócio e o time que vamos montar para você.\n",
     )
 
     lines.append("## O que entendemos do seu negócio")
@@ -90,7 +90,7 @@ def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
                 lines.append(f"  - {task}")
         if a.tools_integrations:
             friendly = sorted(
-                {_friendly_tool_name(t, bp) for t in a.tools_integrations}
+                {_friendly_tool_name(t, bp) for t in a.tools_integrations},
             )
             lines.append(f"- Vai trabalhar com: {', '.join(friendly)}")
         if a.talks_to:
@@ -100,7 +100,7 @@ def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
         lines.append("\n## Por onde vamos começar")
         lines.append(
             "Cada etapa entra no ar quando a anterior estiver redonda — "
-            "você acompanha e aprova tudo."
+            "você acompanha e aprova tudo.",
         )
         for r in sorted(bp.roadmap, key=lambda x: x.order):
             lines.append(f"{r.order}. **{r.title}** — {r.rationale}")
@@ -120,25 +120,26 @@ def _blueprint_to_markdown(bp: TeamBlueprint) -> str:
         contato = "você"
     lines.append(
         "1. Vamos conectar o WhatsApp da sua empresa — ele será o canal "
-        "oficial de atendimento do seu time de agentes."
+        "oficial de atendimento do seu time de agentes.",
     )
     lines.append(
         f"2. Vamos criar um grupo no WhatsApp com {contato} para "
-        "acompanhar tudo de perto."
+        "acompanhar tudo de perto.",
     )
     lines.append(
         "3. Pelo grupo, você nos passa as informações que faltarem e "
-        "testa o atendente antes de ele começar a falar com seus clientes."
+        "testa o atendente antes de ele começar a falar com seus clientes.",
     )
     lines.append(
         "\nVamos montar o seu time de agentes — e você acompanha cada "
-        "passo pelo grupo. 🤝"
+        "passo pelo grupo. 🤝",
     )
     return "\n".join(lines) + "\n"
 
 
 def _requirements_to_markdown(
-    report: RequirementsReport, state: DiscoveryState
+    report: RequirementsReport,
+    state: DiscoveryState,
 ) -> str:
     """Relatório leigo de informações pendentes, por agente."""
     lines: list[str] = ["# O que falta para o seu time começar\n"]
@@ -157,18 +158,19 @@ def _requirements_to_markdown(
     if contato:
         lines.append(
             f"\n_Vamos pedir essas informações no grupo do WhatsApp com "
-            f"{contato.responsible_name} ({contato.whatsapp_number})._"
+            f"{contato.responsible_name} ({contato.whatsapp_number})._",
         )
     else:
         lines.append(
             "\n_Vamos pedir essas informações no grupo do WhatsApp assim "
-            "que o contato for confirmado._"
+            "que o contato for confirmado._",
         )
     return "\n".join(lines) + "\n"
 
 
 def _group_messages_markdown(
-    report: RequirementsReport, state: DiscoveryState
+    report: RequirementsReport,
+    state: DiscoveryState,
 ) -> str:
     """Mensagens prontas para enviar no grupo de onboarding."""
     lines: list[str] = ["# Mensagens prontas para o grupo do WhatsApp\n"]
@@ -176,7 +178,7 @@ def _group_messages_markdown(
     if contato:
         lines.append(
             f"_Grupo de onboarding com {contato.responsible_name} "
-            f"({contato.whatsapp_number})._\n"
+            f"({contato.whatsapp_number})._\n",
         )
     lines.append("## Mensagem de abertura\n")
     lines.append("```")
@@ -184,7 +186,7 @@ def _group_messages_markdown(
         report.summary_for_owner
         or "Olá! Este é o grupo de acompanhamento do seu time de agentes. "
         "Por aqui vamos pedir as informações que faltam e você testa o "
-        "atendente antes de ele falar com seus clientes."
+        "atendente antes de ele falar com seus clientes.",
     )
     lines.append("```\n")
     for item in report.items:
@@ -237,13 +239,13 @@ class DiscoverySession:
                         ),
                         confidence=0.1,
                         priority=4,
-                    )
+                    ),
                 )
             return _ok(
                 "Segmento não está na taxonomia curada. Raciocine de"
                 " forma LIVRE sobre as áreas, processos, dores e"
                 " integrações típicas deste tipo de negócio antes de"
-                " continuar a entrevista."
+                " continuar a entrevista.",
             )
         self.state.company.segment = info.key
         if info.cnae:
@@ -259,7 +261,7 @@ class DiscoverySession:
         return _ok(
             f"Segmento identificado: {info.key} ({info.label}). Use estes "
             f"trilhos como ponto de partida e APROFUNDE com perguntas:\n"
-            + json.dumps(payload, ensure_ascii=False, indent=2)
+            + json.dumps(payload, ensure_ascii=False, indent=2),
         )
 
     async def connector_lookup(self, integration_kind: str) -> ToolChunk:
@@ -292,7 +294,7 @@ class DiscoverySession:
                 f"Nenhum conector curado para '{integration_kind}'. "
                 "Registre no blueprint um ConnectorRef com origin='build' e "
                 "status='build', e adicione uma open_question sobre essa "
-                "integração."
+                "integração.",
             )
         payload = [
             {
@@ -308,7 +310,7 @@ class DiscoverySession:
         return _ok(
             "Conectores curados (use em recommended_connectors; referência "
             "curta em tools_integrations = '<origin>:<slug>'):\n"
-            + json.dumps(payload, ensure_ascii=False, indent=2)
+            + json.dumps(payload, ensure_ascii=False, indent=2),
         )
 
     async def reflect(self, learned: str, updates_json: str) -> ToolChunk:
@@ -336,13 +338,14 @@ class DiscoverySession:
         except Exception as exc:
             return _err(
                 f"updates_json inválido ({exc}). Reenvie um JSON válido "
-                f"conforme o schema ReflectUpdate."
+                f"conforme o schema ReflectUpdate.",
             )
 
         # fecha áreas
         if upd.close_area_ids:
             self.state.open_areas = [
-                a for a in self.state.open_areas
+                a
+                for a in self.state.open_areas
                 if a.id not in upd.close_area_ids
             ]
 
@@ -426,7 +429,7 @@ class DiscoverySession:
             return _err(
                 f"Número '{whatsapp_number}' inválido — esperado DDD + "
                 f"número (10-11 dígitos). Confirme com o empresário e "
-                f"chame register_onboarding de novo."
+                f"chame register_onboarding de novo.",
             )
         normalized = f"+55 ({digits[:2]}) {digits[2:-4]}-{digits[-4:]}"
         self.state.onboarding = OnboardingInfo(
@@ -437,7 +440,7 @@ class DiscoverySession:
         return _ok(
             f"Contato registrado: {self.state.onboarding.responsible_name} "
             f"— {normalized}. Será usado para conectar o canal oficial e "
-            f"criar o grupo de onboarding."
+            f"criar o grupo de onboarding.",
         )
 
     async def emit_blueprint(self, blueprint_json: str) -> ToolChunk:
@@ -459,17 +462,19 @@ class DiscoverySession:
         except Exception as exc:
             return _err(
                 f"Blueprint inválido ({exc}). Corrija o JSON conforme o "
-                f"schema TeamBlueprint e chame emit_blueprint de novo."
+                f"schema TeamBlueprint e chame emit_blueprint de novo.",
             )
         # o contato de onboarding vive no estado — fonte da verdade
         if self.state.onboarding is not None:
             bp.onboarding = self.state.onboarding
         self.out_dir.mkdir(parents=True, exist_ok=True)
         (self.out_dir / "blueprint.json").write_text(
-            bp.model_dump_json(indent=2), encoding="utf-8"
+            bp.model_dump_json(indent=2),
+            encoding="utf-8",
         )
         (self.out_dir / "blueprint.md").write_text(
-            _blueprint_to_markdown(bp), encoding="utf-8"
+            _blueprint_to_markdown(bp),
+            encoding="utf-8",
         )
         self.emitted = True
         j = self.out_dir / "blueprint.json"
@@ -505,29 +510,33 @@ class DiscoverySession:
         except Exception as exc:
             return _err(
                 f"Relatório inválido ({exc}). Corrija o JSON conforme o "
-                f"schema RequirementsReport e chame emit_requirements de novo."
+                "schema RequirementsReport e chame "
+                "emit_requirements de novo.",
             )
         if not report.items:
             return _err(
                 "Relatório vazio — liste as informações pendentes de cada "
-                "agente do blueprint (mínimo 1 agente)."
+                "agente do blueprint (mínimo 1 agente).",
             )
         self.out_dir.mkdir(parents=True, exist_ok=True)
         (self.out_dir / "requirements.json").write_text(
-            report.model_dump_json(indent=2), encoding="utf-8"
+            report.model_dump_json(indent=2),
+            encoding="utf-8",
         )
         (self.out_dir / "informacoes_pendentes.md").write_text(
-            _requirements_to_markdown(report, self.state), encoding="utf-8"
+            _requirements_to_markdown(report, self.state),
+            encoding="utf-8",
         )
         (self.out_dir / "mensagens_grupo.md").write_text(
-            _group_messages_markdown(report, self.state), encoding="utf-8"
+            _group_messages_markdown(report, self.state),
+            encoding="utf-8",
         )
         self.requirements_emitted = True
         self.requirements = report
         return _ok(
             f"Relatório de pendências gravado em "
             f"{self.out_dir / 'informacoes_pendentes.md'} e mensagens do "
-            f"grupo em {self.out_dir / 'mensagens_grupo.md'}."
+            f"grupo em {self.out_dir / 'mensagens_grupo.md'}.",
         )
 
     # --- toolkit ---------------------------------------------------------
@@ -540,7 +549,7 @@ class DiscoverySession:
                 FunctionTool(self.register_onboarding, is_read_only=False),
                 FunctionTool(self.emit_blueprint, is_read_only=False),
                 FunctionTool(self.connector_lookup, is_read_only=True),
-            ]
+            ],
         )
 
     def build_requirements_toolkit(self) -> Toolkit:
@@ -548,5 +557,5 @@ class DiscoverySession:
         return Toolkit(
             tools=[
                 FunctionTool(self.emit_requirements, is_read_only=False),
-            ]
+            ],
         )
