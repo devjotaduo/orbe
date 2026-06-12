@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import json
 from pathlib import Path
 
 LOCALES = Path("console/src/locales")
+
 
 def _flat_keys(d, prefix=""):
     keys = set()
@@ -12,6 +14,7 @@ def _flat_keys(d, prefix=""):
         else:
             keys.add(full)
     return keys
+
 
 def test_ptbr_has_all_en_keys():
     en = json.loads((LOCALES / "en.json").read_text(encoding="utf-8"))

@@ -11,11 +11,28 @@ from pydantic import BaseModel, field_validator, model_validator
 
 _DATA = Path(__file__).parent / "data" / "cnae_seed.json"
 
-CANONICAL_INTEGRATION_KINDS: frozenset[str] = frozenset({
-    "whatsapp", "crm", "planilha", "agenda", "erp", "pagamento",
-    "fiscal", "ecommerce", "helpdesk", "email", "delivery", "voz",
-    "juridico", "lms", "pdv", "prontuario", "chat-interno", "analytics",
-})
+CANONICAL_INTEGRATION_KINDS: frozenset[str] = frozenset(
+    {
+        "whatsapp",
+        "crm",
+        "planilha",
+        "agenda",
+        "erp",
+        "pagamento",
+        "fiscal",
+        "ecommerce",
+        "helpdesk",
+        "email",
+        "delivery",
+        "voz",
+        "juridico",
+        "lms",
+        "pdv",
+        "prontuario",
+        "chat-interno",
+        "analytics",
+    },
+)
 
 
 class SegmentInfo(BaseModel):
@@ -39,8 +56,13 @@ class ConnectorInfo(BaseModel):
     integration_kind: str
     name: str
     origin: Literal[
-        "clawhub", "lobehub", "modelscope",
-        "skills-sh", "skillsmp", "github", "build",
+        "clawhub",
+        "lobehub",
+        "modelscope",
+        "skills-sh",
+        "skillsmp",
+        "github",
+        "build",
     ]
     slug_or_url: str = ""
     status: Literal["recomendado", "validar", "build"]
@@ -52,7 +74,7 @@ class ConnectorInfo(BaseModel):
     def _kind_is_canonical(cls, v: str) -> str:
         if v not in CANONICAL_INTEGRATION_KINDS:
             raise ValueError(
-                f"integration_kind '{v}' fora do vocabulário canônico"
+                f"integration_kind '{v}' fora do vocabulário canônico",
             )
         return v
 
@@ -63,7 +85,7 @@ class ConnectorInfo(BaseModel):
         ):
             raise ValueError(
                 f"conector build '{self.id}' deve ter origin='build' "
-                f"e slug_or_url vazio"
+                f"e slug_or_url vazio",
             )
         return self
 
@@ -92,10 +114,11 @@ def lookup_connectors(
     if kind not in CANONICAL_INTEGRATION_KINDS:
         raise ValueError(
             f"integration_kind desconhecido: '{kind}'. "
-            f"Válidos: {', '.join(sorted(CANONICAL_INTEGRATION_KINDS))}"
+            f"Válidos: {', '.join(sorted(CANONICAL_INTEGRATION_KINDS))}",
         )
     result = [
-        c for c in load_connectors()
+        c
+        for c in load_connectors()
         if c.integration_kind == kind
         and (not segment or not c.segments or segment in c.segments)
     ]

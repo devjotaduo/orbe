@@ -1,4 +1,3 @@
-import { createGlobalStyle } from "antd-style";
 import {
   ConfigProvider,
   bailianDarkTheme,
@@ -13,7 +12,6 @@ import enUS from "antd/locale/en_US";
 import jaJP from "antd/locale/ja_JP";
 import ruRU from "antd/locale/ru_RU";
 import idID from "antd/locale/id_ID";
-import ptBR from "antd/locale/pt_BR";
 import type { Locale } from "antd/es/locale";
 import { theme as antdTheme } from "antd";
 import dayjs from "dayjs";
@@ -36,7 +34,8 @@ import { authApi } from "./api/modules/auth";
 import { languageApi } from "./api/modules/language";
 import { useUploadLimitStore } from "./stores/uploadLimitStore";
 import { getApiUrl, getApiToken, clearAuthToken } from "./api/config";
-import "./styles/aionui-tokens.css";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { Toaster } from "./components/ui/sonner";
 import "./styles/layout.css";
 import "./styles/form-override.css";
 
@@ -46,7 +45,6 @@ const antdLocaleMap: Record<string, Locale> = {
   ja: jaJP,
   ru: ruRU,
   id: idID,
-  pt: ptBR,
 };
 
 const dayjsLocaleMap: Record<string, string> = {
@@ -56,14 +54,8 @@ const dayjsLocaleMap: Record<string, string> = {
   ru: "ru",
   id: "id",
   pt: "pt-br",
+  "pt-BR": "pt-br",
 };
-
-const GlobalStyle = createGlobalStyle`
-* {
-  margin: 0;
-  box-sizing: border-box;
-}
-`;
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<"loading" | "auth-required" | "ok">(
@@ -132,49 +124,43 @@ function AppInner() {
   const { isDark } = useTheme();
   const { loading: pluginsLoading } = usePlugins();
   const selectedTheme = isDark ? bailianDarkTheme : bailianTheme;
-  const lang = i18n.language || i18n.resolvedLanguage || "en";
-  const baseLang = lang.split("-")[0];
+  const lang = i18n.resolvedLanguage || i18n.language || "en";
   const [antdLocale, setAntdLocale] = useState<Locale>(
-    antdLocaleMap[baseLang] ?? enUS,
+    antdLocaleMap[lang] ?? enUS,
   );
 
   useEffect(() => {
-    languageApi
-      .getLanguage()
-      .then(({ language }) => {
-        if (!language) return;
-
-        if (
-          language !== i18n.language &&
-          language !== i18n.resolvedLanguage
-        ) {
-          i18n.changeLanguage(language);
-        }
-        localStorage.setItem("language", language);
-      })
-      .catch((err) =>
-        console.error("Failed to fetch language preference:", err),
-      );
+    if (!localStorage.getItem("language")) {
+      languageApi
+        .getLanguage()
+        .then(({ language }) => {
+          if (language && language !== i18n.language) {
+            i18n.changeLanguage(language);
+            localStorage.setItem("language", language);
+          }
+        })
+        .catch((err) =>
+          console.error("Failed to fetch language preference:", err),
+        );
+    }
     useUploadLimitStore.getState().fetch();
-  }, [i18n]);
+  }, []);
 
   useEffect(() => {
     const handleLanguageChanged = (lng: string) => {
       const shortLng = lng.split("-")[0];
-      document.documentElement.lang = lng;
       setAntdLocale(antdLocaleMap[shortLng] ?? enUS);
       dayjs.locale(dayjsLocaleMap[shortLng] ?? "en");
     };
 
     // Set initial dayjs locale
-    document.documentElement.lang = lang;
-    dayjs.locale(dayjsLocaleMap[baseLang] ?? "en");
+    dayjs.locale(dayjsLocaleMap[lang.split("-")[0]] ?? "en");
 
     i18n.on("languageChanged", handleLanguageChanged);
     return () => {
       i18n.off("languageChanged", handleLanguageChanged);
     };
-  }, [baseLang, i18n, lang]);
+  }, [i18n]);
 
   // Wait for plugins to load before rendering routes that might be patched
   if (pluginsLoading) {
@@ -183,7 +169,6 @@ function AppInner() {
 
   return (
     <BrowserRouter basename={basename}>
-      <GlobalStyle />
       <ConfigProvider
         {...selectedTheme}
         prefix="qwenpaw"
@@ -200,26 +185,29 @@ function AppInner() {
         }}
       >
         <AntdApp>
-          <ApprovalProvider>
-            <Routes>
-              <Route
-                path="/login"
-                element={
-                  <Suspense fallback={null}>
-                    <LoginPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/*"
-                element={
-                  <AuthGuard>
-                    <MainLayout />
-                  </AuthGuard>
-                }
-              />
-            </Routes>
-          </ApprovalProvider>
+          <TooltipProvider>
+            <Toaster theme={isDark ? "dark" : "light"} />
+            <ApprovalProvider>
+              <Routes>
+                <Route
+                  path="/login"
+                  element={
+                    <Suspense fallback={null}>
+                      <LoginPage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/*"
+                  element={
+                    <AuthGuard>
+                      <MainLayout />
+                    </AuthGuard>
+                  }
+                />
+              </Routes>
+            </ApprovalProvider>
+          </TooltipProvider>
         </AntdApp>
       </ConfigProvider>
     </BrowserRouter>

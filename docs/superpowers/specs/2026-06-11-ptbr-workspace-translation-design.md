@@ -1,6 +1,6 @@
 # Design: Tradução pt-BR do Workspace QwenPaw
 
-**Data:** 2026-06-11  
+**Data:** 2026-06-11
 **Status:** Aprovado
 
 ## Objetivo

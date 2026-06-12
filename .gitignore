@@ -109,7 +109,13 @@ logs/
 AGENTS.md
 # md_files de agentes têm AGENTS.md versionados (templates de workspace por idioma)
 !src/qwenpaw/agents/md_files/**/AGENTS.md
-.claude
+# .claude: version shared config (settings.json, skills/, agents/, hooks/),
+# but ignore local/runtime artifacts.
+.claude/settings.local.json
+.claude/.agentscope-guardian-approved
+.claude/**/__pycache__/
+# claude-flow runtime artifacts (ruflo) — never version
+.claude-flow/
 openspec
 CLAUDE.md
 *.tmp

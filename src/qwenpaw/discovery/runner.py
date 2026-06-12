@@ -42,17 +42,24 @@ def _read_user_input(prompt: str) -> str:  # isolado p/ teste (monkeypatch)
 def _persist(state: DiscoveryState, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "discovery_state.json").write_text(
-        state.model_dump_json(indent=2), encoding="utf-8"
+        state.model_dump_json(indent=2),
+        encoding="utf-8",
     )
 
 
 async def run_discovery_session(
-    session_id: str, out_dir: Path
+    session_id: str,
+    out_dir: Path,
 ) -> DiscoverySession:
-    """Conduz a entrevista no terminal e retorna a sessão (com estado/flags)."""
+    """Conduz a entrevista no terminal.
+
+    Retorna a sessão com estado e flags.
+    """
     out_dir = Path(out_dir)
     state = DiscoveryState(session_id=session_id)
-    state.open_areas.append(_SEED_AREA.model_copy())  # cópia: evita mutar o singleton
+    state.open_areas.append(
+        _SEED_AREA.model_copy(),
+    )  # cópia: evita mutar o singleton
     session = DiscoverySession(state, out_dir=out_dir)
     agent = build_discovery_agent(session)
 
@@ -77,12 +84,18 @@ async def run_discovery_session(
         await _run_requirements_phase(session)
         _persist(state, out_dir)
     else:
-        print("\n(Entrevista encerrada sem blueprint — estado salvo para retomar.)")
+        print(
+            "\n(Entrevista encerrada sem blueprint"
+            " — estado salvo para retomar.)",
+        )
     return session
 
 
 async def _close_interview(
-    agent, session: DiscoverySession, out_dir: Path, max_tries: int = 3
+    agent,
+    session: DiscoverySession,
+    out_dir: Path,
+    max_tries: int = 3,
 ) -> None:
     """Fecha a entrevista no /fim: insiste no emit_blueprint, pedindo o
     WhatsApp do onboarding apenas se ainda faltar. O modelo costuma dar uma
@@ -112,7 +125,10 @@ async def _close_interview(
             except EOFError:
                 contact = ""
             if contact and contact.lower() not in (
-                "/fim", "/sair", "exit", "quit"
+                "/fim",
+                "/sair",
+                "exit",
+                "quit",
             ):
                 state.transcript.append(Turn(role="user", text=contact))
                 closing = contact
@@ -125,17 +141,21 @@ async def _close_interview(
 
 async def _run_requirements_phase(session: DiscoverySession) -> None:
     """Fase pós-blueprint: levanta informações pendentes por agente."""
-    print("\n(Levantando as informações que faltam para o seu time começar...)")
+    print(
+        "\n(Levantando as informações que faltam para o seu time começar...)",
+    )
     try:
         agent = build_requirements_agent(session)
         await agent.reply(
-            UserMsg(name="user", content=build_requirements_input(session))
+            UserMsg(name="user", content=build_requirements_input(session)),
         )
     except Exception as exc:  # não derruba a sessão: blueprint já está salvo
         print(f"\n(Não consegui gerar a lista de pendências agora: {exc})")
         return
     if not session.requirements_emitted or session.requirements is None:
-        print("\n(Lista de pendências não foi gerada — tente novamente depois.)")
+        print(
+            "\n(Lista de pendências não foi gerada — tente novamente depois.)",
+        )
         return
     report = session.requirements
     print(f"\nConsultor: {report.summary_for_owner}")
@@ -148,5 +168,5 @@ async def _run_requirements_phase(session: DiscoverySession) -> None:
             print(f"   - {req.item}")
     print(
         f"\n(Detalhes em {session.out_dir / 'informacoes_pendentes.md'} e "
-        f"mensagens prontas em {session.out_dir / 'mensagens_grupo.md'})"
+        f"mensagens prontas em {session.out_dir / 'mensagens_grupo.md'})",
     )

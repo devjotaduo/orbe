@@ -59,7 +59,7 @@ def build_requirements_prompt() -> str:
             RequirementsReport.model_json_schema(),
             ensure_ascii=False,
             indent=2,
-        )
+        ),
     )
 
 
@@ -91,7 +91,7 @@ def build_requirements_agent(
 
 
 def build_requirements_input(session: DiscoverySession) -> str:
-    """Monta o contexto (blueprint + entrevista) para o agente de requisitos."""
+    """Monta contexto (blueprint + entrevista) para o agente de requisitos."""
     bp_path = session.out_dir / "blueprint.json"
     blueprint_json = (
         bp_path.read_text(encoding="utf-8") if bp_path.exists() else "{}"

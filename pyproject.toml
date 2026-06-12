@@ -6,9 +6,13 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "agentscope==2.0.0",
-    # agentscope-runtime is no longer needed: agentscope 2.0 ships the
-    # runtime (`agentscope.app`, `agentscope.session`, `agentscope.app._schema`)
-    # in-tree, replacing the standalone agentscope-runtime package.
+    # agentscope-runtime is still required: the code imports
+    # `agentscope_runtime.engine.*` (Runner, AgentRequest, schemas,
+    # exceptions) in src/qwenpaw/app/runner/runner.py and channels, and
+    # agentscope 2.0 ships NO in-tree equivalent (no `engine`/`Runner`).
+    # 1.1.6 declares `agentscope>=1.0.14` (no upper bound), so it resolves
+    # cleanly alongside agentscope 2.0.0.
+    "agentscope-runtime==1.1.6",
     "httpx>=0.27.0",
     "packaging>=24.0",
     "discord-py>=2.3",

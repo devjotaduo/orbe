@@ -198,7 +198,9 @@ function re(o, i) {
     const p = [];
     return t.agent_id && p.push(String(t.agent_id)), t.reason && p.push(String(t.reason)), t.error && p.push(String(t.error)), p.join(" | ") || "-";
   }
-  return c.length === 0 ? "-" : c.slice(0, 3).map((p) => `${p}: ${typeof t[p] == "object" ? JSON.stringify(t[p]) : t[p]}`).join(" | ");
+  return c.length === 0 ? "-" : c.slice(0, 3).map(
+    (p) => `${p}: ${typeof t[p] == "object" ? JSON.stringify(t[p]) : t[p]}`
+  ).join(" | ");
 }
 async function le(o) {
   const i = o.fetch;
@@ -237,7 +239,10 @@ function ue() {
     const l = new URLSearchParams();
     return r.actor && l.set("actor", r.actor), r.action && l.set("action", r.action), r.status && l.set("status", r.status), r.date_from && l.set("date_from", r.date_from), r.date_to && l.set("date_to", r.date_to), l.set("limit", String(r.limit || 200)), `?${l.toString()}`;
   }
-  function ee({ event: r, locale: l }) {
+  function ee({
+    event: r,
+    locale: l
+  }) {
     const n = [
       { label: s(l, "eventId"), value: r.id, copyable: !0 },
       { label: s(l, "time"), value: q(r.timestamp) },
@@ -388,11 +393,7 @@ function ue() {
         render: (a, u) => e(
           V,
           { direction: "vertical", size: 0 },
-          e(
-            m.Text,
-            { ellipsis: !0 },
-            u.resource_id || "-"
-          ),
+          e(m.Text, { ellipsis: !0 }, u.resource_id || "-"),
           e(
             m.Text,
             { type: "secondary", style: { fontSize: 12 } },
@@ -620,9 +621,12 @@ async function de() {
     location: "primary.settings",
     parentId: "core.settings-group",
     label: () => s(Q(), "menuLabel"),
-    icon: e && y ? e.createElement(y, {
-      style: { fontSize: 16 }
-    }) : void 0,
+    icon: e && y ? e.createElement(
+      y,
+      {
+        style: { fontSize: 16 }
+      }
+    ) : void 0,
     route: "nexora-admin.audit",
     order: 62,
     // after Security (60), before Token Usage (70)

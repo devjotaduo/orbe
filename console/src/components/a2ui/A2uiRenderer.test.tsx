@@ -204,7 +204,10 @@ describe("A2uiRenderer (Repeater)", () => {
   it("editing inside a repeater writes to the right index", () => {
     const onDataChange = vi.fn();
     render(
-      <A2uiRenderer surface={buildRepeatSurface()} onDataChange={onDataChange} />,
+      <A2uiRenderer
+        surface={buildRepeatSurface()}
+        onDataChange={onDataChange}
+      />,
     );
     fireEvent.change(screen.getByDisplayValue("A2"), {
       target: { value: "A2-edit" },

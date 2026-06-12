@@ -10,6 +10,7 @@ session is created so clients (e.g. the paw TUI) can offer autocompletion.
 from __future__ import annotations
 
 import asyncio
+import sys
 
 from qwenpaw.agents.acp.server import (
     _ACP_REDUNDANT_COMMANDS,
@@ -57,6 +58,30 @@ def test_build_available_commands_set():
 
     # Every advertised command carries a human-readable description.
     assert all(c.description for c in commands)
+
+
+def test_build_available_commands_survives_import_failure(monkeypatch):
+    """A broken command-description module must not break the ACP server.
+
+    The descriptions are imported lazily inside a best-effort try block:
+    if ``agents.mission.handler`` cannot be imported, the builder must
+    degrade gracefully (no exception leaks to ``new_session``) instead of
+    crashing session creation.
+    """
+    # ``None`` in sys.modules makes ``from ... import X`` raise ImportError.
+    monkeypatch.setitem(sys.modules, "qwenpaw.agents.mission.handler", None)
+
+    commands = QwenPawACPAgent._build_available_commands()
+
+    assert isinstance(commands, list)
+    names = {c.name for c in commands}
+    # clear/compact/mission come from the (now broken) description import,
+    # so they are dropped together with it...
+    assert names.isdisjoint({"clear", "compact", "mission"})
+    # ...but the control-command registry block is independent: /skills is
+    # still advertised, and the ACP-redundant commands stay hidden.
+    assert "skills" in names
+    assert names.isdisjoint(_ACP_REDUNDANT_COMMANDS)
 
 
 async def test_new_session_advertises_commands():

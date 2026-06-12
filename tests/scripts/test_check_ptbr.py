@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import subprocess
 import sys
 from pathlib import Path
@@ -8,7 +9,8 @@ SCRIPT = Path("scripts/check_ptbr.py")
 def _run(file_path):
     result = subprocess.run(
         [sys.executable, str(SCRIPT), file_path],
-        capture_output=True, text=True
+        capture_output=True,
+        text=True,
     )
     return result.returncode, result.stderr
 

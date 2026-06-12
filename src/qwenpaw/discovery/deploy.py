@@ -279,7 +279,9 @@ def _save_deployed(session_dir: Path, mapping: dict[str, str]) -> None:
     path = session_dir / "deployed.json"
     path.write_text(
         json.dumps(
-            {"version": 1, "agents": mapping}, ensure_ascii=False, indent=2
+            {"version": 1, "agents": mapping},
+            ensure_ascii=False,
+            indent=2,
         ),
         encoding="utf-8",
     )

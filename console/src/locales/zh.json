@@ -1105,8 +1105,6 @@
     "hideValue": "隐藏值"
   },
   "tokenUsage": {
-    "filterByUser": "按用户筛选",
-    "allUsers": "全部用户",
     "title": "Token 消耗",
     "totalTokens": "总 Token",
     "totalCalls": "总调用次数",
@@ -1124,7 +1122,9 @@
     "allSelected": "全部",
     "itemsSelected": "已选 {{count}} 项",
     "selectModels": "选择模型",
-    "selectTokenTypes": "选择 Token 类型"
+    "selectTokenTypes": "选择 Token 类型",
+    "filterByUser": "按用户筛选",
+    "allUsers": "全部用户"
   },
   "agentStats": {
     "title": "智能体统计",

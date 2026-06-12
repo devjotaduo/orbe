@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# pylint: disable=too-many-return-statements
 #!/usr/bin/env python3
 """
 Hook Claude Code: verifica se novos arquivos de skill/agente/plugin

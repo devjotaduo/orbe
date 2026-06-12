@@ -1194,8 +1194,6 @@
     "viewMore": "Ver mais ({{count}})"
   },
   "tokenUsage": {
-    "filterByUser": "Filtrar por usuário",
-    "allUsers": "Todos os usuários",
     "title": "Uso de Tokens",
     "description": "View LLM token consumption over time, by date and model.",
     "totalTokens": "Total Tokens",
@@ -1209,7 +1207,9 @@
     "date": "Date",
     "refresh": "Atualizar",
     "loadFailed": "Falha ao load token usage",
-    "noData": "No token usage data in the selected period"
+    "noData": "No token usage data in the selected period",
+    "filterByUser": "Filtrar por usuário",
+    "allUsers": "Todos os usuários"
   },
   "agentStats": {
     "title": "Estatisticas dos Agentes",

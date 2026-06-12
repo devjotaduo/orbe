@@ -13,9 +13,17 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 
+const testT = vi.hoisted(() =>
+  vi.fn((key: string, fallback?: string) => fallback ?? key),
+);
+const testMessage = vi.hoisted(() => ({
+  error: vi.fn(),
+  success: vi.fn(),
+}));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: testT,
   }),
 }));
 
@@ -24,7 +32,7 @@ vi.mock("../../../contexts/ThemeContext", () => ({
 }));
 
 vi.mock("../../../hooks/useAppMessage", () => ({
-  useAppMessage: () => ({ message: { error: vi.fn(), success: vi.fn() } }),
+  useAppMessage: () => ({ message: testMessage }),
 }));
 
 vi.mock("@/components/PageHeader", () => ({
@@ -57,8 +65,7 @@ vi.mock("./hooks/useTokenTypeConfig", () => ({
 const getTokenUsageDetails = vi.fn();
 vi.mock("../../../api", () => ({
   default: {
-    getTokenUsageDetails: (...args: unknown[]) =>
-      getTokenUsageDetails(...args),
+    getTokenUsageDetails: (...args: unknown[]) => getTokenUsageDetails(...args),
   },
 }));
 
@@ -93,9 +100,7 @@ describe("TokenUsage page — per-user filter", () => {
     render(<TokenUsagePage />);
 
     await waitFor(() =>
-      expect(
-        screen.getByTestId("token-usage-user-filter"),
-      ).toBeInTheDocument(),
+      expect(screen.getByTestId("token-usage-user-filter")).toBeInTheDocument(),
     );
     expect(listUsers).toHaveBeenCalledTimes(1);
   });

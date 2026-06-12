@@ -88,7 +88,9 @@
   border: none;
   background: transparent;
   padding: 0;
-  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
 
   &:hover {
     background: @bg-active;
@@ -97,7 +99,9 @@
 }
 
 :global(.dark-mode) {
-  .panelHeader { border-color: @border-base-dark; }
+  .panelHeader {
+    border-color: @border-base-dark;
+  }
   .panelCloseBtn:hover {
     background: @bg-active-dark;
     color: @text-primary-dark;
@@ -160,7 +164,9 @@
   color: @text-muted;
   font-size: 11px;
   padding: 0;
-  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
   writing-mode: vertical-rl;
   white-space: nowrap;
 
@@ -206,6 +212,12 @@
 
 // ── Reduced motion ────────────────────────────────────────────────────────────
 @media (prefers-reduced-motion: reduce) {
-  .panel { transition: none; }
-  .dragHandle, .panelCloseBtn, .toggleBtn { transition: none; }
+  .panel {
+    transition: none;
+  }
+  .dragHandle,
+  .panelCloseBtn,
+  .toggleBtn {
+    transition: none;
+  }
 }

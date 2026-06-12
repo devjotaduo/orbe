@@ -960,8 +960,6 @@
     "hideValue": "Скрыть значение"
   },
   "tokenUsage": {
-    "filterByUser": "Фильтр по пользователю",
-    "allUsers": "Все пользователи",
     "title": "Использование токенов",
     "totalTokens": "Всего токенов",
     "totalCalls": "Всего вызовов",
@@ -979,7 +977,9 @@
     "allSelected": "Все",
     "itemsSelected": "Выбрано: {{count}}",
     "selectModels": "Выберите модели",
-    "selectTokenTypes": "Выберите типы токенов"
+    "selectTokenTypes": "Выберите типы токенов",
+    "filterByUser": "Фильтр по пользователю",
+    "allUsers": "Все пользователи"
   },
   "agentStats": {
     "title": "Статистика агента",

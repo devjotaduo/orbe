@@ -960,8 +960,6 @@
     "hideValue": "値を非表示"
   },
   "tokenUsage": {
-    "filterByUser": "ユーザーで絞り込み",
-    "allUsers": "すべてのユーザー",
     "title": "Token 使用量",
     "totalTokens": "合計 Token",
     "totalCalls": "総呼び出し回数",
@@ -979,7 +977,9 @@
     "allSelected": "すべて",
     "itemsSelected": "{{count}} 件選択済み",
     "selectModels": "モデルを選択",
-    "selectTokenTypes": "トークンタイプを選択"
+    "selectTokenTypes": "トークンタイプを選択",
+    "filterByUser": "ユーザーで絞り込み",
+    "allUsers": "すべてのユーザー"
   },
   "agentStats": {
     "title": "エージェント統計",

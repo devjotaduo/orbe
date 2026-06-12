@@ -216,47 +216,97 @@ _EXAMPLE = {
     "company_profile": {
         "segment": "alimentacao",
         "size": "pequeno (8 funcionários, R$ 60k/mês)",
-        "business_model": "restaurante com salão e delivery (iFood + WhatsApp)",
+        "business_model": "restaurante com salão e delivery (iFood + WhatsApp)",  # noqa: E501
         "pains": ["pedidos misturados na cozinha", "sem presença digital"],
     },
     "process_map": [
-        {"name": "atendimento", "description": "dúvidas e reservas via WhatsApp"},
-        {"name": "pedidos", "description": "iFood + WhatsApp + salão, sem unificação"},
-        {"name": "marketing", "description": "sem rotina de posts ou campanhas"},
+        {
+            "name": "atendimento",
+            "description": "dúvidas e reservas via WhatsApp",
+        },  # noqa: E501
+        {
+            "name": "pedidos",
+            "description": "iFood + WhatsApp + salão, sem unificação",
+        },  # noqa: E501
+        {
+            "name": "marketing",
+            "description": "sem rotina de posts ou campanhas",
+        },  # noqa: E501
     ],
     "detected_integrations": [
-        {"kind": "marketplace", "name": "iFood", "data_location": "painel do parceiro", "confidence": 0.9},
-        {"kind": "whatsapp", "name": "WhatsApp Business", "data_location": "celular do dono", "confidence": 0.9},
+        {
+            "kind": "marketplace",
+            "name": "iFood",
+            "data_location": "painel do parceiro",
+            "confidence": 0.9,
+        },  # noqa: E501
+        {
+            "kind": "whatsapp",
+            "name": "WhatsApp Business",
+            "data_location": "celular do dono",
+            "confidence": 0.9,
+        },  # noqa: E501
     ],
     "proposed_team": [
         {
-            "name": "Atendente WhatsApp", "role": "SAC 24/7",
-            "objective": "responder cardápio, horários e reservas sem intervenção humana",
-            "tasks": ["responder FAQ", "registrar reservas", "encaminhar pedidos"],
+            "name": "Atendente WhatsApp",
+            "role": "SAC 24/7",
+            "objective": (
+                "responder cardápio, horários e reservas"
+                " sem intervenção humana"
+            ),
+            "tasks": [
+                "responder FAQ",
+                "registrar reservas",
+                "encaminhar pedidos",
+            ],  # noqa: E501
             "tools_integrations": [
-                "clawhub:evolution-api", "cardápio digital",
+                "clawhub:evolution-api",
+                "cardápio digital",
             ],
             "talks_to": ["Coordenador de Pedidos"],
         },
         {
-            "name": "Gerente de Redes Sociais", "role": "marketing de conteúdo",
-            "objective": "criar presença digital que traga clientes novos",
-            "tasks": ["posts do prato do dia", "stories", "responder comentários"],
+            "name": "Gerente de Redes Sociais",
+            "role": "marketing de conteúdo",  # noqa: E501
+            "objective": "criar presença digital que traga clientes novos",  # noqa: E501
+            "tasks": [
+                "posts do prato do dia",
+                "stories",
+                "responder comentários",
+            ],  # noqa: E501
             "tools_integrations": ["instagram"],
             "talks_to": ["Atendente WhatsApp"],
         },
         {
-            "name": "Coordenador de Pedidos", "role": "operações",
-            "objective": "unificar pedidos do iFood, WhatsApp e salão num fluxo só",
-            "tasks": ["consolidar pedidos", "notificar cozinha", "avisar atraso"],
+            "name": "Coordenador de Pedidos",
+            "role": "operações",
+            "objective": "unificar pedidos do iFood, WhatsApp e salão num fluxo só",  # noqa: E501
+            "tasks": [
+                "consolidar pedidos",
+                "notificar cozinha",
+                "avisar atraso",
+            ],  # noqa: E501
             "tools_integrations": ["ifood", "whatsapp", "planilha"],
             "talks_to": ["Atendente WhatsApp"],
         },
     ],
     "roadmap": [
-        {"order": 1, "title": "Atendente WhatsApp", "rationale": "dor principal, implantação simples"},
-        {"order": 2, "title": "Coordenador de Pedidos", "rationale": "resolve o caos da cozinha"},
-        {"order": 3, "title": "Gerente de Redes Sociais", "rationale": "cresce a receita após estabilizar a operação"},
+        {
+            "order": 1,
+            "title": "Atendente WhatsApp",
+            "rationale": "dor principal, implantação simples",
+        },  # noqa: E501
+        {
+            "order": 2,
+            "title": "Coordenador de Pedidos",
+            "rationale": "resolve o caos da cozinha",
+        },  # noqa: E501
+        {
+            "order": 3,
+            "title": "Gerente de Redes Sociais",
+            "rationale": "cresce a receita após estabilizar a operação",
+        },  # noqa: E501
     ],
     "open_questions": ["o iFood do parceiro permite integração via API?"],
     "recommended_connectors": [

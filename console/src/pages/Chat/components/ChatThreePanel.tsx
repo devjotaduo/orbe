@@ -5,7 +5,11 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { FileTextOutlined, AppstoreOutlined, CloseOutlined } from "@ant-design/icons";
+import {
+  FileTextOutlined,
+  AppstoreOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import styles from "./ChatThreePanel.module.less";
 
 interface ChatThreePanelProps {
@@ -19,17 +23,27 @@ const STORAGE_KEY_WORKSPACE_W = "qwenpaw-panel-workspace-w";
 
 function loadWidth(key: string, fallback: number): number {
   try {
-    return parseInt(localStorage.getItem(key) || String(fallback), 10) || fallback;
+    return (
+      parseInt(localStorage.getItem(key) || String(fallback), 10) || fallback
+    );
   } catch {
     return fallback;
   }
 }
 
-export function ChatThreePanel({ chat, preview, workspace }: ChatThreePanelProps) {
+export function ChatThreePanel({
+  chat,
+  preview,
+  workspace,
+}: ChatThreePanelProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
-  const [previewW, setPreviewW] = useState(() => loadWidth(STORAGE_KEY_PREVIEW_W, 380));
-  const [workspaceW, setWorkspaceW] = useState(() => loadWidth(STORAGE_KEY_WORKSPACE_W, 320));
+  const [previewW, setPreviewW] = useState(() =>
+    loadWidth(STORAGE_KEY_PREVIEW_W, 380),
+  );
+  const [workspaceW, setWorkspaceW] = useState(() =>
+    loadWidth(STORAGE_KEY_WORKSPACE_W, 320),
+  );
 
   // Drag state
   const draggingPanel = useRef<"preview" | "workspace" | null>(null);
@@ -38,46 +52,55 @@ export function ChatThreePanel({ chat, preview, workspace }: ChatThreePanelProps
   const previewWRef = useRef(previewW);
   const workspaceWRef = useRef(workspaceW);
 
-  useEffect(() => { previewWRef.current = previewW; }, [previewW]);
-  useEffect(() => { workspaceWRef.current = workspaceW; }, [workspaceW]);
+  useEffect(() => {
+    previewWRef.current = previewW;
+  }, [previewW]);
+  useEffect(() => {
+    workspaceWRef.current = workspaceW;
+  }, [workspaceW]);
 
   const handleDragStart = useCallback(
-    (panel: "preview" | "workspace") =>
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        draggingPanel.current = panel;
-        dragStartX.current = e.clientX;
-        dragStartW.current =
-          panel === "preview" ? previewWRef.current : workspaceWRef.current;
-        document.body.style.userSelect = "none";
-        document.body.style.cursor = "col-resize";
+    (panel: "preview" | "workspace") => (e: React.MouseEvent) => {
+      e.preventDefault();
+      draggingPanel.current = panel;
+      dragStartX.current = e.clientX;
+      dragStartW.current =
+        panel === "preview" ? previewWRef.current : workspaceWRef.current;
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
 
-        const onMove = (me: MouseEvent) => {
-          if (!draggingPanel.current) return;
-          // dragging left edge → increasing width means moving handle left
-          const delta = dragStartX.current - me.clientX;
-          const next = Math.min(Math.max(dragStartW.current + delta, 220), 620);
-          if (panel === "preview") setPreviewW(next);
-          else setWorkspaceW(next);
-        };
+      const onMove = (me: MouseEvent) => {
+        if (!draggingPanel.current) return;
+        // dragging left edge → increasing width means moving handle left
+        const delta = dragStartX.current - me.clientX;
+        const next = Math.min(Math.max(dragStartW.current + delta, 220), 620);
+        if (panel === "preview") setPreviewW(next);
+        else setWorkspaceW(next);
+      };
 
-        const onUp = () => {
-          draggingPanel.current = null;
-          document.body.style.userSelect = "";
-          document.body.style.cursor = "";
-          try {
-            if (panel === "preview")
-              localStorage.setItem(STORAGE_KEY_PREVIEW_W, String(previewWRef.current));
-            else
-              localStorage.setItem(STORAGE_KEY_WORKSPACE_W, String(workspaceWRef.current));
-          } catch {}
-          document.removeEventListener("mousemove", onMove);
-          document.removeEventListener("mouseup", onUp);
-        };
+      const onUp = () => {
+        draggingPanel.current = null;
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+        try {
+          if (panel === "preview")
+            localStorage.setItem(
+              STORAGE_KEY_PREVIEW_W,
+              String(previewWRef.current),
+            );
+          else
+            localStorage.setItem(
+              STORAGE_KEY_WORKSPACE_W,
+              String(workspaceWRef.current),
+            );
+        } catch {}
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      };
 
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-      },
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    },
     [],
   );
 
@@ -95,7 +118,9 @@ export function ChatThreePanel({ chat, preview, workspace }: ChatThreePanelProps
           <div className={styles.panelToggleBar}>
             {hasPreview && (
               <button
-                className={`${styles.toggleBtn} ${previewOpen ? styles.toggleBtnActive : ""}`}
+                className={`${styles.toggleBtn} ${
+                  previewOpen ? styles.toggleBtnActive : ""
+                }`}
                 onClick={() => setPreviewOpen((v) => !v)}
                 title="Preview"
               >
@@ -104,7 +129,9 @@ export function ChatThreePanel({ chat, preview, workspace }: ChatThreePanelProps
             )}
             {hasWorkspace && (
               <button
-                className={`${styles.toggleBtn} ${workspaceOpen ? styles.toggleBtnActive : ""}`}
+                className={`${styles.toggleBtn} ${
+                  workspaceOpen ? styles.toggleBtnActive : ""
+                }`}
                 onClick={() => setWorkspaceOpen((v) => !v)}
                 title="Workspace"
               >

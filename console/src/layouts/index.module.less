@@ -32,7 +32,9 @@
   padding: 0 !important;
   border-radius: 6px !important;
   color: @text-secondary !important;
-  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring !important;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring !important;
 
   &:hover:not(:disabled) {
     background: @bg-hover !important;
@@ -172,8 +174,9 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 
-  &::-webkit-scrollbar { display: none; }
-
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   // SiderToolbar — botão Nova Conversa, AionUi scale animation
   .siderToolbar {
@@ -196,7 +199,9 @@
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: transform @transition-fast @ease-spring, background @transition-fast @ease-spring;
+    transition:
+      transform @transition-fast @ease-spring,
+      background @transition-fast @ease-spring;
 
     &:hover {
       background: @brand-hover;
@@ -229,7 +234,9 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
 
-    &::-webkit-scrollbar { display: none; }
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .recentSessions {
@@ -266,7 +273,9 @@
     font-size: @nav-font-size;
     cursor: pointer;
     text-align: left;
-    transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
+    transition:
+      background @transition-fast @ease-spring,
+      color @transition-fast @ease-spring;
 
     &:hover {
       background: @bg-hover;
@@ -348,10 +357,14 @@
       color: @text-muted !important;
       opacity: 0.7 !important;
       font-size: 11px !important;
-      transition: transform 0.2s, opacity 0.15s !important;
+      transition:
+        transform 0.2s,
+        opacity 0.15s !important;
     }
 
-    .qwenpaw-menu-submenu-open > .qwenpaw-menu-submenu-title .qwenpaw-menu-submenu-arrow {
+    .qwenpaw-menu-submenu-open
+      > .qwenpaw-menu-submenu-title
+      .qwenpaw-menu-submenu-arrow {
       transform: rotate(180deg) !important;
       opacity: 1 !important;
     }
@@ -434,8 +447,12 @@
 }
 
 @keyframes backdropIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 // ─── Sidebar dark ─────────────────────────────────────────────────────────────
@@ -554,7 +571,9 @@
 .collapseToggle {
   color: @text-muted;
   border-radius: @sidebar-radius;
-  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
 
   &:hover {
     background: @bg-hover !important;
@@ -579,7 +598,9 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .collapsedNavItem {
@@ -593,7 +614,9 @@
   background: transparent;
   cursor: pointer;
   color: @text-muted;
-  transition: background @transition-fast @ease-spring, color @transition-fast @ease-spring;
+  transition:
+    background @transition-fast @ease-spring,
+    color @transition-fast @ease-spring;
 
   &:hover {
     background: @bg-hover;
@@ -904,7 +927,10 @@
     background: @bg-hover-dark !important;
   }
 
-  .anticon, svg { color: inherit !important; }
+  .anticon,
+  svg {
+    color: inherit !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

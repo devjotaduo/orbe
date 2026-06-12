@@ -125,8 +125,9 @@ describe("nexora-admin plugin", () => {
     const [, item] = menuAdd.mock.calls[0] as unknown as [string, MenuItemStub];
     expect(item.visible?.()).toBe(true);
 
-    (mod as AnyRec & { state: { permissions: Set<string> } }).state.permissions =
-      new Set();
+    (
+      mod as AnyRec & { state: { permissions: Set<string> } }
+    ).state.permissions = new Set();
     expect(item.visible?.()).toBe(false);
   });
 

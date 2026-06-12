@@ -114,4 +114,3 @@ export async function loadAllPlugins(): Promise<{
   );
   return { loaded: frontendPlugins.length - failed.length, failed };
 }
-

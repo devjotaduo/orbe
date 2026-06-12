@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 """Block Codex edits to secret-bearing file paths."""
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -43,8 +43,14 @@ def main() -> int:
 
     normalized = raw_path.replace("\\", "/").lower()
     name = Path(raw_path).name.lower()
-    if name in SECRET_NAMES or name.startswith(".env.") or any(part in normalized for part in SECRET_PARTS):
-        sys.stderr.write(f"[secret-path-guard] BLOCKED edit to sensitive path: {raw_path}\n")
+    if (
+        name in SECRET_NAMES
+        or name.startswith(".env.")
+        or any(part in normalized for part in SECRET_PARTS)
+    ):
+        sys.stderr.write(
+            f"[secret-path-guard] BLOCKED edit to sensitive path: {raw_path}\n",
+        )
         return 2
     return 0
 

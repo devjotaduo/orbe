@@ -1379,7 +1379,11 @@ function Ft() {
           (r, h) => e.createElement(
             G,
             { key: h, size: "small", style: { marginBottom: 8 } },
-            e.createElement("strong", null, q(r.name)),
+            e.createElement(
+              "strong",
+              null,
+              q(r.name)
+            ),
             r.description ? e.createElement(
               "div",
               { style: { color: "#666", fontSize: 12 } },
@@ -1481,7 +1485,11 @@ function Ft() {
             alignItems: "center"
           }
         },
-        e.createElement("h2", { style: { margin: 0 } }, "A2A Agents remotos"),
+        e.createElement(
+          "h2",
+          { style: { margin: 0 } },
+          "A2A Agents remotos"
+        ),
         e.createElement(
           W,
           null,

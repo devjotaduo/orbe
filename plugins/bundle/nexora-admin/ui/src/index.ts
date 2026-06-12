@@ -278,7 +278,9 @@ function detailSummary(locale: string, event: AuditEvent): string {
   if (keys.length === 0) return "-";
   return keys
     .slice(0, 3)
-    .map((k) => `${k}: ${typeof d[k] === "object" ? JSON.stringify(d[k]) : d[k]}`)
+    .map(
+      (k) => `${k}: ${typeof d[k] === "object" ? JSON.stringify(d[k]) : d[k]}`,
+    )
     .join(" | ");
 }
 
@@ -355,7 +357,13 @@ function buildAuditLogsPage(): ((props: AnyRec) => unknown) | null {
     return `?${q.toString()}`;
   }
 
-  function DetailContent({ event, locale }: { event: AuditEvent; locale: string }) {
+  function DetailContent({
+    event,
+    locale,
+  }: {
+    event: AuditEvent;
+    locale: string;
+  }) {
     const base: Array<{ label: string; value: string; copyable?: boolean }> = [
       { label: msg(locale, "eventId"), value: event.id, copyable: true },
       { label: msg(locale, "time"), value: formatTime(event.timestamp) },
@@ -537,11 +545,7 @@ function buildAuditLogsPage(): ((props: AnyRec) => unknown) | null {
           h(
             Space,
             { direction: "vertical", size: 0 },
-            h(
-              Typography.Text,
-              { ellipsis: true },
-              record.resource_id || "-",
-            ),
+            h(Typography.Text, { ellipsis: true }, record.resource_id || "-"),
             h(
               Typography.Text,
               { type: "secondary", style: { fontSize: 12 } },
@@ -618,7 +622,9 @@ function buildAuditLogsPage(): ((props: AnyRec) => unknown) | null {
             Typography.Text,
             { type: "secondary" },
             msg(locale, "subtitle"),
-            events.length > 0 ? ` ${events.length} ${msg(locale, "showing")}.` : "",
+            events.length > 0
+              ? ` ${events.length} ${msg(locale, "showing")}.`
+              : "",
           ),
         ),
         h(
@@ -753,8 +759,7 @@ function buildAuditLogsPage(): ((props: AnyRec) => unknown) | null {
           pagination: {
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total: number) =>
-              `${total} ${msg(locale, "total")}`,
+            showTotal: (total: number) => `${total} ${msg(locale, "total")}`,
           },
           scroll: { x: 900 },
         }),
@@ -822,9 +827,12 @@ async function install(): Promise<void> {
     label: () => msg(currentLocale(), "menuLabel"),
     icon:
       React && AuditOutlined
-        ? React.createElement(AuditOutlined as never, {
-            style: { fontSize: 16 },
-          } as never)
+        ? React.createElement(
+            AuditOutlined as never,
+            {
+              style: { fontSize: 16 },
+            } as never,
+          )
         : undefined,
     route: "nexora-admin.audit",
     order: 62, // after Security (60), before Token Usage (70)

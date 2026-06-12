@@ -30,7 +30,7 @@ def discovery_start(out_dir: str | None) -> None:
     target = Path(out_dir) if out_dir else Path("discovery") / session_id
     click.echo(f"Sessao de discovery: {session_id} -> {target}")
     session = asyncio.run(
-        run_discovery_session(session_id=session_id, out_dir=target)
+        run_discovery_session(session_id=session_id, out_dir=target),
     )
     if session.emitted:
         click.echo(f"\nBlueprint em {target / 'blueprint.md'}")

@@ -1,96 +1,85 @@
-import { Dropdown } from "@agentscope-ai/design";
 import { useTranslation } from "react-i18next";
-import { Button, type MenuProps } from "antd";
-import { agentApi } from "../../api/modules/agent";
 import { languageApi } from "../../api/modules/language";
-import styles from "./index.module.less";
 import {
-  SparkChinese02Line,
-  SparkEnglish02Line,
-  SparkJapanLine,
-  SparkRusLine,
-  SparkPtLine,
-} from "@agentscope-ai/icons";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Globe } from "lucide-react";
 
 interface LanguageConfig {
   key: string;
   label: string;
-  icon: React.ReactElement;
+  /** Two-letter ISO emoji flag or short text shown in the trigger button. */
+  flag: string;
 }
 
 const LANGUAGE_LIST: LanguageConfig[] = [
-  { key: "en", label: "English", icon: <SparkEnglish02Line /> },
-  { key: "zh", label: "简体中文", icon: <SparkChinese02Line /> },
-  { key: "ja", label: "日本語", icon: <SparkJapanLine /> },
-  { key: "ru", label: "Русский", icon: <SparkRusLine /> },
-  { key: "pt-BR", label: "Português (Brasil)", icon: <SparkPtLine /> },
-  { key: "id", label: "Bahasa Indonesia", icon: <SparkEnglish02Line /> },
+  { key: "en", label: "English", flag: "🇬🇧" },
+  { key: "zh", label: "简体中文", flag: "🇨🇳" },
+  { key: "ja", label: "日本語", flag: "🇯🇵" },
+  { key: "ru", label: "Русский", flag: "🇷🇺" },
+  { key: "pt-BR", label: "Português (Brasil)", flag: "🇧🇷" },
+  { key: "id", label: "Bahasa Indonesia", flag: "🇮🇩" },
 ];
 
 const KNOWN_LANG_KEYS = new Set(LANGUAGE_LIST.map((lang) => lang.key));
 
-const UI_LANGUAGE_ALIAS: Record<string, string> = {
-  pt: "pt-BR",
-  "pt-br": "pt-BR",
-};
-
-const WORKSPACE_LANGUAGE_BY_UI_LANGUAGE: Record<string, string> = {
-  en: "en",
-  zh: "zh",
-  ja: "en",
-  ru: "ru",
-  pt: "pt",
-  "pt-BR": "pt",
-  "pt-br": "pt",
-  id: "id",
-};
-
-function toWorkspaceLanguage(uiLanguage: string): string {
-  return (
-    WORKSPACE_LANGUAGE_BY_UI_LANGUAGE[uiLanguage] ??
-    WORKSPACE_LANGUAGE_BY_UI_LANGUAGE[uiLanguage.split("-")[0]] ??
-    "en"
-  );
-}
-
 export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
-  const currentLanguage = i18n.language || i18n.resolvedLanguage || "en";
-  const normalizedLanguage = UI_LANGUAGE_ALIAS[currentLanguage] ?? currentLanguage;
-  const currentLangKey = KNOWN_LANG_KEYS.has(normalizedLanguage)
-    ? normalizedLanguage
-    : normalizedLanguage.split("-")[0];
+  const currentLanguage = i18n.resolvedLanguage || i18n.language;
+  const currentLangKey = KNOWN_LANG_KEYS.has(currentLanguage)
+    ? currentLanguage
+    : currentLanguage.split("-")[0];
 
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem("language", lang);
-    Promise.all([
-      languageApi.updateLanguage(lang),
-      agentApi.updateAgentLanguage(toWorkspaceLanguage(lang)),
-    ])
+    languageApi
+      .updateLanguage(lang)
       .catch((err) =>
         console.error("Failed to save language preference:", err),
       );
   };
 
-  const items: MenuProps["items"] = LANGUAGE_LIST.map(({ key, label }) => ({
-    key,
-    label,
-    onClick: () => changeLanguage(key),
-  }));
-
-  const iconMap: Record<string, React.ReactElement> = Object.fromEntries(
-    LANGUAGE_LIST.map(({ key, icon }) => [key, icon]),
+  const flagMap: Record<string, string> = Object.fromEntries(
+    LANGUAGE_LIST.map(({ key, flag }) => [key, flag]),
   );
 
+  const currentFlag = flagMap[currentLangKey];
+
   return (
-    <Dropdown
-      menu={{ items, selectedKeys: [currentLangKey] }}
-      placement="bottomRight"
-      rootClassName={styles.languageDropdown}
-    >
-      <Button icon={iconMap[currentLangKey]} type="text" />
-    </Dropdown>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          {currentFlag ? (
+            <span className="text-base leading-none" aria-hidden="true">
+              {currentFlag}
+            </span>
+          ) : (
+            <Globe size={16} aria-hidden="true" />
+          )}
+          <span className="sr-only">Change language</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {LANGUAGE_LIST.map(({ key, label, flag }) => (
+          <DropdownMenuItem
+            key={key}
+            onClick={() => changeLanguage(key)}
+            className={cn(currentLangKey === key && "bg-accent")}
+          >
+            <span className="text-base leading-none mr-1" aria-hidden="true">
+              {flag}
+            </span>
+            <span>{label}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

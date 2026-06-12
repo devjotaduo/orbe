@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # --- Estado da entrevista -------------------------------------------------
 
+
 class CompanyProfile(BaseModel):
     segment: Optional[str] = None
     cnae: Optional[str] = None
@@ -22,6 +23,7 @@ class CompanyProfile(BaseModel):
 
 class OpenArea(BaseModel):
     """Uma ramificação ainda por aprofundar na entrevista."""
+
     id: str
     topic: str
     confidence: float = Field(ge=0.0, le=1.0, default=0.0)
@@ -30,19 +32,20 @@ class OpenArea(BaseModel):
 
 
 class Integration(BaseModel):
-    kind: str            # crm | erp | planilha | whatsapp | outro
+    kind: str  # crm | erp | planilha | whatsapp | outro
     name: str
     data_location: str = ""
     confidence: float = Field(ge=0.0, le=1.0, default=0.5)
 
 
 class Turn(BaseModel):
-    role: str            # "user" | "assistant"
+    role: str  # "user" | "assistant"
     text: str
 
 
 class OnboardingInfo(BaseModel):
     """Contato de WhatsApp para o onboarding (canal oficial + grupo)."""
+
     whatsapp_number: str
     responsible_name: str
     is_owner: bool = True
@@ -71,7 +74,8 @@ class DiscoveryState(BaseModel):
         if not self.open_areas:
             return None
         return sorted(
-            self.open_areas, key=lambda a: (a.confidence, -a.priority)
+            self.open_areas,
+            key=lambda a: (a.confidence, -a.priority),
         )[0]
 
     def ready_to_emit(self, threshold: float = 0.7) -> bool:
@@ -87,6 +91,7 @@ class DiscoveryState(BaseModel):
 
 class ReflectUpdate(BaseModel):
     """Saída estruturada do passo de raciocínio `reflect`."""
+
     learned: str
     close_area_ids: list[str] = Field(default_factory=list)
     new_areas: list[OpenArea] = Field(default_factory=list)
@@ -96,6 +101,7 @@ class ReflectUpdate(BaseModel):
 
 
 # --- Blueprint do time ----------------------------------------------------
+
 
 class ProcessArea(BaseModel):
     name: str
@@ -123,6 +129,7 @@ class ConnectorRef(BaseModel):
     Campos string lenientes de propósito: o JSON vem do LLM; a validação
     estrita de vocabulário vive em ConnectorInfo (taxonomy.py).
     """
+
     integration_kind: str
     name: str
     origin: str
@@ -144,20 +151,24 @@ class TeamBlueprint(BaseModel):
 
 # --- Requisitos por agente (fase pós-blueprint) -----------------------------
 
+
 class InfoRequest(BaseModel):
     """Uma informação concreta que falta para um agente operar."""
-    item: str            # ex.: "catálogo de produtos com preços"
-    why: str             # por que o agente precisa (linguagem simples)
-    group_message: str   # mensagem pronta, leiga, para pedir no grupo
+
+    item: str  # ex.: "catálogo de produtos com preços"
+    why: str  # por que o agente precisa (linguagem simples)
+    group_message: str  # mensagem pronta, leiga, para pedir no grupo
 
 
 class AgentRequirements(BaseModel):
     """Informações pendentes de um agente do time proposto."""
+
     agent_name: str
     requests: list[InfoRequest] = Field(default_factory=list)
 
 
 class RequirementsReport(BaseModel):
     """Relatório consolidado de informações pendentes por agente."""
+
     items: list[AgentRequirements] = Field(default_factory=list)
-    summary_for_owner: str = ""   # parágrafo leigo de abertura do grupo
+    summary_for_owner: str = ""  # parágrafo leigo de abertura do grupo

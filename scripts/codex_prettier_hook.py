@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 """Run local Prettier after Codex edits, constrained to this repository."""
 
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -56,13 +56,16 @@ def main() -> int:
             stderr=subprocess.PIPE,
             text=True,
             timeout=30,
+            check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         sys.stderr.write(f"[prettier-hook] skipped: {exc}\n")
         return 0
 
     if completed.returncode != 0:
-        sys.stderr.write(f"[prettier-hook] prettier failed: {completed.stderr.strip()}\n")
+        sys.stderr.write(
+            f"[prettier-hook] prettier failed: {completed.stderr.strip()}\n",
+        )
     return 0
 
 

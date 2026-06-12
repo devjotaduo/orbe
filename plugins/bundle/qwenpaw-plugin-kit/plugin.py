@@ -20,7 +20,9 @@ from fastapi import APIRouter
 
 from qwenpaw.plugins.api import PluginApi
 
-from .tools import plugin_kit_describe_elements
+from .tools import (
+    plugin_kit_describe_elements,
+)  # pylint: disable=relative-beyond-top-level
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,10 @@ def _plugin_elements() -> list[dict[str, str]]:
         {
             "id": "manifest",
             "name": "plugin.json",
-            "description": "Manifesto com id, versao, entradas, dependencias e metadados.",
+            "description": (
+                "Manifesto com id, versao, entradas, "
+                "dependencias e metadados."
+            ),
         },
         {
             "id": "backend",
@@ -58,12 +63,16 @@ def _plugin_elements() -> list[dict[str, str]]:
         {
             "id": "frontend",
             "name": "Frontend bundle",
-            "description": "JavaScript carregado pelo Console via window.QwenPaw.",
+            "description": (
+                "JavaScript carregado pelo Console via window.QwenPaw."
+            ),
         },
         {
             "id": "i18n",
             "name": "pt-BR",
-            "description": "Campos localizados em portugues no manifesto e na UI.",
+            "description": (
+                "Campos localizados em portugues no manifesto e na UI."
+            ),
         },
     ]
 
@@ -120,7 +129,8 @@ class QwenPawPluginKit:
             tool_name="plugin_kit_describe_elements",
             tool_func=plugin_kit_describe_elements,
             description=(
-                "Describe the basic QwenPaw plugin elements available to developers."
+                "Describe the basic QwenPaw plugin elements "
+                "available to developers."
             ),
             icon="🧩",
         )

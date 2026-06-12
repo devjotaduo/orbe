@@ -4,10 +4,22 @@ import {
   type IAgentScopeRuntimeWebUIRef,
 } from "@agentscope-ai/chat";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Modal, Result, Tooltip } from "antd";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAppMessage } from "../../hooks/useAppMessage";
-import { ExclamationCircleOutlined, SettingOutlined } from "@ant-design/icons";
-import { SparkCopyLine, SparkAttachmentLine } from "@agentscope-ai/icons";
+import { AlertTriangle, Settings, Paperclip, Copy } from "lucide-react";
 import { usePlugins } from "../../plugins/PluginContext";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -26,12 +38,9 @@ import { useAgentStore } from "../../stores/agentStore";
 import { useCodingMode } from "../../stores/codingModeStore";
 import { useChatAnywhereInput } from "@agentscope-ai/chat";
 import styles from "./index.module.less";
-import { IconButton } from "@agentscope-ai/design";
 import ChatActionGroup from "./components/ChatActionGroup";
 import ChatHeaderTitle from "./components/ChatHeaderTitle";
 import ChatSessionInitializer from "./components/ChatSessionInitializer";
-import { ChatThreePanel } from "./components/ChatThreePanel";
-import { ChatWelcomeView } from "./components/ChatWelcomeView";
 import { ApprovalCard } from "../../components/ApprovalCard/ApprovalCard";
 import { commandsApi } from "../../api/modules/commands";
 import { useApprovalContext } from "../../contexts/ApprovalContext";
@@ -690,17 +699,12 @@ function RuntimeLoadingBridge({
 
 const timestampStyle: React.CSSProperties = {
   fontSize: 12,
-  color: "var(--ant-color-text-quaternary)",
+  color: "var(--muted-foreground, rgba(0,0,0,0.45))",
   whiteSpace: "nowrap",
 };
 
 export default function ChatPage() {
   const { t, i18n } = useTranslation();
-  const [chatReady, setChatReady] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setChatReady(true), 400);
-    return () => clearTimeout(t);
-  }, []);
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark } = useTheme();
@@ -1435,7 +1439,6 @@ export default function ChatPage() {
       slot: string,
       spec: { id: string; icon?: any; render?: any; onClick?: any },
     ) => ({
-      id: spec.id,
       icon: spec.icon,
       render: spec.render
         ? (ctx: { data: unknown }) => (
@@ -1555,10 +1558,7 @@ export default function ChatPage() {
           : {}),
         ...(extPrompts !== undefined ? { prompts: extPrompts } : {}),
         // SDK uses `render` if present and ignores the other fields.
-        // Plugin render wins; otherwise use our AionUi-style welcome.
-        ...(wrappedWelcomeRender
-          ? { render: wrappedWelcomeRender }
-          : { render: (props: WelcomeRenderProps) => <ChatWelcomeView {...props} /> }),
+        ...(wrappedWelcomeRender ? { render: wrappedWelcomeRender } : {}),
       },
       sender: {
         ...(i18nConfig as any)?.sender,
@@ -1569,7 +1569,6 @@ export default function ChatPage() {
             <>
               {whisperEnabled ? (
                 <WhisperSpeechButton
-                  key="whisper-speech"
                   ref={whisperSpeechRef}
                   onTranscription={handleWhisperTranscription}
                 />
@@ -1593,12 +1592,18 @@ export default function ChatPage() {
                   })}`
                 : t(tooltipKey);
             return (
-              <Tooltip title={tooltipTitle}>
-                <IconButton
-                  disabled={props?.disabled}
-                  icon={<SparkAttachmentLine />}
-                  bordered={false}
-                />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    disabled={props?.disabled}
+                    className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+                    type="button"
+                  >
+                    <Paperclip size={16} />
+                    <span className="sr-only">{tooltipTitle}</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{tooltipTitle}</TooltipContent>
               </Tooltip>
             );
           },
@@ -1685,7 +1690,7 @@ export default function ChatPage() {
           {
             icon: (
               <span title={t("common.copy")}>
-                <SparkCopyLine />
+                <Copy size={14} />
               </span>
             ),
             onClick: ({ data }: { data: CopyableResponse }) => {
@@ -1721,7 +1726,7 @@ export default function ChatPage() {
             },
           },
           {
-            icon: <SparkCopyLine />,
+            icon: <Copy size={14} />,
             onClick: ({ data }: { data: { input?: any[] } }) => {
               const text = (data?.input || [])
                 .map(extractUserMessageText)
@@ -1759,7 +1764,7 @@ export default function ChatPage() {
     handleWhisperTranscription,
   ]);
 
-  const chatContent = (
+  return (
     <div
       style={{
         height: "100%",
@@ -1768,28 +1773,7 @@ export default function ChatPage() {
         flexDirection: "column",
       }}
     >
-      <div className={styles.chatMessagesArea} style={{ position: "relative" }}>
-        {!chatReady && (
-          <div className={styles.chatSkeleton}>
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className={`${styles.skeletonMsg} ${i % 2 === 0 ? styles.skeletonMsgRight : ""}`}
-              >
-                <div className={styles.skeletonAvatar} />
-                <div className={styles.skeletonLines}>
-                  <div
-                    className={styles.skeletonLine}
-                    style={{ width: i === 1 ? "70%" : i === 2 ? "50%" : "80%" }}
-                  />
-                  {i !== 2 && (
-                    <div className={styles.skeletonLine} style={{ width: "40%" }} />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className={styles.chatMessagesArea}>
         <AgentScopeRuntimeWebUI
           ref={chatRef}
           key={refreshKey}
@@ -1807,8 +1791,8 @@ export default function ChatPage() {
             {rateLimitAlternatives.slice(0, 3).map((alt) => (
               <Button
                 key={`${alt.provider_id}/${alt.model_id}`}
-                size="small"
-                type="default"
+                size="sm"
+                variant="outline"
                 onClick={async () => {
                   try {
                     await providerApi.setActiveLlm({
@@ -1831,8 +1815,8 @@ export default function ChatPage() {
               </Button>
             ))}
             <Button
-              size="small"
-              type="link"
+              size="sm"
+              variant="link"
               onClick={() => setRateLimitAlternatives([])}
             >
               {t("common.close")}
@@ -1901,53 +1885,38 @@ export default function ChatPage() {
         </div>
       ))}
 
-      <Modal
-        open={showModelPrompt}
-        closable={false}
-        footer={null}
-        width={480}
-        styles={{
-          content: isDark
-            ? { background: "#1f1f1f", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }
-            : undefined,
-        }}
-      >
-        <Result
-          icon={<ExclamationCircleOutlined style={{ color: "#faad14" }} />}
-          title={
-            <span
-              style={{ color: isDark ? "rgba(255,255,255,0.88)" : undefined }}
-            >
+      <Dialog open={showModelPrompt} onOpenChange={() => {}}>
+        <DialogContent
+          className="max-w-[480px]"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <AlertTriangle size={40} className="text-yellow-500" />
+            </div>
+            <DialogTitle className="text-center">
               {t("modelConfig.promptTitle")}
-            </span>
-          }
-          subTitle={
-            <span
-              style={{ color: isDark ? "rgba(255,255,255,0.55)" : undefined }}
-            >
+            </DialogTitle>
+            <DialogDescription className="text-center">
               {t("modelConfig.promptMessage")}
-            </span>
-          }
-          extra={[
-            <Button key="skip" onClick={() => setShowModelPrompt(false)}>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="justify-center gap-3 sm:justify-center">
+            <Button variant="outline" onClick={() => setShowModelPrompt(false)}>
               {t("modelConfig.skipButton")}
-            </Button>,
+            </Button>
             <Button
-              key="configure"
-              type="primary"
-              icon={<SettingOutlined />}
               onClick={() => {
                 setShowModelPrompt(false);
                 navigate("/models");
               }}
             >
+              <Settings size={14} className="mr-2" />
               {t("modelConfig.configureButton")}
-            </Button>,
-          ]}
-        />
-      </Modal>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-
-  return <ChatThreePanel chat={chatContent} />;
 }

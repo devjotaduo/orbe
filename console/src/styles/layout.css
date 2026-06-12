@@ -1,41 +1,41 @@
 /* AionUi design tokens — light */
 :root {
-  --bg-base:   #ffffff;
-  --bg-1:      #f9fafb;
-  --bg-2:      #f2f3f5;
-  --bg-3:      #e5e6eb;
-  --bg-4:      #c9cdd4;
-  --bg-hover:  #f3f4f6;
+  --bg-base: #ffffff;
+  --bg-1: #f9fafb;
+  --bg-2: #f2f3f5;
+  --bg-3: #e5e6eb;
+  --bg-4: #c9cdd4;
+  --bg-hover: #f3f4f6;
   --bg-active: #e5e6eb;
-  --bg-input:  #ffffff;
-  --text-primary:   #000000;
+  --bg-input: #ffffff;
+  --text-primary: #000000;
   --text-secondary: #454d5f;
-  --text-muted:     #86909c;
-  --brand:          #7583b2;
+  --text-muted: #86909c;
+  --brand: #7583b2;
   --brand-selected: rgba(117, 131, 178, 0.12);
-  --brand-selected-strong: rgba(117, 131, 178, 0.20);
-  --border-base:    #e5e6eb;
+  --brand-selected-strong: rgba(117, 131, 178, 0.2);
+  --border-base: #e5e6eb;
   --primary-action: #ff7d00;
   --titlebar-height: 36px;
 }
 
 /* AionUi design tokens — dark */
 html.dark-mode {
-  --bg-base:   #0e0e0e;
-  --bg-1:      #1a1a1a;
-  --bg-2:      #262626;
-  --bg-3:      #333333;
-  --bg-4:      #404040;
-  --bg-hover:  #1f1f1f;
+  --bg-base: #0e0e0e;
+  --bg-1: #1a1a1a;
+  --bg-2: #262626;
+  --bg-3: #333333;
+  --bg-4: #404040;
+  --bg-hover: #1f1f1f;
   --bg-active: #2d2d2d;
-  --bg-input:  #2a2a2a;
-  --text-primary:   #ffffff;
+  --bg-input: #2a2a2a;
+  --text-primary: #ffffff;
   --text-secondary: #ced3da;
-  --text-muted:     #929292;
-  --brand:          #a1aacb;
+  --text-muted: #929292;
+  --brand: #a1aacb;
   --brand-selected: rgba(161, 170, 203, 0.12);
-  --brand-selected-strong: rgba(161, 170, 203, 0.20);
-  --border-base:    #333333;
+  --brand-selected-strong: rgba(161, 170, 203, 0.2);
+  --border-base: #333333;
   --primary-action: #ff7d00;
 }
 
@@ -47,7 +47,8 @@ body {
   padding: 0;
   background: var(--bg-1);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -56,8 +57,13 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--bg-3) transparent;
 }
-*::-webkit-scrollbar { width: 6px; height: 6px; }
-*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
 *::-webkit-scrollbar-thumb {
   background-color: var(--bg-3);
   border-radius: 6px;
@@ -102,7 +108,9 @@ html.dark-mode .page-content {
 /* Override antd's default rgba(0,0,0,0.88) text on all descendants in dark mode */
 html.dark-mode .page-content p,
 html.dark-mode .page-content span:not([class*="badge"]):not([class*="tag"]),
-html.dark-mode .page-content div:not([class*="ant-btn"]):not([class*="qwenpaw-btn"]),
+html.dark-mode
+  .page-content
+  div:not([class*="ant-btn"]):not([class*="qwenpaw-btn"]),
 html.dark-mode .page-content h1,
 html.dark-mode .page-content h2,
 html.dark-mode .page-content h3,

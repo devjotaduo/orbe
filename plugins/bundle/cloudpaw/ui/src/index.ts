@@ -1144,30 +1144,30 @@ function buildPlugin() {
 
   const A2A_TEXT_MAP: Record<string, string> = {
     "阿里云Agent Hub": "Alibaba Cloud Agent Hub",
-    "ecs文件备份基础版助手": "Assistente de backup de arquivos ECS",
-    "ECS文件备份基础版助手": "Assistente de backup de arquivos ECS",
+    ecs文件备份基础版助手: "Assistente de backup de arquivos ECS",
+    ECS文件备份基础版助手: "Assistente de backup de arquivos ECS",
     "dataworks-基础设施管家": "DataWorks - gerenciador de infraestrutura",
     "DataWorks 基础设施管家": "DataWorks - gerenciador de infraestrutura",
-    "dataworks元数据助手": "Assistente de metadados DataWorks",
-    "DataWorks元数据助手": "Assistente de metadados DataWorks",
-    "ecs智能诊断助手": "Assistente de diagnóstico ECS",
-    "ECS智能诊断助手": "Assistente de diagnóstico ECS",
-    "阿里云elasticsearch实例管理助手":
+    dataworks元数据助手: "Assistente de metadados DataWorks",
+    DataWorks元数据助手: "Assistente de metadados DataWorks",
+    ecs智能诊断助手: "Assistente de diagnóstico ECS",
+    ECS智能诊断助手: "Assistente de diagnóstico ECS",
+    阿里云elasticsearch实例管理助手:
       "Assistente de gerenciamento de instancias Elasticsearch",
     "emr-spark智能管理助手": "Assistente de gerenciamento EMR Spark",
-    "pts压测运维助手": "Assistente de operacao de testes de carga PTS",
-    "智能": "",
-    "基础设施": "infraestrutura",
-    "元数据": "metadados",
-    "助手": "assistente",
-    "管家": "gerenciador",
-    "文件备份": "backup de arquivos",
-    "诊断": "diagnostico",
-    "实例管理": "gerenciamento de instancias",
-    "压测运维": "operacao de testes de carga",
-    "未连接": "Nao conectado",
-    "已连接": "Conectado",
-    "错误": "Erro",
+    pts压测运维助手: "Assistente de operacao de testes de carga PTS",
+    智能: "",
+    基础设施: "infraestrutura",
+    元数据: "metadados",
+    助手: "assistente",
+    管家: "gerenciador",
+    文件备份: "backup de arquivos",
+    诊断: "diagnostico",
+    实例管理: "gerenciamento de instancias",
+    压测运维: "operacao de testes de carga",
+    未连接: "Nao conectado",
+    已连接: "Conectado",
+    错误: "Erro",
   };
 
   function translateA2AText(value: any): string {
@@ -1279,7 +1279,7 @@ function buildPlugin() {
           ? React.createElement(
               "div",
               { style: { marginBottom: 4, color: "#999" } },
-          translateA2AText(agent.description),
+              translateA2AText(agent.description),
             )
           : null,
         agent.skills?.length > 0
@@ -1671,9 +1671,9 @@ function buildPlugin() {
       }
       await fetchAgents();
       antdMsg.success(
-        `Importacao concluida: ${results.filter((r) => r.success).length} sucesso(s), ${
-          results.filter((r) => !r.success).length
-        } falha(s)`,
+        `Importacao concluida: ${
+          results.filter((r) => r.success).length
+        } sucesso(s), ${results.filter((r) => !r.success).length} falha(s)`,
       );
       setImporting(false);
       // Auto-close modal after 0.8s
@@ -1881,7 +1881,11 @@ function buildPlugin() {
                   React.createElement(
                     Card,
                     { key: i, size: "small", style: { marginBottom: 8 } },
-                    React.createElement("strong", null, translateA2AText(s.name)),
+                    React.createElement(
+                      "strong",
+                      null,
+                      translateA2AText(s.name),
+                    ),
                     s.description
                       ? React.createElement(
                           "div",
@@ -1975,7 +1979,8 @@ function buildPlugin() {
       {
         title: isCreateMode
           ? "Registrar A2A Agent remoto"
-          : translateA2AText(activeAgent?.name || activeAgent?.alias) || "Detalhes do Agent",
+          : translateA2AText(activeAgent?.name || activeAgent?.alias) ||
+            "Detalhes do Agent",
         open: drawerOpen,
         onClose: handleClose,
         width: 480,
@@ -2007,7 +2012,11 @@ function buildPlugin() {
             alignItems: "center",
           },
         },
-        React.createElement("h2", { style: { margin: 0 } }, "A2A Agents remotos"),
+        React.createElement(
+          "h2",
+          { style: { margin: 0 } },
+          "A2A Agents remotos",
+        ),
         React.createElement(
           Space,
           null,
@@ -2092,7 +2101,9 @@ function buildPlugin() {
     const importModalEl = React.createElement(
       Modal,
       {
-        title: hasResults ? "Resultado da importacao" : "Importar Agent do Alibaba Cloud Agent Hub",
+        title: hasResults
+          ? "Resultado da importacao"
+          : "Importar Agent do Alibaba Cloud Agent Hub",
         open: importModalOpen,
         onCancel: closeImportModal,
         closable: !importing || hasResults,

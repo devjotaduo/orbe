@@ -65,25 +65,33 @@ describe("HomePage — suggestion cards", () => {
 describe("HomePage — navigation on card click", () => {
   it("navigates to /chat when Chat card is clicked", () => {
     renderHomePage();
-    fireEvent.click(screen.getByText("home.cards.chat.title").closest("button")!);
+    fireEvent.click(
+      screen.getByText("home.cards.chat.title").closest("button")!,
+    );
     expect(mockNavigate).toHaveBeenCalledWith("/chat");
   });
 
   it("navigates to /skills when Skills card is clicked", () => {
     renderHomePage();
-    fireEvent.click(screen.getByText("home.cards.skills.title").closest("button")!);
+    fireEvent.click(
+      screen.getByText("home.cards.skills.title").closest("button")!,
+    );
     expect(mockNavigate).toHaveBeenCalledWith("/skills");
   });
 
   it("navigates to /mcp when MCP card is clicked", () => {
     renderHomePage();
-    fireEvent.click(screen.getByText("home.cards.mcp.title").closest("button")!);
+    fireEvent.click(
+      screen.getByText("home.cards.mcp.title").closest("button")!,
+    );
     expect(mockNavigate).toHaveBeenCalledWith("/mcp");
   });
 
   it("navigates to /agents when Settings card is clicked", () => {
     renderHomePage();
-    fireEvent.click(screen.getByText("home.cards.settings.title").closest("button")!);
+    fireEvent.click(
+      screen.getByText("home.cards.settings.title").closest("button")!,
+    );
     expect(mockNavigate).toHaveBeenCalledWith("/agents");
   });
 });
@@ -97,6 +105,8 @@ describe("HomePage — dark-mode CSS class smoke test", () => {
 
   it("root html element does NOT have dark-mode class in light mode", () => {
     renderHomePage(false);
-    expect(document.documentElement.classList.contains("dark-mode")).toBe(false);
+    expect(document.documentElement.classList.contains("dark-mode")).toBe(
+      false,
+    );
   });
 });
