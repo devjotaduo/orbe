@@ -156,9 +156,16 @@ class _NeverEmitAgent:
 
 @pytest.mark.asyncio
 async def test_runner_fim_path(tmp_path, monkeypatch):
-    """Exercita o branch /fim: o loop deve persistir e sair sem blueprint."""
+    """Exercita o branch /fim: _close_interview tenta emitir 3x; o agente
+    nunca emite, então o loop persiste e sai sem blueprint."""
     inputs = iter(["minha empresa vende sapatos", "/fim"])
-    monkeypatch.setattr(runner_mod, "_read_user_input", lambda prompt: next(inputs))
+
+    def _read(prompt):
+        # Após esgotar o script, devolve "/fim" (como o terminal/avaliador
+        # faz quando o usuário desiste) — _close_interview lida com isso.
+        return next(inputs, "/fim")
+
+    monkeypatch.setattr(runner_mod, "_read_user_input", _read)
     monkeypatch.setattr(runner_mod, "build_discovery_agent",
                         lambda session, **kw: _NeverEmitAgent())
 
