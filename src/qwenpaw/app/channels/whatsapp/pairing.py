@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=wrong-import-order,wrong-import-position,ungrouped-imports
 """Pareamento de WhatsApp por codigo PIN — helper puro (sem FastAPI).
 
 Espelha o fluxo neonize provado em

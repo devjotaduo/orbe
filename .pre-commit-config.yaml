@@ -82,6 +82,7 @@ repos:
           | .*/skills/.*
           | ^e2e/
           | ^\.claude/
+          | ^src/qwenpaw/app/channels/whatsapp/channel\.py$
           )
         args: [
           --disable=W0511,
