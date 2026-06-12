@@ -886,7 +886,6 @@ function Ft() {
   function it(t) {
     return t && {
       ...t,
-      alias: z(t.alias),
       name: z(t.name),
       description: z(t.description),
       skills: Array.isArray(t.skills) ? t.skills.map((n) => ({
@@ -1389,7 +1388,11 @@ function Ft() {
           (r, h) => e.createElement(
             G,
             { key: h, size: "small", style: { marginBottom: 8 } },
-            e.createElement("strong", null, z(r.name)),
+            e.createElement(
+              "strong",
+              null,
+              z(r.name)
+            ),
             r.description ? e.createElement(
               "div",
               { style: { color: "#666", fontSize: 12 } },
@@ -1491,7 +1494,11 @@ function Ft() {
             alignItems: "center"
           }
         },
-        e.createElement("h2", { style: { margin: 0 } }, "A2A Agents remotos"),
+        e.createElement(
+          "h2",
+          { style: { margin: 0 } },
+          "A2A Agents remotos"
+        ),
         e.createElement(
           F,
           null,

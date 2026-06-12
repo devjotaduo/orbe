@@ -219,6 +219,8 @@ async def reload_channel_service(
        change — the file on disk gets the new values but the running channel
        keeps its old ones.
     """
+    from ...config import Config, update_last_dispatch
+    from ..channels.manager import ChannelManager
     from ..channels.utils import make_process_from_runner
 
     _logger = logger  # reuse module-level logger
@@ -229,9 +231,43 @@ async def reload_channel_service(
         return
 
     new_process = make_process_from_runner(runner)
+    new_channels_config = getattr(ws._config, "channels", None)
+
+    def on_last_dispatch(channel, user_id, session_id):
+        update_last_dispatch(
+            channel=channel,
+            user_id=user_id,
+            session_id=session_id,
+            agent_id=ws.agent_id,
+        )
+
+    async def remove_channel(channel_name: str) -> None:
+        async with cm._lock:
+            old_channel = None
+            remaining_channels = []
+            for existing_ch in cm.channels:
+                if existing_ch.channel == channel_name:
+                    old_channel = existing_ch
+                else:
+                    remaining_channels.append(existing_ch)
+            cm.channels = remaining_channels
+        if old_channel is not None:
+            try:
+                await old_channel.stop()
+            except Exception:
+                _logger.exception(
+                    "channel_manager reload: failed to stop disabled "
+                    "channel %s",
+                    channel_name,
+                )
+
+    def is_channel_enabled(channel_config) -> bool:
+        if isinstance(channel_config, dict):
+            return bool(channel_config.get("enabled", False))
+        return bool(getattr(channel_config, "enabled", False))
+
     # Snapshot list — `replace_channel` mutates `cm.channels` mid-iteration.
     snapshot = list(cm.channels)
-    new_channels_config = getattr(ws._config, "channels", None)
     for ch in snapshot:
         old_id = id(getattr(ch, "_process", None))
         ch._process = new_process
@@ -252,6 +288,13 @@ async def reload_channel_service(
             )
             new_ch_cfg = extra.get(ch.channel)
         if new_ch_cfg is None:
+            continue
+        if not is_channel_enabled(new_ch_cfg):
+            await remove_channel(ch.channel)
+            _logger.info(
+                "channel_manager reload: %s removed after disable",
+                ch.channel,
+            )
             continue
         # update_config é opcional (hoje só o WhatsAppChannel implementa);
         # canais sem ele caem direto no caminho clone + replace_channel.
@@ -287,6 +330,49 @@ async def reload_channel_service(
                 "running channel may have stale config",
                 ch.channel,
             )
+
+    if new_channels_config is not None:
+        try:
+            desired_config = Config(channels=new_channels_config)
+        except Exception:
+            _logger.debug(
+                "channel_manager reload: new channels config is not "
+                "validatable; skipping dynamic channel additions",
+            )
+            desired_config = None
+        if desired_config is None:
+            cm.set_workspace(ws)
+            _logger.info(
+                "channel_manager reload: updated %d channels to new runner "
+                "(id=%s)",
+                len(cm.channels),
+                id(runner),
+            )
+            return
+        desired_manager = ChannelManager.from_config(
+            process=new_process,
+            config=desired_config,
+            on_last_dispatch=on_last_dispatch,
+            workspace_dir=ws.workspace_dir,
+        )
+        existing_channels = {ch.channel for ch in cm.channels}
+        for new_ch in desired_manager.channels:
+            if new_ch.channel in existing_channels:
+                continue
+            if hasattr(new_ch, "set_workspace"):
+                new_ch.set_workspace(ws, cm._command_registry)
+            try:
+                await cm.replace_channel(new_ch)
+                existing_channels.add(new_ch.channel)
+                _logger.info(
+                    "channel_manager reload: %s added from new config",
+                    new_ch.channel,
+                )
+            except Exception:
+                _logger.exception(
+                    "channel_manager reload: failed to add channel %s",
+                    new_ch.channel,
+                )
 
     cm.set_workspace(ws)
     _logger.info(

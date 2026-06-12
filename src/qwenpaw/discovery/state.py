@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """Schemas Pydantic do discovery agent.
 
-Estado da entrevista e blueprint do time.
+Estado da entrevista (camada 1, determinística) + blueprint do time.
 """
 from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 # --- Estado da entrevista -------------------------------------------------
 
 
 class CompanyProfile(BaseModel):
+    name: Optional[str] = None
     segment: Optional[str] = None
     cnae: Optional[str] = None
     size: Optional[str] = None
@@ -43,31 +44,12 @@ class Turn(BaseModel):
     text: str
 
 
-class OnboardingInfo(BaseModel):
-    """Contato de WhatsApp para o onboarding (canal oficial + grupo)."""
-
-    whatsapp_number: str
-    responsible_name: str
-    is_owner: bool = True
-
-
 class DiscoveryState(BaseModel):
-    model_config = ConfigDict(validate_assignment=True)
-
     session_id: str
     company: CompanyProfile = Field(default_factory=CompanyProfile)
     open_areas: list[OpenArea] = Field(default_factory=list)
     integrations: list[Integration] = Field(default_factory=list)
     transcript: list[Turn] = Field(default_factory=list)
-    onboarding: Optional[OnboardingInfo] = None
-
-    @field_validator("open_areas")
-    @classmethod
-    def _unique_area_ids(cls, v: list[OpenArea]) -> list[OpenArea]:
-        ids = [a.id for a in v]
-        if len(ids) != len(set(ids)):
-            raise ValueError("open_areas contém ids duplicados")
-        return v
 
     def next_focus(self) -> Optional[OpenArea]:
         """Área de maior prioridade e menor confiança (não-formulário)."""
@@ -79,18 +61,13 @@ class DiscoveryState(BaseModel):
         )[0]
 
     def ready_to_emit(self, threshold: float = 0.7) -> bool:
-        """Pronto quando toda área prioritária (priority>=3) supera limiar.
-
-        Retorna False quando open_areas está vazio (nenhuma descoberta ainda).
-        """
-        if not self.open_areas:
-            return False
+        """Pronto quando toda área prioritária (priority>=3) bate o limiar."""
         critical = [a for a in self.open_areas if a.priority >= 3]
         return all(a.confidence >= threshold for a in critical)
 
 
 class ReflectUpdate(BaseModel):
-    """Saída estruturada do passo de raciocínio `reflect`."""
+    """Saída estruturada do passo de raciocínio ``reflect``."""
 
     learned: str
     close_area_ids: list[str] = Field(default_factory=list)
@@ -123,21 +100,6 @@ class RoadmapItem(BaseModel):
     rationale: str = ""
 
 
-class ConnectorRef(BaseModel):
-    """Conector recomendado no blueprint (whitelist curada).
-
-    Campos string lenientes de propósito: o JSON vem do LLM; a validação
-    estrita de vocabulário vive em ConnectorInfo (taxonomy.py).
-    """
-
-    integration_kind: str
-    name: str
-    origin: str
-    slug_or_url: str = ""
-    status: str
-    notes: str = ""
-
-
 class TeamBlueprint(BaseModel):
     company_profile: CompanyProfile
     process_map: list[ProcessArea] = Field(default_factory=list)
@@ -145,30 +107,3 @@ class TeamBlueprint(BaseModel):
     proposed_team: list[AgentSpec] = Field(default_factory=list)
     roadmap: list[RoadmapItem] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
-    recommended_connectors: list[ConnectorRef] = Field(default_factory=list)
-    onboarding: Optional[OnboardingInfo] = None
-
-
-# --- Requisitos por agente (fase pós-blueprint) -----------------------------
-
-
-class InfoRequest(BaseModel):
-    """Uma informação concreta que falta para um agente operar."""
-
-    item: str  # ex.: "catálogo de produtos com preços"
-    why: str  # por que o agente precisa (linguagem simples)
-    group_message: str  # mensagem pronta, leiga, para pedir no grupo
-
-
-class AgentRequirements(BaseModel):
-    """Informações pendentes de um agente do time proposto."""
-
-    agent_name: str
-    requests: list[InfoRequest] = Field(default_factory=list)
-
-
-class RequirementsReport(BaseModel):
-    """Relatório consolidado de informações pendentes por agente."""
-
-    items: list[AgentRequirements] = Field(default_factory=list)
-    summary_for_owner: str = ""  # parágrafo leigo de abertura do grupo

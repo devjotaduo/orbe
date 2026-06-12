@@ -1184,7 +1184,6 @@ function buildPlugin() {
     if (!agent) return agent;
     return {
       ...agent,
-      alias: translateA2AText(agent.alias),
       name: translateA2AText(agent.name),
       description: translateA2AText(agent.description),
       skills: Array.isArray(agent.skills)

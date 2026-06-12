@@ -43,6 +43,7 @@ import {
   Wrench,
   Users,
   Activity,
+  Compass,
   Wifi,
   Package,
 } from "lucide-react";
@@ -56,6 +57,14 @@ const navLabel = (key: string, defaultValue?: string) => (): string =>
 
 export const BUILTIN_MENU: MenuItem[] = [
   // ── Agent-scoped (Sidebar Menu #1) ───────────────────────────────────────
+  {
+    id: "core.discovery",
+    location: "primary.agentScoped",
+    label: navLabel("nav.discovery", "Discovery"),
+    icon: Compass,
+    route: "core.discovery",
+    order: 5,
+  },
   {
     id: "core.inbox",
     location: "primary.agentScoped",
