@@ -20,6 +20,7 @@ export const CHANNEL_LABELS: Record<string, string> = {
   wecom: "WeCom",
   xiaoyi: "XiaoYi",
   wechat: "WeChat",
+  whatsapp: "WhatsApp",
   onebot: "OneBot",
   yuanbao: "Yuanbao",
 };
