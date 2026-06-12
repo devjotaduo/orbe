@@ -97,7 +97,8 @@ async def feat_tool_events(timeout):
     ok = has_call and has_result
     return (
         ok,
-        f"ToolCall={has_call} ToolResult={has_result}; tipos tool: {[k for k in sorted(kinds) if 'Tool' in k]}",
+        f"ToolCall={has_call} ToolResult={has_result}; "
+        f"tipos tool: {[k for k in sorted(kinds) if 'Tool' in k]}",
     )
 
 
@@ -115,12 +116,13 @@ async def feat_thinking(timeout):
     has_think = any("ThinkingBlock" in k for k in kinds)
     return (
         has_think,
-        f"ThinkingBlock events: {[k for k in sorted(kinds) if 'Thinking' in k] or 'nenhum'}",
+        "ThinkingBlock events: "
+        f"{[k for k in sorted(kinds) if 'Thinking' in k] or 'nenhum'}",
     )
 
 
 async def feat_structured_output(timeout):
-    """4. ChatModel.generate_structured_output returns a validated pydantic obj."""
+    """4. ChatModel.generate_structured_output returns a validated pydantic obj."""  # noqa: E501
     from pydantic import BaseModel, Field
     from qwenpaw.providers.provider_manager import ProviderManager
 
@@ -159,7 +161,8 @@ async def feat_state_roundtrip(timeout):
         ok = is_v2 and restored.get("state") is not None
     return (
         ok,
-        f"state_dict 2.0={is_v2}; round-trip carregou={restored.get('state') is not None}",
+        f"state_dict 2.0={is_v2}; round-trip "
+        f"carregou={restored.get('state') is not None}",
     )
 
 
@@ -199,7 +202,8 @@ FEATURES = [
 async def main():
     timeout = 150.0
     print(
-        f"== Testando {len(FEATURES)} features novas do AgentScope 2.0 no qwenpaw =="
+        f"== Testando {len(FEATURES)} features novas "
+        f"do AgentScope 2.0 no qwenpaw =="
     )
     results = []
     for title, fn in FEATURES:
@@ -234,7 +238,8 @@ async def main():
         f"# AgentScope 2.0 — teste de features novas no qwenpaw ({stamp})",
         "",
         f"agentscope instalado: **{run['installed_agentscope']}** · "
-        f"agente real `QwenPawAgent`, modelo `{MODEL}` (thinking: `{THINKING_MODEL}`).",
+        f"agente real `QwenPawAgent`, modelo `{MODEL}` "
+        f"(thinking: `{THINKING_MODEL}`).",
         "",
         "| Feature 2.0 | Resultado | Evidência |",
         "|---|---|---|",

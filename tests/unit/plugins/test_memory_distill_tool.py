@@ -30,7 +30,9 @@ MODULE_PATH = (
     / "memory_distill_tool.py"
 )
 
-_SPEC = importlib.util.spec_from_file_location("memory_distill_tool", MODULE_PATH)
+_SPEC = importlib.util.spec_from_file_location(
+    "memory_distill_tool", MODULE_PATH
+)
 assert _SPEC is not None and _SPEC.loader is not None, (
     f"Could not find memory_distill_tool at {MODULE_PATH}"
 )
@@ -56,7 +58,7 @@ def _text(result) -> str:
 
 @pytest.mark.asyncio
 async def test_distill_memory_rejects_non_workspace_dir(tmp_path):
-    """A directory with neither MEMORY.md nor the daily-notes dir is rejected."""
+    """Directory without MEMORY.md nor daily-notes dir is rejected."""
     result = await memory_distill_tool.distill_memory(
         working_dir=str(tmp_path),
         days=7,
@@ -67,8 +69,10 @@ async def test_distill_memory_rejects_non_workspace_dir(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_distill_memory_detects_new_titles_when_known_topics_exist(tmp_path):
-    """Only genuinely new titles appear in the preview; known topics are filtered."""
+async def test_distill_memory_detects_new_titles_when_known_topics_exist(
+    tmp_path,
+):
+    """New titles appear in preview; known topics are filtered out."""
     (tmp_path / "memory").mkdir()
     (tmp_path / "MEMORY.md").write_text(
         "# MEMORY\n\n- **Known Topic**: existing note\n",
@@ -91,7 +95,7 @@ async def test_distill_memory_detects_new_titles_when_known_topics_exist(tmp_pat
 
 @pytest.mark.asyncio
 async def test_consolidate_memory_does_not_delete_workspace_png(tmp_path):
-    """consolidate_memory must not touch files outside the managed subdirectories."""
+    """consolidate_memory must not touch files outside managed subdirs."""
     (tmp_path / "memory").mkdir()
     (tmp_path / "MEMORY.md").write_text("# MEMORY\n", encoding="utf-8")
     (tmp_path / "tool_results").mkdir()
@@ -103,12 +107,14 @@ async def test_consolidate_memory_does_not_delete_workspace_png(tmp_path):
         days=30,
         dry_run=False,
     )
-    assert png.exists(), "consolidate_memory must not delete workspace .png files"
+    assert png.exists(), (
+        "consolidate_memory must not delete workspace .png files"
+    )
 
 
 @pytest.mark.asyncio
 async def test_distill_memory_dry_run_does_not_write(tmp_path):
-    """dry_run=True must not modify MEMORY.md even when new discoveries are found."""
+    """dry_run=True must not modify MEMORY.md with new discoveries found."""
     (tmp_path / "memory").mkdir()
     mem = tmp_path / "MEMORY.md"
     mem.write_text("# MEMORY\n", encoding="utf-8")
@@ -126,7 +132,9 @@ async def test_distill_memory_dry_run_does_not_write(tmp_path):
     text = _text(result)
 
     # Preview must mention the new title
-    assert "Brand New Thing" in text, "dry_run preview must list new discoveries"
+    assert "Brand New Thing" in text, (
+        "dry_run preview must list new discoveries"
+    )
     # File must be unchanged
     assert mem.read_text(encoding="utf-8") == before, (
         "dry_run=True must not write to MEMORY.md"
@@ -139,12 +147,12 @@ async def test_distill_memory_dry_run_does_not_write(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_distill_memory_sets_error_state_on_invalid_working_dir(tmp_path):
-    """An empty directory (no MEMORY.md, no daily-notes dir) must return
-    state=ToolResultState.ERROR — not the default SUCCESS state.
+async def test_distill_memory_sets_error_state_on_invalid_working_dir(
+    tmp_path,
+):
+    """Empty directory must return state=ToolResultState.ERROR.
 
-    Reviewer: 'assert result.state == ToolResultState.ERROR (not just
-    assert \"agent workspace\" in text) once the error-state fix is applied.'
+    Reviewer: assert result.state == ToolResultState.ERROR once fix applied.
     """
     result = await memory_distill_tool.distill_memory(
         working_dir=str(tmp_path),
@@ -159,14 +167,11 @@ async def test_distill_memory_sets_error_state_on_invalid_working_dir(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_consolidate_memory_uses_daily_memory_dir_from_config(tmp_path):
-    """When _resolve_daily_dir_name() returns a non-default value ('notes'),
-    consolidate_memory must look in <wd>/notes/ — not the hardcoded 'memory/'.
-
-    Reviewer: 'patch _resolve_daily_dir_name to return \"notes\", create a
-    notes/ subdir in tmp_path, and verify consolidate_memory finds the notes
-    there (covers the config-resolution path; currently no test exercises
-    _resolve_daily_dir_name returning a non-default value).'
+async def test_consolidate_memory_uses_daily_memory_dir_from_config(
+    tmp_path,
+):
+    """When _resolve_daily_dir_name() returns 'notes', consolidate_memory
+    must look in <wd>/notes/ — not the hardcoded 'memory/'.
     """
     # Arrange: workspace with 'notes/' instead of 'memory/'
     notes_dir = tmp_path / "notes"
@@ -179,7 +184,11 @@ async def test_consolidate_memory_uses_daily_memory_dir_from_config(tmp_path):
     )
 
     # Act: patch _resolve_daily_dir_name to return 'notes' in the module
-    with patch.object(memory_distill_tool, "_resolve_daily_dir_name", return_value="notes"):
+    with patch.object(
+        memory_distill_tool,
+        "_resolve_daily_dir_name",
+        return_value="notes",
+    ):
         result = await memory_distill_tool.consolidate_memory(
             working_dir=str(tmp_path),
             days=30,
@@ -191,7 +200,12 @@ async def test_consolidate_memory_uses_daily_memory_dir_from_config(tmp_path):
     assert result.state == ToolResultState.SUCCESS, (
         f"Expected SUCCESS, got {result.state!r}: {text}"
     )
-    # The distill step must have found the note in notes/ and reported the topic
-    assert "Config Resolution Topic" in text or "1 new" in text or "new discovery" in text.lower(), (
+    # Distill step must have found the note in notes/ and reported the topic
+    found = (
+        "Config Resolution Topic" in text
+        or "1 new" in text
+        or "new discovery" in text.lower()
+    )
+    assert found, (
         f"Expected distill step to find topic in notes/; got:\n{text}"
     )

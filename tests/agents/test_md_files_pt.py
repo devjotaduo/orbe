@@ -48,7 +48,9 @@ def test_pt_md_files_match_en_structure(en_dir: Path, pt_dir: Path):
     missing = en_names - pt_names
     extra = pt_names - en_names
     assert not missing, f"Faltando em {pt_dir}: {sorted(missing)}"
-    assert not extra, f"Sobrando em {pt_dir} (sem original en): {sorted(extra)}"
+    assert (
+        not extra
+    ), f"Sobrando em {pt_dir} (sem original en): {sorted(extra)}"
 
 
 @pytest.mark.parametrize(
