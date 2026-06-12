@@ -21,6 +21,13 @@ describe("binding", () => {
     expect(joinBase(undefined, "name")).toBe("name");
   });
 
+  it('joinBase treats "." as the item itself (string-array binds)', () => {
+    expect(joinBase("proposed_team/0/tasks/1", ".")).toBe(
+      "proposed_team/0/tasks/1",
+    );
+    expect(joinBase(undefined, ".")).toBe("");
+  });
+
   it("resolveBind walks json-pointer-like paths", () => {
     expect(resolveBind(DATA, "proposed_team/0/name")).toBe("Atendente");
     expect(resolveBind(DATA, "proposed_team/0/tasks/1")).toBe("b");

@@ -159,6 +159,243 @@ describe("A2uiRenderer (read-only components)", () => {
   });
 });
 
+const REPEAT_MSGS: A2uiMessage[] = [
+  { messageType: "createSurface", surfaceId: "bp", root: "root" },
+  {
+    messageType: "updateComponents",
+    surfaceId: "bp",
+    components: [
+      { id: "root", type: "Column", properties: {}, children: ["rep"] },
+      {
+        id: "rep",
+        type: "Repeater",
+        properties: { bind: "proposed_team", itemTemplate: "tpl" },
+        children: [],
+      },
+      {
+        id: "tpl",
+        type: "TextInput",
+        properties: { bind: "name", label: "Nome" },
+        children: [],
+      },
+    ],
+  },
+  {
+    messageType: "updateDataModel",
+    surfaceId: "bp",
+    data: { proposed_team: [{ name: "A1" }, { name: "A2" }] },
+  },
+];
+
+function buildRepeatSurface(msgs: A2uiMessage[] = REPEAT_MSGS) {
+  let s = emptySurface("bp");
+  for (const m of msgs) s = applyA2uiMessage(s, m);
+  return s;
+}
+
+describe("A2uiRenderer (Repeater)", () => {
+  it("instantiates the template once per item with relative binds", () => {
+    render(<A2uiRenderer surface={buildRepeatSurface()} />);
+    expect(screen.getByDisplayValue("A1")).toBeTruthy();
+    expect(screen.getByDisplayValue("A2")).toBeTruthy();
+    expect(screen.getAllByRole("textbox")).toHaveLength(2);
+  });
+
+  it("editing inside a repeater writes to the right index", () => {
+    const onDataChange = vi.fn();
+    render(
+      <A2uiRenderer surface={buildRepeatSurface()} onDataChange={onDataChange} />,
+    );
+    fireEvent.change(screen.getByDisplayValue("A2"), {
+      target: { value: "A2-edit" },
+    });
+    const next = onDataChange.mock.calls[0][0] as {
+      proposed_team: Array<{ name: string }>;
+    };
+    expect(next.proposed_team[1].name).toBe("A2-edit");
+    expect(next.proposed_team[0].name).toBe("A1");
+  });
+
+  it('bind "." resolves to the item itself (string arrays)', () => {
+    const msgs: A2uiMessage[] = [
+      { messageType: "createSurface", surfaceId: "bp", root: "root" },
+      {
+        messageType: "updateComponents",
+        surfaceId: "bp",
+        components: [
+          { id: "root", type: "Column", properties: {}, children: ["rep"] },
+          {
+            id: "rep",
+            type: "Repeater",
+            properties: { bind: "tasks", itemTemplate: "tpl" },
+            children: [],
+          },
+          {
+            id: "tpl",
+            type: "TextInput",
+            properties: { bind: ".", label: "Tarefa" },
+            children: [],
+          },
+        ],
+      },
+      {
+        messageType: "updateDataModel",
+        surfaceId: "bp",
+        data: { tasks: ["ligar", "responder"] },
+      },
+    ];
+    const onDataChange = vi.fn();
+    render(
+      <A2uiRenderer
+        surface={buildRepeatSurface(msgs)}
+        onDataChange={onDataChange}
+      />,
+    );
+    expect(screen.getByDisplayValue("ligar")).toBeTruthy();
+    fireEvent.change(screen.getByDisplayValue("responder"), {
+      target: { value: "responder rapido" },
+    });
+    const next = onDataChange.mock.calls[0][0] as { tasks: string[] };
+    expect(next.tasks).toEqual(["ligar", "responder rapido"]);
+  });
+
+  it("indexFromRepeater injects the item index (path defaults to the array)", () => {
+    const msgs: A2uiMessage[] = [
+      { messageType: "createSurface", surfaceId: "bp", root: "root" },
+      {
+        messageType: "updateComponents",
+        surfaceId: "bp",
+        components: [
+          { id: "root", type: "Column", properties: {}, children: ["rep"] },
+          {
+            id: "rep",
+            type: "Repeater",
+            properties: { bind: "proposed_team", itemTemplate: "tpl" },
+            children: [],
+          },
+          { id: "tpl", type: "Row", properties: {}, children: ["del"] },
+          {
+            id: "del",
+            type: "Button",
+            properties: {
+              text: "Remover",
+              action: {
+                name: "remove_agent",
+                params: { indexFromRepeater: true },
+              },
+            },
+            children: [],
+          },
+        ],
+      },
+      {
+        messageType: "updateDataModel",
+        surfaceId: "bp",
+        data: { proposed_team: [{ name: "A1" }, { name: "A2" }] },
+      },
+    ];
+    const onAction = vi.fn();
+    render(
+      <A2uiRenderer surface={buildRepeatSurface(msgs)} onAction={onAction} />,
+    );
+    fireEvent.click(screen.getAllByText("Remover")[1]);
+    expect(onAction).toHaveBeenCalledWith(
+      "remove_agent",
+      expect.objectContaining({ index: 1, path: "proposed_team" }),
+    );
+  });
+
+  it("pathFromBase absolutizes a relative params.path against the item base", () => {
+    const msgs: A2uiMessage[] = [
+      { messageType: "createSurface", surfaceId: "bp", root: "root" },
+      {
+        messageType: "updateComponents",
+        surfaceId: "bp",
+        components: [
+          { id: "root", type: "Column", properties: {}, children: ["rep"] },
+          {
+            id: "rep",
+            type: "Repeater",
+            properties: { bind: "proposed_team", itemTemplate: "tpl" },
+            children: [],
+          },
+          { id: "tpl", type: "Row", properties: {}, children: ["add"] },
+          {
+            id: "add",
+            type: "Button",
+            properties: {
+              text: "+ Tarefa",
+              action: {
+                name: "add_item",
+                params: { path: "tasks", pathFromBase: true },
+              },
+            },
+            children: [],
+          },
+        ],
+      },
+      {
+        messageType: "updateDataModel",
+        surfaceId: "bp",
+        data: { proposed_team: [{ name: "A1" }, { name: "A2" }] },
+      },
+    ];
+    const onAction = vi.fn();
+    render(
+      <A2uiRenderer surface={buildRepeatSurface(msgs)} onAction={onAction} />,
+    );
+    fireEvent.click(screen.getAllByText("+ Tarefa")[1]);
+    expect(onAction).toHaveBeenCalledWith(
+      "add_item",
+      expect.objectContaining({ path: "proposed_team/1/tasks" }),
+    );
+  });
+
+  it("shows a visible fallback when the bound value is not an array", () => {
+    const msgs: A2uiMessage[] = [
+      REPEAT_MSGS[0],
+      REPEAT_MSGS[1],
+      {
+        messageType: "updateDataModel",
+        surfaceId: "bp",
+        data: { proposed_team: "oops" },
+      },
+    ];
+    const { container } = render(
+      <A2uiRenderer surface={buildRepeatSurface(msgs)} />,
+    );
+    expect(container.textContent).toContain("Repeater");
+  });
+
+  it("shows a visible fallback when the itemTemplate id does not exist", () => {
+    const msgs: A2uiMessage[] = [
+      { messageType: "createSurface", surfaceId: "bp", root: "root" },
+      {
+        messageType: "updateComponents",
+        surfaceId: "bp",
+        components: [
+          { id: "root", type: "Column", properties: {}, children: ["rep"] },
+          {
+            id: "rep",
+            type: "Repeater",
+            properties: { bind: "proposed_team", itemTemplate: "ghost" },
+            children: [],
+          },
+        ],
+      },
+      {
+        messageType: "updateDataModel",
+        surfaceId: "bp",
+        data: { proposed_team: [{ name: "A1" }] },
+      },
+    ];
+    const { container } = render(
+      <A2uiRenderer surface={buildRepeatSurface(msgs)} />,
+    );
+    expect(container.textContent).toContain("Repeater");
+  });
+});
+
 describe("surfaceReducer", () => {
   it("createSurface sets the root", () => {
     const s = applyA2uiMessage(emptySurface("bp"), MSGS[0]);

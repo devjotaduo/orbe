@@ -19,6 +19,8 @@ export interface A2uiRendererProps {
 interface RenderCtx {
   data: Record<string, unknown>;
   basePath?: string;
+  /** Innermost enclosing Repeater (nested repeaters overwrite it). */
+  repeater?: { index: number; arrPath: string };
   onDataChange?: A2uiRendererProps["onDataChange"];
   onAction?: A2uiRendererProps["onAction"];
 }
@@ -32,6 +34,36 @@ function renderNode(
   if (!node) return null;
   const { data, basePath, onDataChange, onAction } = ctx;
   const resolved = resolveProps(node.properties, data, basePath);
+
+  // Repeater: instantiate `itemTemplate` once per array item. The whole
+  // template subtree inherits basePath = `<arrPath>/<i>`, so its binds are
+  // RELATIVE to the item ("name", "tasks", or "." for the item itself).
+  if (node.type === "Repeater") {
+    const arrPath = joinBase(basePath, String(node.properties.bind ?? ""));
+    const arr = resolveBind(data, arrPath);
+    const tplId = String(node.properties.itemTemplate ?? "");
+    if (!Array.isArray(arr) || !surface.components[tplId]) {
+      // Visible fallback — a broken Repeater must never blank the screen.
+      return (
+        <Typography.Text type="warning">
+          [Repeater] {arrPath} → {tplId}
+        </Typography.Text>
+      );
+    }
+    return (
+      <>
+        {arr.map((_, i) => (
+          <div key={`${node.id}-${i}`} className={styles.node}>
+            {renderNode(surface, tplId, {
+              ...ctx,
+              basePath: `${arrPath}/${i}`,
+              repeater: { index: i, arrPath },
+            })}
+          </div>
+        ))}
+      </>
+    );
+  }
 
   // Editable fields live here (not in the static catalog) because they need
   // the data model + onDataChange callback from the render context.
@@ -65,10 +97,32 @@ function renderNode(
       name?: string;
       params?: Record<string, unknown>;
     };
+    const dispatch = () => {
+      let params = action.params;
+      // Builders can't know item indexes — the renderer injects them. A
+      // Button inside a Repeater with `indexFromRepeater: true` receives the
+      // item index (and, by default, the innermost repeater's array path).
+      if (params?.indexFromRepeater === true && ctx.repeater) {
+        params = {
+          ...params,
+          index: ctx.repeater.index,
+          path: params.path ?? ctx.repeater.arrPath,
+        };
+      }
+      // `pathFromBase: true` absolutizes a template-relative params.path
+      // (e.g. "tasks" inside a card template → "proposed_team/2/tasks").
+      if (params?.pathFromBase === true) {
+        params = {
+          ...params,
+          path: joinBase(basePath, String(params.path ?? "")),
+        };
+      }
+      onAction?.(String(action.name ?? ""), params);
+    };
     return (
       <Button
         type={resolved.variant === "primary" ? "primary" : "default"}
-        onClick={() => onAction?.(String(action.name ?? ""), action.params)}
+        onClick={dispatch}
       >
         {String(resolved.text ?? "")}
       </Button>

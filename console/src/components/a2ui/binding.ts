@@ -18,8 +18,13 @@ export function isBind(v: unknown): v is BindRef {
   );
 }
 
-/** Join a base path and a relative path (`joinBase("a/0", "b") === "a/0/b"`). */
+/**
+ * Join a base path and a relative path (`joinBase("a/0", "b") === "a/0/b"`).
+ * The special path `"."` means "the item itself" and resolves to the base
+ * alone — used by Repeater templates over string arrays.
+ */
 export function joinBase(basePath: string | undefined, path: string): string {
+  if (path === ".") return basePath ?? "";
   return basePath ? `${basePath}/${path}` : path;
 }
 
